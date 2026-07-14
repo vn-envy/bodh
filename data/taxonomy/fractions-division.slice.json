@@ -1,0 +1,273 @@
+{
+  "sliceVersion": "1.0.0",
+  "source": {
+    "name": "Marble Skill Taxonomy",
+    "version": "v1",
+    "repository": "https://github.com/withmarbleapp/os-taxonomy",
+    "commit": "96a7933754af672e1bfdbf7ecb05c325860c6e0d",
+    "databaseLicense": "ODbL-1.0",
+    "contentLicense": "CC-BY-SA-4.0"
+  },
+  "selection": {
+    "createdFor": "Bodh Build Week hero journey: fraction division",
+    "policy": "Only canonical nodes and canonical edges needed to diagnose or teach the seeded fraction-division cases are included. Omitted upstream edges are not represented as absent knowledge.",
+    "targetTopicId": "mt_9Y96vxG_LH",
+    "diagnosticSupportTopicIds": ["mt_GDG9_SZmsO", "mt_iNdrM2-oJf"]
+  },
+  "topics": [
+    {
+      "id": "mt_9Y96vxG_LH",
+      "type": "PROCEDURAL",
+      "subject": "Mathematics",
+      "domain": "Fractions",
+      "name": "Dividing fractions",
+      "description": "Divide a fraction by a fraction using the 'keep-change-flip' method and visual models; interpret and solve word problems involving division of fractions by fractions",
+      "ageRangeStart": 11,
+      "ageRangeEnd": 12,
+      "centrality": 0.1053351573187414,
+      "evidence": [
+        "Divide a fraction by a fraction using the reciprocal method",
+        "Use visual fraction models to represent and explain fraction division",
+        "Create story contexts for fraction division problems and solve them"
+      ],
+      "assessmentPrompt": "If {{name}} has 3/4 of a litre of juice and each glass holds 3/8 of a litre, can they work out how many glasses they can fill — using fraction division?",
+      "standards": ["ccss-math:6.NS.1", "uk-nc-2013:KS3.Maths.Num.4"]
+    },
+    {
+      "id": "mt_1PAWhRhpdg",
+      "type": "CONCEPTUAL",
+      "subject": "Mathematics",
+      "domain": "Fractions",
+      "name": "Dividing by Fractions",
+      "description": "Interpret and compute division of a whole number by a unit fraction (e.g. 4 ÷ 1/5 = 20); use visual models and the relationship between multiplication and division to explain why the quotient is larger than the dividend",
+      "ageRangeStart": 10,
+      "ageRangeEnd": 11,
+      "centrality": 0.106703146374829,
+      "evidence": [
+        "Compute 4 ÷ (1/5) = 20 and explain: 'How many fifths fit in 4 wholes?'",
+        "Create a story context for 6 ÷ (1/4) and solve it",
+        "Verify 4 ÷ (1/5) = 20 by showing 20 × (1/5) = 4"
+      ],
+      "assessmentPrompt": "If you have 4 metres of ribbon and each bow needs 1/5 of a metre, can {{name}} work out how many bows you can make — and explain why the answer is bigger than 4?",
+      "standards": []
+    },
+    {
+      "id": "mt_ifPDOYvUqm",
+      "type": "CONCEPTUAL",
+      "subject": "Mathematics",
+      "domain": "Fractions",
+      "name": "Dividing fractions (unit fractions)",
+      "description": "Interpret and compute division of a unit fraction by a non-zero whole number (e.g. 1/3 ÷ 4 = 1/12); use visual models and the relationship between multiplication and division to explain the result",
+      "ageRangeStart": 10,
+      "ageRangeEnd": 11,
+      "centrality": 0.1094391244870041,
+      "evidence": [
+        "Compute (1/3) ÷ 4 = 1/12 and explain using a visual model of splitting 1/3 into 4 equal parts",
+        "Create a story context for (1/6) ÷ 3 and solve it",
+        "Verify (1/3) ÷ 4 = 1/12 by showing (1/12) × 4 = 1/3"
+      ],
+      "assessmentPrompt": "If {{name}} has 1/3 of a bag of rice and splits it into 4 equal portions, can they work out what fraction of the whole bag each portion is — and explain why the answer is smaller than 1/3?",
+      "standards": []
+    },
+    {
+      "id": "mt_AabJisinfi",
+      "type": "PROCEDURAL",
+      "subject": "Mathematics",
+      "domain": "Fractions",
+      "name": "Multiplying fractions (age 10+)",
+      "description": "Multiply a fraction or whole number by a fraction, including proper fractions by proper fractions; interpret (a/b) × q as a parts of q partitioned into b equal parts; write answers in simplest form",
+      "ageRangeStart": 10,
+      "ageRangeEnd": 11,
+      "centrality": 0.1012311901504788,
+      "evidence": [
+        "Compute (2/3) × (4/5) = 8/15 and show with an area model",
+        "Use a visual model to demonstrate (2/3) × 4 = 8/3 = 2 2/3",
+        "Simplify the product 3/4 × 2/3 = 6/12 = 1/2"
+      ],
+      "assessmentPrompt": "If a recipe uses 2/3 of a bag of flour and {{name}} only wants to make 3/4 of the recipe, can they multiply those fractions to find out how much flour they need?",
+      "standards": []
+    },
+    {
+      "id": "mt_4Km38F4L-6",
+      "type": "CONCEPTUAL",
+      "subject": "Mathematics",
+      "domain": "Fractions",
+      "name": "Fractions of a whole (age 10+)",
+      "description": "Interpret a fraction as division of the numerator by the denominator (a/b = a ÷ b); solve word problems involving division of whole numbers leading to fractional or mixed-number answers",
+      "ageRangeStart": 10,
+      "ageRangeEnd": 11,
+      "centrality": 0.1313269493844049,
+      "evidence": [
+        "Explain that 3/4 means 3 ÷ 4 and verify by showing 3/4 × 4 = 3",
+        "Solve: '9 people share a 50-pound sack equally — how many pounds each?' and express the answer as 5 5/9",
+        "Use a visual model to show that sharing 3 wholes among 4 people gives each person 3/4"
+      ],
+      "assessmentPrompt": "If {{name}} shares 3 pizzas equally among 4 friends, can they work out what fraction each person gets — and explain why 3 ÷ 4 gives the same answer as 3/4?",
+      "standards": []
+    },
+    {
+      "id": "mt_TgHxujL81r",
+      "type": "PROCEDURAL",
+      "subject": "Mathematics",
+      "domain": "Fractions",
+      "name": "Multiplying fractions",
+      "description": "Understand a/b as a multiple of 1/b; multiply proper fractions and mixed numbers by whole numbers, supported by visual models (e.g. 3 × 2/5 = 6/5 = 1 1/5)",
+      "ageRangeStart": 9,
+      "ageRangeEnd": 10,
+      "centrality": 0.09302325581395349,
+      "evidence": [
+        "Calculate 4 × 3/8 using repeated addition or the rule n × a/b = (n×a)/b",
+        "Multiply 2 1/3 × 3 and express as a mixed number",
+        "Use a visual model to show why 5 × 1/4 = 5/4"
+      ],
+      "assessmentPrompt": "If a recipe uses 2/3 of a cup of butter and {{name}} wants to make it three times over, can they work out how much butter they need in total?",
+      "standards": []
+    },
+    {
+      "id": "mt_09sySPqM9Z",
+      "type": "CONCEPTUAL",
+      "subject": "Mathematics",
+      "domain": "Fractions",
+      "name": "Understanding fractions (age 9+)",
+      "description": "Understand a fraction a/b with a > 1 as a sum of fractions 1/b (e.g. 3/5 = 1/5 + 1/5 + 1/5)",
+      "ageRangeStart": 9,
+      "ageRangeEnd": 10,
+      "centrality": 0.1080711354309166,
+      "evidence": [
+        "Express 5/8 as a sum of five copies of 1/8",
+        "Show on a number line how 4/3 is built by iterating 1/3 four times",
+        "Explain why 7/4 = 1/4 + 1/4 + 1/4 + 1/4 + 1/4 + 1/4 + 1/4"
+      ],
+      "assessmentPrompt": "If you ask {{name}} to show 4/5 as a sum of smaller equal fractions, can they write it out as 1/5 + 1/5 + 1/5 + 1/5?",
+      "standards": []
+    },
+    {
+      "id": "mt_ndGqFPWyen",
+      "type": "CONCEPTUAL",
+      "subject": "Mathematics",
+      "domain": "Fractions",
+      "name": "Fractions of a whole",
+      "description": "Understand a fraction 1/b as the quantity formed by 1 part when a whole is partitioned into b equal parts; understand a/b as a parts of size 1/b",
+      "ageRangeStart": 8,
+      "ageRangeEnd": 9,
+      "centrality": 0.2106703146374829,
+      "evidence": [
+        "Given a shape divided into 5 equal parts, identify one shaded part as 1/5",
+        "Explain that 3/4 means 3 parts each of size 1/4",
+        "Draw a model showing 2/6 as 2 pieces of a whole cut into 6"
+      ],
+      "assessmentPrompt": "If you cut a pizza into 6 equal slices, can {{name}} explain what 1/6 means — and then work out what 4/6 of the pizza looks like?",
+      "standards": []
+    },
+    {
+      "id": "mt_GDG9_SZmsO",
+      "type": "CONCEPTUAL",
+      "subject": "Mathematics",
+      "domain": "Multiplication & Division",
+      "name": "Division as Unknown Factor",
+      "description": "Understand division as an unknown-factor problem (e.g. find 32 ÷ 8 by finding the number that makes 32 when multiplied by 8)",
+      "ageRangeStart": 8,
+      "ageRangeEnd": 9,
+      "centrality": 0.1409028727770178,
+      "evidence": [
+        "Explain that 32 ÷ 8 = ? is the same as 8 × ? = 32",
+        "Use a known multiplication fact to find a division answer",
+        "Describe the relationship between multiplication and division as inverse operations"
+      ],
+      "assessmentPrompt": "Can {{name}} work out '32 ÷ 8' by asking 'what do I multiply 8 by to get 32?' — using times table knowledge rather than a separate division method?",
+      "standards": ["ccss-math:3.OA.6"]
+    },
+    {
+      "id": "mt_iNdrM2-oJf",
+      "type": "CONCEPTUAL",
+      "subject": "Mathematics",
+      "domain": "Multiplication & Division",
+      "name": "What Division Means",
+      "description": "Interpret whole-number quotients (e.g. 56 ÷ 8 as the number of objects in each share or the number of equal groups)",
+      "ageRangeStart": 8,
+      "ageRangeEnd": 9,
+      "centrality": 0.1381668946648427,
+      "evidence": [
+        "Explain that 56 ÷ 8 can mean sharing 56 into 8 equal groups or making groups of 8",
+        "Draw a picture to represent a division expression",
+        "Match a division expression to a word problem involving equal sharing or grouping"
+      ],
+      "assessmentPrompt": "Can {{name}} explain that '56 ÷ 8' could mean 'if 56 things are shared between 8 people, how many does each person get?' — not just recite the answer '7'?",
+      "standards": ["ccss-math:3.OA.2"]
+    }
+  ],
+  "dependencies": [
+    {
+      "topicId": "mt_9Y96vxG_LH",
+      "prerequisiteId": "mt_AabJisinfi",
+      "strength": "hard",
+      "reason": "Dividing fractions uses the reciprocal method which builds on fraction multiplication"
+    },
+    {
+      "topicId": "mt_9Y96vxG_LH",
+      "prerequisiteId": "mt_ifPDOYvUqm",
+      "strength": "hard",
+      "reason": "Dividing fraction by fraction extends Y5 dividing unit fractions by whole numbers"
+    },
+    {
+      "topicId": "mt_1PAWhRhpdg",
+      "prerequisiteId": "mt_4Km38F4L-6",
+      "strength": "soft",
+      "reason": "Understanding fraction as division supports reasoning about quotients"
+    },
+    {
+      "topicId": "mt_1PAWhRhpdg",
+      "prerequisiteId": "mt_AabJisinfi",
+      "strength": "hard",
+      "reason": "Whole ÷ unit-fraction uses inverse relationship with fraction multiplication"
+    },
+    {
+      "topicId": "mt_1PAWhRhpdg",
+      "prerequisiteId": "mt_ifPDOYvUqm",
+      "strength": "soft",
+      "reason": "Understanding unit-fraction ÷ whole helps contrast with whole ÷ unit-fraction"
+    },
+    {
+      "topicId": "mt_ifPDOYvUqm",
+      "prerequisiteId": "mt_4Km38F4L-6",
+      "strength": "hard",
+      "reason": "Understanding fraction as division supports interpreting 1/3 ÷ 4"
+    },
+    {
+      "topicId": "mt_ifPDOYvUqm",
+      "prerequisiteId": "mt_AabJisinfi",
+      "strength": "hard",
+      "reason": "Unit-fraction ÷ whole uses inverse relationship with fraction multiplication"
+    },
+    {
+      "topicId": "mt_AabJisinfi",
+      "prerequisiteId": "mt_TgHxujL81r",
+      "strength": "hard",
+      "reason": "Fraction × fraction extends Y5 fraction × whole number"
+    },
+    {
+      "topicId": "mt_4Km38F4L-6",
+      "prerequisiteId": "mt_TgHxujL81r",
+      "strength": "hard",
+      "reason": "Understanding fraction as division builds on fraction × whole number (inverse reasoning)"
+    },
+    {
+      "topicId": "mt_TgHxujL81r",
+      "prerequisiteId": "mt_09sySPqM9Z",
+      "strength": "hard",
+      "reason": "a/b as sum of 1/b is prerequisite to understanding a/b as multiple of 1/b"
+    },
+    {
+      "topicId": "mt_09sySPqM9Z",
+      "prerequisiteId": "mt_ndGqFPWyen",
+      "strength": "hard",
+      "reason": "Understanding a/b as a parts of size 1/b is prerequisite to understanding a/b as sum of 1/b"
+    },
+    {
+      "topicId": "mt_GDG9_SZmsO",
+      "prerequisiteId": "mt_iNdrM2-oJf",
+      "strength": "hard",
+      "reason": "Seeing division as unknown-factor requires understanding division first"
+    }
+  ]
+}

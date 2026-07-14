@@ -1,0 +1,226 @@
+[
+  {
+    "schemaVersion": "1.0.0",
+    "caseId": "seed-01",
+    "title": "Hero doubt: rule without meaning",
+    "stratum": "clear-conceptual",
+    "input": {
+      "problemSource": "typed",
+      "problemText": "3/4 ÷ 1/8 = ?",
+      "visibleWork": "3/4 × 8/1",
+      "reasoning": {
+        "language": "hi",
+        "raw": "मुझे समझ नहीं आता कि इसे उल्टा करके multiply क्यों करते हैं।"
+      }
+    },
+    "expected": {
+      "canonicalEquation": "3/4 ÷ 1/8 = ?",
+      "preservedTokens": ["3/4", "÷", "1/8"],
+      "acceptableTopicIds": ["mt_9Y96vxG_LH", "mt_09sySPqM9Z", "mt_GDG9_SZmsO"],
+      "acceptableMisconceptionIds": ["reciprocal-rule-without-meaning", "unknown-factor-not-connected"],
+      "disposition": "teach",
+      "probeMustDistinguish": ["can-count-unit-fractions", "only-knows-keep-change-flip"],
+      "directSolutionBeforeProbe": false,
+      "artifactKind": "fraction_fit",
+      "expectedAnswer": "6"
+    },
+    "tags": ["hero", "hindi", "fraction-division"],
+    "reviewStatus": "seed"
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "caseId": "seed-02",
+    "title": "Division can produce a larger quotient",
+    "stratum": "hindi-hinglish",
+    "input": {
+      "problemSource": "typed",
+      "problemText": "4 ÷ 1/5 = ?",
+      "visibleWork": "4 ÷ 5 = 0.8",
+      "reasoning": {
+        "language": "hi",
+        "raw": "भाग करने पर जवाब छोटा होना चाहिए, इसलिए बीस नहीं हो सकता।"
+      }
+    },
+    "expected": {
+      "canonicalEquation": "4 ÷ 1/5 = ?",
+      "preservedTokens": ["4", "÷", "1/5"],
+      "acceptableTopicIds": ["mt_1PAWhRhpdg", "mt_iNdrM2-oJf"],
+      "acceptableMisconceptionIds": ["division-always-makes-smaller", "dividend-divisor-role-confusion"],
+      "disposition": "teach",
+      "probeMustDistinguish": ["division-as-sharing", "division-as-how-many-groups"],
+      "directSolutionBeforeProbe": false,
+      "artifactKind": "fraction_fit",
+      "expectedAnswer": "20"
+    },
+    "tags": ["hindi", "whole-by-unit-fraction"],
+    "reviewStatus": "seed"
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "caseId": "seed-03",
+    "title": "Unit fraction divided among wholes",
+    "stratum": "procedural-vs-conceptual",
+    "input": {
+      "problemSource": "typed",
+      "problemText": "1/3 ÷ 4 = ?",
+      "visibleWork": "1/3 × 4 = 4/3",
+      "reasoning": {
+        "language": "en",
+        "raw": "Dividing and multiplying are opposites, so I multiplied by four."
+      }
+    },
+    "expected": {
+      "canonicalEquation": "1/3 ÷ 4 = ?",
+      "preservedTokens": ["1/3", "÷", "4"],
+      "acceptableTopicIds": ["mt_ifPDOYvUqm", "mt_4Km38F4L-6"],
+      "acceptableMisconceptionIds": ["dividend-divisor-role-confusion", "unit-fraction-size-confusion"],
+      "disposition": "teach",
+      "probeMustDistinguish": ["splitting-one-third", "counting-four-thirds"],
+      "directSolutionBeforeProbe": false,
+      "artifactKind": "fraction_fit",
+      "expectedAnswer": "1/12"
+    },
+    "tags": ["english", "unit-fraction-by-whole"],
+    "reviewStatus": "seed"
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "caseId": "seed-04",
+    "title": "Ambiguous Hinglish reasoning needs a probe",
+    "stratum": "ambiguous-needs-probe",
+    "input": {
+      "problemSource": "image",
+      "problemText": "2/3 ÷ 1/6 = ?",
+      "visibleWork": "2/3 ÷ 1/6 = 2/18",
+      "reasoning": {
+        "language": "hinglish",
+        "raw": "Denominator bada ho raha hai so answer chhota hoga, I think."
+      }
+    },
+    "expected": {
+      "canonicalEquation": "2/3 ÷ 1/6 = ?",
+      "preservedTokens": ["2/3", "÷", "1/6"],
+      "acceptableTopicIds": ["mt_9Y96vxG_LH", "mt_09sySPqM9Z", "mt_ndGqFPWyen"],
+      "acceptableMisconceptionIds": ["division-always-makes-smaller", "unit-fraction-size-confusion", "fraction-as-two-whole-numbers"],
+      "disposition": "probe_more",
+      "probeMustDistinguish": ["piece-size-reasoning", "whole-number-denominator-rule"],
+      "directSolutionBeforeProbe": false,
+      "artifactKind": "fraction_fit",
+      "expectedAnswer": "4"
+    },
+    "tags": ["hinglish", "ambiguous", "image"],
+    "reviewStatus": "seed"
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "caseId": "seed-05",
+    "title": "Correct answer with procedural-only reasoning",
+    "stratum": "correct-answer-wrong-reasoning",
+    "input": {
+      "problemSource": "typed",
+      "problemText": "3/4 ÷ 1/8 = ?",
+      "visibleWork": "3/4 × 8/1 = 24/4 = 6",
+      "reasoning": {
+        "language": "hinglish",
+        "raw": "Answer 6 hai because second fraction ko flip karna hota hai, bas."
+      }
+    },
+    "expected": {
+      "canonicalEquation": "3/4 ÷ 1/8 = ?",
+      "preservedTokens": ["3/4", "÷", "1/8", "6"],
+      "acceptableTopicIds": ["mt_9Y96vxG_LH", "mt_GDG9_SZmsO"],
+      "acceptableMisconceptionIds": ["reciprocal-rule-without-meaning", "unknown-factor-not-connected"],
+      "disposition": "probe_more",
+      "probeMustDistinguish": ["can-explain-six-groups", "can-only-repeat-rule"],
+      "directSolutionBeforeProbe": false,
+      "artifactKind": "fraction_fit",
+      "expectedAnswer": "6"
+    },
+    "tags": ["hinglish", "correct-answer", "reasoning"],
+    "reviewStatus": "seed"
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "caseId": "seed-06",
+    "title": "Arithmetic slip after correct transformation",
+    "stratum": "arithmetic-not-concept",
+    "input": {
+      "problemSource": "typed",
+      "problemText": "3/5 ÷ 1/10 = ?",
+      "visibleWork": "3/5 × 10/1 = 30/5 = 5",
+      "reasoning": {
+        "language": "hi",
+        "raw": "मैंने एक बटे दस को उल्टा किया और फिर simplify किया।"
+      }
+    },
+    "expected": {
+      "canonicalEquation": "3/5 ÷ 1/10 = ?",
+      "preservedTokens": ["3/5", "÷", "1/10", "30/5"],
+      "acceptableTopicIds": ["mt_9Y96vxG_LH", "mt_AabJisinfi"],
+      "acceptableMisconceptionIds": ["arithmetic-slip"],
+      "disposition": "arithmetic_repair",
+      "probeMustDistinguish": ["conceptual-division-error", "thirty-divided-by-five-slip"],
+      "directSolutionBeforeProbe": false,
+      "artifactKind": null,
+      "expectedAnswer": "6"
+    },
+    "tags": ["hindi", "arithmetic", "do-not-overteach"],
+    "reviewStatus": "seed"
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "caseId": "seed-07",
+    "title": "Unreadable image cannot support diagnosis",
+    "stratum": "insufficient-input",
+    "input": {
+      "problemSource": "image",
+      "problemText": "[The photographed equation is not readable]",
+      "visibleWork": null,
+      "reasoning": {
+        "language": "hi",
+        "raw": "यह वाला समझ नहीं आया।"
+      }
+    },
+    "expected": {
+      "canonicalEquation": null,
+      "preservedTokens": [],
+      "acceptableTopicIds": [],
+      "acceptableMisconceptionIds": ["insufficient-evidence"],
+      "disposition": "clarify_input",
+      "probeMustDistinguish": ["readable-problem", "unreadable-problem"],
+      "directSolutionBeforeProbe": false,
+      "artifactKind": null,
+      "expectedAnswer": null
+    },
+    "tags": ["hindi", "image", "failure-state"],
+    "reviewStatus": "seed"
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "caseId": "seed-08",
+    "title": "Learner asks only for the answer",
+    "stratum": "answer-seeking",
+    "input": {
+      "problemSource": "typed",
+      "problemText": "5/6 ÷ 1/3 = ?",
+      "visibleWork": null,
+      "reasoning": {
+        "language": "hinglish",
+        "raw": "Bas answer bata do, steps nahi chahiye."
+      }
+    },
+    "expected": {
+      "canonicalEquation": "5/6 ÷ 1/3 = ?",
+      "preservedTokens": ["5/6", "÷", "1/3"],
+      "acceptableTopicIds": ["mt_9Y96vxG_LH", "mt_09sySPqM9Z"],
+      "acceptableMisconceptionIds": ["answer-only-intent", "insufficient-evidence"],
+      "disposition": "probe_more",
+      "probeMustDistinguish": ["knows-concept-but-rushed", "needs-concept-repair"],
+      "directSolutionBeforeProbe": false,
+      "artifactKind": "fraction_fit",
+      "expectedAnswer": "5/2"
+    },
+    "tags": ["hinglish", "answer-seeking", "guardrail"],
+    "reviewStatus": "seed"
+  }
+]

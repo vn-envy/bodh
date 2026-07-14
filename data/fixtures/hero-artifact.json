@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0.0",
+  "artifactId": "hero-fraction-fit",
+  "kind": "fraction_fit",
+  "conceptIds": ["mt_9Y96vxG_LH", "mt_09sySPqM9Z", "mt_GDG9_SZmsO"],
+  "locale": {
+    "primary": "hi-IN",
+    "terminologyMode": "hindi-first"
+  },
+  "prompt": {
+    "hi": "देखो, 3/4 के अंदर कितने 1/8 पूरे-पूरा बैठते हैं?",
+    "en": "How many one-eighths fit completely inside three-quarters?",
+    "textbookTerms": [
+      { "hi": "इकाई भिन्न", "en": "unit fraction" },
+      { "hi": "भाग", "en": "division" }
+    ]
+  },
+  "equation": {
+    "raw": "3/4 ÷ 1/8 = ?",
+    "dividend": { "numerator": 3, "denominator": 4 },
+    "divisor": { "numerator": 1, "denominator": 8 },
+    "expectedQuotient": { "numerator": 6, "denominator": 1 }
+  },
+  "canvas": {
+    "wholeCount": 1,
+    "partitionDenominator": 8,
+    "highlightedParts": 6
+  },
+  "manipulatives": [
+    {
+      "id": "eighth-tile",
+      "kind": "unit_tile",
+      "fraction": { "numerator": 1, "denominator": 8 },
+      "count": 6,
+      "interaction": "tap-place-or-drag"
+    }
+  ],
+  "successPredicate": {
+    "type": "placed-tile-count-equals",
+    "manipulativeId": "eighth-tile",
+    "expectedCount": 6
+  },
+  "hints": [
+    {
+      "hi": "पहले 3/4 को आठ बराबर हिस्सों वाले पूरे पर दिखाओ।",
+      "en": "First show three-quarters on a whole divided into eighths."
+    },
+    {
+      "hi": "अब हर 1/8 को एक बार गिनो—rule अभी नहीं चाहिए।",
+      "en": "Now count each one-eighth once—you do not need the rule yet."
+    }
+  ]
+}

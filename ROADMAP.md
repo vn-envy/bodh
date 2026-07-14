@@ -1,0 +1,55 @@
+# Bodh Build Roadmap
+
+> **Bodh — “That which is truly understood.”**
+
+## Scope contract
+
+Bring an English maths doubt. Ask in Hindi. Bodh finds the concept beneath the confusion, teaches it visually, and returns the learner to the original problem ready to solve it independently.
+
+### Build Week MVP
+
+1. Accept a typed or photographed fractions problem.
+2. Preserve typed or spoken Hindi/Hinglish reasoning.
+3. Confirm extracted notation before diagnosis.
+4. Ground the doubt in a bounded Marble prerequisite graph.
+5. Form evidence-backed misconception hypotheses.
+6. Ask one discriminating probe before teaching.
+7. Render a deterministic fraction artifact from validated data.
+8. Verify transfer on a structurally similar problem.
+9. Return to the original homework problem.
+10. Produce an inspectable reasoning trace and mastery receipt.
+
+### Non-goals
+
+No subjects beyond mathematics; no ages outside 8–12; no languages beyond Hindi/Hinglish plus source English; no accounts, payments, dashboards, social features, native app, realtime avatar, arbitrary generated UI code, or long-term mastery claims.
+
+## Protected phases
+
+| Phase | Window (IST) | Outcome | Exit gate |
+|---|---|---|---|
+| P0 — Contract and evidence spine | 14 Jul | Repo, scope, traceability, taxonomy slice, schemas, eight seeds | Clean install runs the fixture and all contracts validate |
+| P1 — Deterministic vertical slice | 14–15 Jul | Complete `3/4 ÷ 1/8` journey without a model | Seeded journey works end to end and math is deterministic |
+| P2 — Diagnostic intelligence | 15–17 Jul | Image/reasoning path grounded in taxonomy | Eight seed cases are schema-valid; failures fall back safely |
+| P3 — Hindi bridge | 17–18 Jul | Hindi/Hinglish pedagogy and dual terminology | Concept mapping is invariant across English/Hindi/Hinglish |
+| P4 — Product and demo polish | 18–19 Jul | Accessible, mobile-responsive judged journey | Feature freeze 19 Jul, 2 p.m. IST |
+| P5 — Golden evals and hardening | 19–20 Jul | 32-case measured release candidate | No critical correctness, privacy, install, or demo failure |
+| P6 — Submission package | 21 Jul | Video, README, deployment, Devpost entry | Submit by 21 Jul, 11 p.m. IST |
+| P7 — Emergency buffer | Until 22 Jul, 5:30 a.m. | Submission failures only | No product changes |
+
+## Phase 0 deliverables
+
+- [x] New repository and runnable product scaffold
+- [x] Scope contract and protected phase gates
+- [x] `docs/TRACEABILITY.md`
+- [x] `docs/DECISIONS.md`
+- [x] `docs/BUILD_LOG.md`
+- [x] `docs/PRIOR_WORK.md`
+- [x] Marble attribution and licenses in `NOTICE.md`
+- [x] Bounded fraction-division taxonomy slice with canonical IDs
+- [x] Artifact and golden-eval schemas
+- [x] Eight seed cases created before prompt tuning
+- [x] Learner-facing fixture shell with no model dependency
+
+## Evaluation reserve
+
+The golden set grows from 8 seed cases to 16 development-gold cases and finally 8 frozen holdouts. Feature work stops before the concentrated evaluation window. Required release invariants are 100% equation preservation, schema validity, deterministic mathematical correctness, and supported taxonomy-ID validity.

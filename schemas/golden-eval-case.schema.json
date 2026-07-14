@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bodh.education/schemas/golden-eval-case.schema.json",
+  "title": "Bodh golden evaluation case",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "caseId", "title", "stratum", "input", "expected", "tags", "reviewStatus"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "caseId": { "type": "string", "pattern": "^(seed|dev|holdout)-[0-9]{2}$" },
+    "title": { "type": "string", "minLength": 3, "maxLength": 100 },
+    "stratum": {
+      "enum": [
+        "clear-conceptual",
+        "procedural-vs-conceptual",
+        "ambiguous-needs-probe",
+        "hindi-hinglish",
+        "correct-answer-wrong-reasoning",
+        "arithmetic-not-concept",
+        "insufficient-input",
+        "answer-seeking"
+      ]
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["problemSource", "problemText", "visibleWork", "reasoning"],
+      "properties": {
+        "problemSource": { "enum": ["typed", "image"] },
+        "problemText": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "visibleWork": { "type": ["string", "null"], "maxLength": 500 },
+        "reasoning": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["language", "raw"],
+          "properties": {
+            "language": { "enum": ["en", "hi", "hinglish"] },
+            "raw": { "type": "string", "minLength": 1, "maxLength": 500 }
+          }
+        }
+      }
+    },
+    "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonicalEquation",
+        "preservedTokens",
+        "acceptableTopicIds",
+        "acceptableMisconceptionIds",
+        "disposition",
+        "probeMustDistinguish",
+        "directSolutionBeforeProbe",
+        "artifactKind",
+        "expectedAnswer"
+      ],
+      "properties": {
+        "canonicalEquation": { "type": ["string", "null"], "maxLength": 80 },
+        "preservedTokens": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 30 }
+        },
+        "acceptableTopicIds": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^mt_[A-Za-z0-9_-]+$" }
+        },
+        "acceptableMisconceptionIds": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "division-always-makes-smaller",
+              "reciprocal-rule-without-meaning",
+              "dividend-divisor-role-confusion",
+              "unit-fraction-size-confusion",
+              "fraction-as-two-whole-numbers",
+              "unknown-factor-not-connected",
+              "arithmetic-slip",
+              "insufficient-evidence",
+              "answer-only-intent"
+            ]
+          }
+        },
+        "disposition": { "enum": ["teach", "probe_more", "clarify_input", "arithmetic_repair"] },
+        "probeMustDistinguish": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": { "type": "string", "minLength": 3, "maxLength": 80 }
+        },
+        "directSolutionBeforeProbe": { "const": false },
+        "artifactKind": { "type": ["string", "null"], "enum": ["fraction_fit", null] },
+        "expectedAnswer": { "type": ["string", "null"], "maxLength": 40 }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z0-9-]+$" }
+    },
+    "reviewStatus": { "enum": ["seed", "reviewed", "frozen"] }
+  }
+}

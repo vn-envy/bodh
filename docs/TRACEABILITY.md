@@ -34,3 +34,13 @@ Every requirement has one owner phase, a verification method, and a visible demo
 | BODH-R07 | The ribbon/bookmark transfer has a fixed answer (`4`) checked by shared answer-normalization code. |
 | BODH-R08 | The exact source equation returns after transfer, accepts `6`, `६`, or `6/1`, and only then opens the receipt. |
 | BODH-R11 | Every state uses the committed fixture and deterministic helpers; no API key or external model call is in the path. |
+
+## Phase 2 implementation evidence
+
+| Requirement | Constrained implementation now present | Remaining release evidence |
+|---|---|---|
+| BODH-R01 | `/diagnose` accepts a bounded typed question plus optional PNG/JPG/WebP homework photo context. Typed notation must round-trip exactly through server guardrails. | Live smoke test after the deployment secret is set; photo-only confirmation flow. |
+| BODH-R03 | Model output allows only the ten canonical IDs in the committed fraction slice; worker resolves learner-visible concept names from that slice. | Expand only through a documented curriculum-slice change. |
+| BODH-R04 | Hypotheses require source/quote evidence. Text quotes must be an exact substring of typed problem/reasoning. | Evaluate top-1/top-3 quality on the growing golden set. |
+| BODH-R05 | The only generated learner-facing teaching-adjacent item is one 2–4 option micro-probe; no solution field exists in the schema. | Verify journey order in live end-to-end testing. |
+| BODH-R10 | `/api/trace/:id` exposes privacy-minimised model/prompt/topic/status metadata stored in D1. | Confirm D1 trace persistence in the hosted environment. |

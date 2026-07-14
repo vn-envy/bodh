@@ -27,13 +27,11 @@ export default function Home() {
             confusion के नीचे छुपी छोटी-सी idea ढूँढने में मदद करेगा।
           </p>
           <div className="hero-actions">
-            <Link className="button button-primary" href="/demo">
-              Curated demo शुरू करें
+            <Link className="button button-primary" href="/diagnose">
+              अपना सवाल समझें
               <span aria-hidden="true">→</span>
             </Link>
-            <span className="trust-note">
-              कोई account नहीं · Phase 0 में कोई model call नहीं
-            </span>
+            <Link className="quiet-link" href="/demo">पहले Curated demo देखें</Link>
           </div>
         </div>
 

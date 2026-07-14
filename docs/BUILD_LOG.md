@@ -31,3 +31,11 @@ Live model calls, image parsing, speech, persistence, full journey interaction, 
 ### Deferred by contract
 
 The P1 demo is intentionally curated. Live model diagnosis, image intake, speech, personalization, and persistence remain out of scope until their assigned phases.
+## 2026-07-14 — Phase 2 diagnostic intelligence (code complete; live secret pending)
+
+- Added a child-facing `/diagnose` intake with Hindi/Hinglish reasoning and optional homework-photo context.
+- Added a Cloudflare Worker `/api/diagnose` route that calls the Responses API only when `OPENAI_API_KEY` is present.
+- Locked model output to a strict schema containing a readback, canonical Marble IDs, tentative evidence-backed hypotheses, and one probe; no final-answer field exists.
+- Added deterministic guardrails for typed notation fidelity, quoted evidence, supported taxonomy IDs, bounded fraction-division notation, and the single validated artifact key.
+- Added a D1-backed, privacy-minimised trace contract. No raw child text, image, evidence quote, or model output is persisted.
+- The hosted secret has not yet been configured, so the deployed intake will intentionally use the curated fallback until a live smoke test is run.

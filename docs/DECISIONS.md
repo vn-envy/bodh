@@ -47,3 +47,9 @@
 **Decision:** Motion and sound are specified but excluded until the correctness and evaluation gates pass.
 
 **Why:** Delight may enhance the demo, but it cannot consume the reliability reserve.
+
+## D-009 — Constrained diagnostic output and private trace
+
+**Decision:** Phase 2 uses the Responses API only for strict JSON diagnosis: a notation readback, up to three canonical Marble topic IDs, evidence-backed tentative hypotheses, and one Hindi probe. The worker validates schema, typed equation/tokens, evidence quotes, curriculum IDs, and bounded fraction notation before returning anything. Durable traces keep only a SHA-256 input fingerprint and operational metadata, never raw child text, photos, quotes, or the model response.
+
+**Why:** Bodh must be inspectable without turning a learner's homework trail into analytics. A model can help choose the next question, but deterministic code controls what reaches the interface and whether the curated fraction artifact is available.

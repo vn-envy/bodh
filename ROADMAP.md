@@ -65,6 +65,22 @@ No subjects beyond mathematics; no ages outside 8–12; no languages beyond Hind
 
 The curated journey runs from beginning to end without a model call. The source problem is not solved before the probe, the visual predicate controls progress, and transfer plus return are checked deterministically.
 
+## Phase 2 deliverables
+
+- [x] `/diagnose` intake for a typed fraction question, Hindi/Hinglish reasoning, and optional homework-photo context
+- [x] Server-side Responses API request with strict JSON Schema; output has no answer or generated interface field
+- [x] Bounded Marble topic-ID selection, exact typed-notation preservation, evidence-quote, and fraction-parser guardrails
+- [x] One generated Hindi micro-probe displayed before a learning artifact
+- [x] Privacy-minimised D1 trace contract plus inspectable `GET /api/trace/:id`
+- [x] Curated-demo fallback for missing key, unsupported maths, unavailable model, and invalid model output
+- [x] Unit checks for hero-artifact selection, equation mutation, unsupported taxonomy, evidence fabrication, and unsupported notation
+- [ ] Add hosted `OPENAI_API_KEY` secret and run a live smoke test
+- [ ] Expand the eight seeds into the first reviewed golden diagnostic set
+
+### Phase 2 exit gate
+
+The hosted live path must process every reviewed seed with schema-valid, equation-preserving output or fall back without leaking a raw input. A deployment without the secret remains a functioning curated product, but does not satisfy the live-intelligence exit gate.
+
 ## Evaluation reserve
 
 The golden set grows from 8 seed cases to 16 development-gold cases and finally 8 frozen holdouts. Feature work stops before the concentrated evaluation window. Required release invariants are 100% equation preservation, schema validity, deterministic mathematical correctness, and supported taxonomy-ID validity.

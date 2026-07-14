@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bodh.dev/schemas/diagnostic-output.schema.json",
+  "title": "Bodh diagnostic response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "inputFidelity", "candidateTopicIds", "hypotheses", "probe"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "inputFidelity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonicalEquation", "preservedTokens", "confidence"],
+      "properties": {
+        "canonicalEquation": { "type": "string", "minLength": 3, "maxLength": 120 },
+        "preservedTokens": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "items": { "type": "string", "minLength": 1, "maxLength": 30 }
+        },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "candidateTopicIds": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "mt_9Y96vxG_LH",
+          "mt_1PAWhRhpdg",
+          "mt_ifPDOYvUqm",
+          "mt_AabJisinfi",
+          "mt_4Km38F4L-6",
+          "mt_TgHxujL81r",
+          "mt_09sySPqM9Z",
+          "mt_ndGqFPWyen",
+          "mt_GDG9_SZmsO",
+          "mt_iNdrM2-oJf"
+        ]
+      }
+    },
+    "hypotheses": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "labelHi", "evidence"],
+        "properties": {
+          "id": {
+            "enum": [
+              "division-always-makes-smaller",
+              "reciprocal-rule-without-meaning",
+              "dividend-divisor-role-confusion",
+              "unit-fraction-size-confusion",
+              "fraction-as-two-whole-numbers",
+              "unknown-factor-not-connected",
+              "arithmetic-slip",
+              "insufficient-evidence",
+              "answer-only-intent"
+            ]
+          },
+          "labelHi": { "type": "string", "minLength": 3, "maxLength": 180 },
+          "evidence": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["source", "quote"],
+            "properties": {
+              "source": { "enum": ["problem", "reasoning", "visible_work"] },
+              "quote": { "type": "string", "minLength": 1, "maxLength": 160 }
+            }
+          }
+        }
+      }
+    },
+    "probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["questionHi", "optionLabelsHi", "distinction"],
+      "properties": {
+        "questionHi": { "type": "string", "minLength": 6, "maxLength": 240 },
+        "optionLabelsHi": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 80 }
+        },
+        "distinction": { "type": "string", "minLength": 3, "maxLength": 220 }
+      }
+    }
+  }
+}

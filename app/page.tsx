@@ -3,7 +3,7 @@ import { BodhMark } from "./components/BodhMark";
 
 export default function Home() {
   return (
-    <main className="site-shell">
+    <main className="site-shell" id="main-content">
       <header className="site-header" aria-label="Bodh header">
         <Link className="brand" href="/" aria-label="Bodh home">
           <BodhMark size="small" />
@@ -32,6 +32,7 @@ export default function Home() {
               <span aria-hidden="true">→</span>
             </Link>
             <Link className="quiet-link" href="/demo">पहले Curated demo देखें</Link>
+            <Link className="quiet-link" href="/how-it-works">Bodh कैसे मदद करता है</Link>
           </div>
         </div>
 

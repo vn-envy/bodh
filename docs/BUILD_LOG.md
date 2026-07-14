@@ -39,3 +39,11 @@ The P1 demo is intentionally curated. Live model diagnosis, image intake, speech
 - Added deterministic guardrails for typed notation fidelity, quoted evidence, supported taxonomy IDs, bounded fraction-division notation, and the single validated artifact key.
 - Added a D1-backed, privacy-minimised trace contract. No raw child text, image, evidence quote, or model output is persisted.
 - The hosted secret has not yet been configured, so the deployed intake will intentionally use the curated fallback until a live smoke test is run.
+
+## 2026-07-14 — Phases 3–6 release preparation
+
+- Added a deterministic Hindi/Hinglish bridge so the model selects only approved term IDs and the interface renders stable bilingual meanings.
+- Added the mobile/accessibility release pass: skip navigation, result focus return, visible keyboard focus for photo upload, and a 90-second product-story route.
+- Expanded the evaluation corpus to 32 synthetic cases and added a live evaluator that writes only case IDs and check outcomes.
+- Added the Open Graph social card, Devpost submission draft, and narrated demo script.
+- The remaining release gate is deliberate: configure the hosted API secret, run and review the live 32-case report, then record/submit the final demo.

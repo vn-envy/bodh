@@ -20,6 +20,10 @@ const validOutput = {
     labelHi: "Rule के पीछे groups का meaning अभी साफ़ नहीं है।",
     evidence: { source: "reasoning", quote: "उल्टा करके multiply" },
   }],
+  languageBridge: {
+    learnerRegister: "hinglish",
+    termIds: ["unit-fraction", "equal-groups"],
+  },
   probe: {
     questionHi: "एक whole में कितने 1/4 होते हैं?",
     optionLabelsHi: ["2", "3", "4", "8"],

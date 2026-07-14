@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { BodhMark } from "../components/BodhMark";
 
 type Trace = {
@@ -18,6 +18,10 @@ type LiveResult = {
     inputFidelity: { canonicalEquation: string; preservedTokens: string[]; confidence: number };
     concepts: Array<{ id: string; name: string; domain: string }>;
     hypotheses: Array<{ id: string; labelHi: string; evidence: { source: string; quote: string } }>;
+    languageBridge: {
+      learnerRegister: "hindi" | "hinglish" | "english";
+      terms: Array<{ id: string; hindi: string; english: string; childMeaningHi: string }>;
+    };
     probe: { questionHi: string; optionLabelsHi: string[]; distinction: string };
   };
   next: { kind: "curated_artifact" | "curated_demo"; href: string; artifactKey?: string };
@@ -53,6 +57,11 @@ export function DiagnosticIntake() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedProbe, setSelectedProbe] = useState<string | null>(null);
+  const resultHeadingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (result) resultHeadingRef.current?.focus();
+  }, [result]);
 
   const chooseImage = (file: File | null) => {
     setImageMessage("");
@@ -102,7 +111,7 @@ export function DiagnosticIntake() {
   };
 
   return (
-    <main className="journey-shell diagnose-shell">
+    <main className="journey-shell diagnose-shell" id="main-content">
       <header className="journey-header">
         <Link className="back-link" href="/" aria-label="Bodh home पर वापस जाएँ">
           <span aria-hidden="true">←</span> वापस
@@ -180,7 +189,7 @@ export function DiagnosticIntake() {
         {result?.mode === "live" && (
           <article className="diagnose-card diagnosis-result-card">
             <span className="eyebrow">Bodh ने पहले क्या सुना</span>
-            <h2>चलो इस idea को एक छोटी जाँच से समझें।</h2>
+            <h2 ref={resultHeadingRef} tabIndex={-1}>चलो इस idea को एक छोटी जाँच से समझें।</h2>
             <div className="readback-equation">
               <span>Bodh read this as</span>
               <strong>{result.diagnosis.inputFidelity.canonicalEquation}</strong>
@@ -207,6 +216,20 @@ export function DiagnosticIntake() {
                 </div>
               ))}
             </div>
+
+            <section className="diagnosis-section bridge-section" aria-labelledby="bridge-title">
+              <span className="reasoning-label">Bodh के शब्द</span>
+              <h3 id="bridge-title">Hindi में समझें, किताब वाले शब्द भी साथ रखें।</h3>
+              <div className="bridge-terms">
+                {result.diagnosis.languageBridge.terms.map((term) => (
+                  <article key={term.id}>
+                    <strong>{term.hindi}</strong>
+                    <span>{term.english}</span>
+                    <p>{term.childMeaningHi}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
 
             <section className="live-probe" aria-labelledby="live-probe-title">
               <span className="reasoning-label">पहले एक छोटी जाँच</span>
@@ -239,7 +262,7 @@ export function DiagnosticIntake() {
           <article className="diagnose-card fallback-card">
             <BodhMark size="small" />
             <span className="eyebrow">सुरक्षित रास्ता</span>
-            <h2>इस बार हम guess नहीं करेंगे।</h2>
+            <h2 ref={resultHeadingRef} tabIndex={-1}>इस बार हम guess नहीं करेंगे।</h2>
             <p>{result.messageHi}</p>
             <Link className="button button-primary next-lab-action" href={result.next.href}>
               curated fraction demo खोलें <span aria-hidden="true">→</span>

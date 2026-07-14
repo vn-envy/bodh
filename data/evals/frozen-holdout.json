@@ -1,0 +1,74 @@
+[
+  {
+    "schemaVersion": "1.0.0",
+    "caseId": "holdout-01",
+    "title": "Hindi whole divided by a unit fraction",
+    "stratum": "hindi-hinglish",
+    "input": { "problemSource": "typed", "problemText": "6 ÷ 1/3 = ?", "visibleWork": null, "reasoning": { "language": "hi", "raw": "छह को एक बटे तीन से divide करने पर क्या तीन से divide करेंगे?" } },
+    "expected": { "canonicalEquation": "6 ÷ 1/3 = ?", "preservedTokens": ["6", "÷", "1/3"], "acceptableTopicIds": ["mt_1PAWhRhpdg", "mt_iNdrM2-oJf"], "acceptableMisconceptionIds": ["dividend-divisor-role-confusion", "division-always-makes-smaller"], "disposition": "teach", "probeMustDistinguish": ["groups", "division-by-three"], "directSolutionBeforeProbe": false, "artifactKind": null, "expectedAnswer": "18" },
+    "tags": ["hindi", "holdout", "whole-by-unit-fraction"], "reviewStatus": "frozen"
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "caseId": "holdout-02",
+    "title": "English fraction division asks for grouping",
+    "stratum": "clear-conceptual",
+    "input": { "problemSource": "typed", "problemText": "7/10 ÷ 1/5 = ?", "visibleWork": null, "reasoning": { "language": "en", "raw": "What does the division sign mean with these two fractions?" } },
+    "expected": { "canonicalEquation": "7/10 ÷ 1/5 = ?", "preservedTokens": ["7/10", "÷", "1/5"], "acceptableTopicIds": ["mt_9Y96vxG_LH", "mt_GDG9_SZmsO"], "acceptableMisconceptionIds": ["unknown-factor-not-connected"], "disposition": "teach", "probeMustDistinguish": ["number-of-groups", "share-size"], "directSolutionBeforeProbe": false, "artifactKind": null, "expectedAnswer": "7/2" },
+    "tags": ["english", "holdout", "groups"], "reviewStatus": "frozen"
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "caseId": "holdout-03",
+    "title": "Hinglish denominator shortcut",
+    "stratum": "procedural-vs-conceptual",
+    "input": { "problemSource": "typed", "problemText": "4/5 ÷ 1/10 = ?", "visibleWork": "4 ÷ 1 and 5 ÷ 10", "reasoning": { "language": "hinglish", "raw": "Main numerator aur denominator separately divide kar raha tha." } },
+    "expected": { "canonicalEquation": "4/5 ÷ 1/10 = ?", "preservedTokens": ["4/5", "÷", "1/10"], "acceptableTopicIds": ["mt_9Y96vxG_LH", "mt_4Km38F4L-6"], "acceptableMisconceptionIds": ["fraction-as-two-whole-numbers", "dividend-divisor-role-confusion"], "disposition": "teach", "probeMustDistinguish": ["one-fraction-quantity", "separate-numbers"], "directSolutionBeforeProbe": false, "artifactKind": null, "expectedAnswer": "8" },
+    "tags": ["hinglish", "holdout", "fraction-meaning"], "reviewStatus": "frozen"
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "caseId": "holdout-04",
+    "title": "Arabic digit notation remains unchanged",
+    "stratum": "hindi-hinglish",
+    "input": { "problemSource": "typed", "problemText": "3/8 ÷ 1/16 = ?", "visibleWork": null, "reasoning": { "language": "hi", "raw": "एक बटे सोलह के कितने टुकड़े तीन बटे आठ में होंगे?" } },
+    "expected": { "canonicalEquation": "3/8 ÷ 1/16 = ?", "preservedTokens": ["3/8", "÷", "1/16"], "acceptableTopicIds": ["mt_9Y96vxG_LH", "mt_ndGqFPWyen"], "acceptableMisconceptionIds": ["unknown-factor-not-connected", "unit-fraction-size-confusion"], "disposition": "teach", "probeMustDistinguish": ["piece-size", "fraction-name"], "directSolutionBeforeProbe": false, "artifactKind": null, "expectedAnswer": "6" },
+    "tags": ["hindi", "holdout", "notation"], "reviewStatus": "frozen"
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "caseId": "holdout-05",
+    "title": "Correct answer should not conceal a misconception",
+    "stratum": "correct-answer-wrong-reasoning",
+    "input": { "problemSource": "typed", "problemText": "1/2 ÷ 1/4 = ?", "visibleWork": "1/2 × 4/1", "reasoning": { "language": "en", "raw": "I got it by flipping, but I could not explain the picture." } },
+    "expected": { "canonicalEquation": "1/2 ÷ 1/4 = ?", "preservedTokens": ["1/2", "÷", "1/4"], "acceptableTopicIds": ["mt_9Y96vxG_LH", "mt_GDG9_SZmsO"], "acceptableMisconceptionIds": ["reciprocal-rule-without-meaning"], "disposition": "probe_more", "probeMustDistinguish": ["visual-explanation", "rule-recall"], "directSolutionBeforeProbe": false, "artifactKind": null, "expectedAnswer": "2" },
+    "tags": ["english", "holdout", "correct-answer"], "reviewStatus": "frozen"
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "caseId": "holdout-06",
+    "title": "Arithmetic correction after intact concept",
+    "stratum": "arithmetic-not-concept",
+    "input": { "problemSource": "image", "problemText": "5/6 ÷ 1/3 = ?", "visibleWork": "5/6 × 3/1 = 15/6 = 3/2", "reasoning": { "language": "hinglish", "raw": "Last simplify step maybe wrong hai." } },
+    "expected": { "canonicalEquation": "5/6 ÷ 1/3 = ?", "preservedTokens": ["5/6", "÷", "1/3", "15/6"], "acceptableTopicIds": ["mt_9Y96vxG_LH", "mt_AabJisinfi"], "acceptableMisconceptionIds": ["arithmetic-slip"], "disposition": "arithmetic_repair", "probeMustDistinguish": ["simplify", "divide-fractions"], "directSolutionBeforeProbe": false, "artifactKind": null, "expectedAnswer": "5/2" },
+    "tags": ["image", "holdout", "arithmetic"], "reviewStatus": "frozen"
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "caseId": "holdout-07",
+    "title": "Answer demand needs a gentle probe",
+    "stratum": "answer-seeking",
+    "input": { "problemSource": "typed", "problemText": "2/5 ÷ 1/10 = ?", "visibleWork": null, "reasoning": { "language": "hi", "raw": "मुझे बस उत्तर चाहिए, समझाना मत।" } },
+    "expected": { "canonicalEquation": "2/5 ÷ 1/10 = ?", "preservedTokens": ["2/5", "÷", "1/10"], "acceptableTopicIds": ["mt_9Y96vxG_LH", "mt_GDG9_SZmsO"], "acceptableMisconceptionIds": ["answer-only-intent", "insufficient-evidence"], "disposition": "probe_more", "probeMustDistinguish": ["time-pressure", "concept-repair"], "directSolutionBeforeProbe": false, "artifactKind": null, "expectedAnswer": "4" },
+    "tags": ["hindi", "holdout", "answer-seeking"], "reviewStatus": "frozen"
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "caseId": "holdout-08",
+    "title": "Insufficient text stays out of a false diagnosis",
+    "stratum": "insufficient-input",
+    "input": { "problemSource": "image", "problemText": "[equation cut off]", "visibleWork": null, "reasoning": { "language": "hinglish", "raw": "Image half aa rahi hai, help please." } },
+    "expected": { "canonicalEquation": null, "preservedTokens": [], "acceptableTopicIds": [], "acceptableMisconceptionIds": ["insufficient-evidence"], "disposition": "clarify_input", "probeMustDistinguish": ["visible-equation", "missing-equation"], "directSolutionBeforeProbe": false, "artifactKind": null, "expectedAnswer": null },
+    "tags": ["image", "hinglish", "holdout"], "reviewStatus": "frozen"
+  }
+]

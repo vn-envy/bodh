@@ -4,7 +4,7 @@
   "title": "Bodh diagnostic response",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "inputFidelity", "candidateTopicIds", "hypotheses", "probe"],
+  "required": ["schemaVersion", "inputFidelity", "candidateTopicIds", "hypotheses", "languageBridge", "probe"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
     "inputFidelity": {
@@ -74,6 +74,21 @@
               "quote": { "type": "string", "minLength": 1, "maxLength": 160 }
             }
           }
+        }
+      }
+    },
+    "languageBridge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["learnerRegister", "termIds"],
+      "properties": {
+        "learnerRegister": { "enum": ["hindi", "hinglish", "english"] },
+        "termIds": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": { "enum": ["unit-fraction", "denominator", "equal-groups", "unknown-factor", "reciprocal"] }
         }
       }
     },

@@ -55,6 +55,24 @@ a {
   outline-offset: 4px;
 }
 
+.skip-link {
+  position: fixed;
+  z-index: 20;
+  top: 12px;
+  left: 12px;
+  transform: translateY(-160%);
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--cream-light);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
 .site-shell,
 .journey-shell {
   width: min(1180px, calc(100% - 40px));
@@ -1203,6 +1221,11 @@ a {
   opacity: 0;
 }
 
+.photo-drop:has(input:focus-visible) {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 4px rgba(243, 199, 212, 0.56);
+}
+
 .photo-drop > span {
   color: var(--olive);
   font-size: 1.55rem;
@@ -1338,6 +1361,47 @@ a {
   line-height: 1.5;
 }
 
+.bridge-section h3 {
+  max-width: 610px;
+  margin-top: 7px;
+}
+
+.bridge-terms {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.bridge-terms article {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-height: 132px;
+  padding: 15px;
+  border: 1px solid rgba(112, 134, 152, 0.18);
+  border-radius: 17px;
+  background: rgba(217, 223, 189, 0.34);
+}
+
+.bridge-terms strong {
+  color: #53602f;
+  font-size: 0.92rem;
+}
+
+.bridge-terms span {
+  color: var(--blue-grey-deep);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.bridge-terms p {
+  margin: 5px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  line-height: 1.52;
+}
+
 .live-probe {
   margin-top: 31px;
   padding: 23px;
@@ -1435,6 +1499,138 @@ a {
   font-weight: 800;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+/* Phase 4: a shareable, judge-readable explanation of the learner path. */
+.guide-shell {
+  width: min(1050px, calc(100% - 40px));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding-bottom: 72px;
+}
+
+.guide-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.65fr);
+  align-items: center;
+  gap: clamp(28px, 6vw, 78px);
+  padding: 46px 0 54px;
+}
+
+.guide-hero h1 {
+  max-width: 680px;
+  margin: 16px 0 18px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.65rem, 5.8vw, 5.2rem);
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1.01;
+}
+
+.guide-hero h1 span {
+  color: var(--pink);
+}
+
+.guide-hero p {
+  max-width: 650px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+  line-height: 1.74;
+}
+
+.guide-mascot-card {
+  display: grid;
+  justify-items: center;
+  gap: 17px;
+  padding: 28px 24px;
+  border-radius: var(--radius-lg);
+  background: var(--peach-soft);
+  text-align: center;
+}
+
+.guide-mascot-card strong {
+  color: #754b3a;
+  font-size: 0.89rem;
+  line-height: 1.6;
+}
+
+.guide-moments {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guide-moment {
+  display: grid;
+  gap: 20px;
+  min-height: 224px;
+  padding: 22px;
+  border-radius: 23px;
+  background: var(--cream-light);
+  box-shadow: 0 15px 35px rgba(79, 67, 55, 0.07);
+}
+
+.guide-moment > span {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: white;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+}
+
+.guide-moment-pink > span { background: var(--pink); }
+.guide-moment-olive > span { background: var(--olive); }
+.guide-moment-peach > span { background: var(--peach); }
+.guide-moment-blue > span { background: var(--blue-grey); }
+
+.guide-moment h2 {
+  margin: 0;
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.18;
+}
+
+.guide-moment p {
+  margin: 8px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  line-height: 1.58;
+}
+
+.guide-note {
+  display: grid;
+  gap: 5px;
+  margin-top: 25px;
+  padding: 21px 23px;
+  border-radius: 20px;
+  background: var(--olive-soft);
+  color: #53602f;
+}
+
+.guide-note strong {
+  font-size: 0.95rem;
+}
+
+.guide-note span {
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.guide-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 30px;
 }
 
 @media (max-width: 900px) {
@@ -1606,6 +1802,33 @@ a {
 
   .live-probe {
     padding: 19px;
+  }
+
+  .guide-shell {
+    width: min(100% - 24px, 1050px);
+  }
+
+  .guide-hero {
+    grid-template-columns: 1fr;
+    padding: 28px 0 37px;
+  }
+
+  .guide-mascot-card {
+    max-width: 420px;
+  }
+
+  .guide-moments {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .guide-moment {
+    min-height: 190px;
+    padding: 18px;
+  }
+
+  .guide-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 

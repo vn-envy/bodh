@@ -81,6 +81,17 @@ The curated journey runs from beginning to end without a model call. The source 
 
 The hosted live path must process every reviewed seed with schema-valid, equation-preserving output or fall back without leaking a raw input. A deployment without the secret remains a functioning curated product, but does not satisfy the live-intelligence exit gate.
 
+## Phases 3–6 release work
+
+- [x] P3: Deterministic Hindi/English teaching terms selected by bounded term ID, with register and term validation
+- [x] P3: Hindi/Hinglish/English bridge checks added to the test suite
+- [x] P4: Mobile-responsive learner intake, skip link, focus return after diagnosis, keyboard-visible photo control, and judge-readable `how-it-works` route
+- [x] P5: 32-case synthetic corpus: 8 seed, 16 reviewed development-gold, 8 frozen holdout
+- [x] P5: Corpus validator and privacy-minimised live evaluation runner
+- [x] P6: Open Graph card, submission draft, and 90-second demo script
+- [ ] P2/P5: Configure `OPENAI_API_KEY` and record a live 32-case evaluation report
+- [ ] P6: Record final video, complete Devpost form, and submit
+
 ## Evaluation reserve
 
 The golden set grows from 8 seed cases to 16 development-gold cases and finally 8 frozen holdouts. Feature work stops before the concentrated evaluation window. Required release invariants are 100% equation preservation, schema validity, deterministic mathematical correctness, and supported taxonomy-ID validity.

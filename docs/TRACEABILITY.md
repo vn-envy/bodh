@@ -44,3 +44,11 @@ Every requirement has one owner phase, a verification method, and a visible demo
 | BODH-R04 | Hypotheses require source/quote evidence. Text quotes must be an exact substring of typed problem/reasoning. | Evaluate top-1/top-3 quality on the growing golden set. |
 | BODH-R05 | The only generated learner-facing teaching-adjacent item is one 2–4 option micro-probe; no solution field exists in the schema. | Verify journey order in live end-to-end testing. |
 | BODH-R10 | `/api/trace/:id` exposes privacy-minimised model/prompt/topic/status metadata stored in D1. | Confirm D1 trace persistence in the hosted environment. |
+
+## Phases 3–5 implementation evidence
+
+| Requirement | Release implementation now present | Remaining release evidence |
+|---|---|---|
+| BODH-R02 / BODH-R09 | The model can return only approved vocabulary IDs; the learner interface renders deterministic `Hindi (English)` terms and child meanings. | Review live Hindi/Hinglish register selection after the API secret is set. |
+| BODH-R04 / BODH-R05 | The 32-case corpus includes conceptual, ambiguous, arithmetic, answer-seeking, and injection cases. The live runner checks acceptable concept/misconception overlap and that a probe arrives without an answer. | Run development first, then frozen holdouts exactly once for the release candidate. |
+| BODH-R12 | The release adds skip navigation, keyboard-visible upload focus, mobile layouts, an Open Graph card, a demo script, and submission draft. | Record the final video and complete the Devpost submission. |

@@ -9,6 +9,7 @@ import {
   type DiagnosticRequestInput,
   validateDiagnosticGuardrails,
 } from "../lib/diagnostic-guardrails";
+import { HINDI_BRIDGE_TERMS, resolveBridgeTerms } from "../lib/hindi-bridge";
 
 export type DiagnosticEnv = {
   DB?: D1Database;
@@ -46,6 +47,7 @@ Rules:
 - Use only taxonomy IDs provided in the curriculum context. Choose at most three.
 - Form one to three tentative hypotheses. They are possibilities, not labels for the learner.
 - For text evidence, quote a short exact substring from either the problem or reasoning. Use visible_work only when the supplied image visibly supports the quote.
+- Select one to three term IDs from the provided Hindi bridge. The interface, not you, will render the Hindi and English labels. Match learnerRegister to the learner's Hindi, Hinglish, or English input.
 - The probe must distinguish among the hypotheses, be answerable without the original answer, and use 2–4 short Hindi options.
 - Never include an answer, worked calculation, solution steps, or a recommendation to use a rule. Never include fields outside the schema.`;
 
@@ -249,6 +251,7 @@ export async function handleDiagnosis(request: Request, env: DiagnosticEnv) {
           domain: topic.domain,
           description: topic.description,
         })),
+        hindiBridge: Object.values(HINDI_BRIDGE_TERMS),
       }),
     },
   ];
@@ -334,6 +337,10 @@ export async function handleDiagnosis(request: Request, env: DiagnosticEnv) {
       inputFidelity: diagnostic.inputFidelity,
       concepts: topicSummary(diagnostic.candidateTopicIds),
       hypotheses: diagnostic.hypotheses,
+      languageBridge: {
+        learnerRegister: diagnostic.languageBridge.learnerRegister,
+        terms: resolveBridgeTerms(diagnostic.languageBridge.termIds),
+      },
       probe: diagnostic.probe,
     },
     next: artifactKey

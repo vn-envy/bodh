@@ -10,8 +10,10 @@
     "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
     "validate:phase0": "node scripts/validate-phase0.mjs",
+    "validate:evals": "node scripts/validate-evals.mjs",
+    "eval:live": "node scripts/run-golden-evals.mjs",
     "db:generate": "drizzle-kit generate",
-    "test": "npm run validate:phase0 && npm run build && node --test tests/*.test.mjs",
+    "test": "npm run validate:phase0 && npm run validate:evals && npm run build && node --test tests/*.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
   },
   "dependencies": {

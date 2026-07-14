@@ -53,3 +53,15 @@
 **Decision:** Phase 2 uses the Responses API only for strict JSON diagnosis: a notation readback, up to three canonical Marble topic IDs, evidence-backed tentative hypotheses, and one Hindi probe. The worker validates schema, typed equation/tokens, evidence quotes, curriculum IDs, and bounded fraction notation before returning anything. Durable traces keep only a SHA-256 input fingerprint and operational metadata, never raw child text, photos, quotes, or the model response.
 
 **Why:** Bodh must be inspectable without turning a learner's homework trail into analytics. A model can help choose the next question, but deterministic code controls what reaches the interface and whether the curated fraction artifact is available.
+
+## D-010 — Deterministic bilingual vocabulary
+
+**Decision:** The model selects only one to three approved vocabulary IDs. Bodh renders the Hindi term, English curriculum term, and child-facing meaning from a committed glossary.
+
+**Why:** A learner should never be asked to bridge a concept and a shifting translation at the same time. Stable terms make Hindi/Hinglish/English behavior inspectable and make later pedagogy evaluation possible.
+
+## D-011 — Synthetic gold before learner data
+
+**Decision:** Build and validate a 32-case synthetic corpus before collecting any learner-specific evaluation data. Development cases are reviewable; frozen holdouts are kept separate; live reports retain case IDs and checks only.
+
+**Why:** The build needs a credible correctness bar without treating child homework as an analytics dataset or tuning to an unseen holdout.

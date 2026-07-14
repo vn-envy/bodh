@@ -49,3 +49,19 @@ test("server-renders the Phase 1 journey at its learner-controlled confirmation 
   assert.doesNotMatch(html, /3\/4<\/span><span>÷<\/span><span>1\/8<\/span><span>= 6/);
   assert.doesNotMatch(html, /Phase 0 foundation ready/);
 });
+
+test("server-renders the diagnostic intake and the judge-readable learning path", async () => {
+  const intake = await render("/diagnose");
+  assert.equal(intake.status, 200);
+  const intakeHtml = await intake.text();
+  assert.match(intakeHtml, /सवाल लिखो। फिर बताओ कि कहाँ अटक गए।/);
+  assert.match(intakeHtml, /Photo जोड़ना चाहो तो जोड़ो/);
+  assert.match(intakeHtml, /Bodh को समझने दें/);
+
+  const guide = await render("/how-it-works");
+  assert.equal(guide.status, 200);
+  const guideHtml = await guide.text();
+  assert.match(guideHtml, /Bodh का छोटा promise/);
+  assert.match(guideHtml, /इसलिए demo में answer पहले नहीं आता।/);
+  assert.match(guideHtml, /how-it-works/);
+});

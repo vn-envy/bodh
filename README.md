@@ -35,6 +35,14 @@ npm test
 
 The Phase 0 validator checks the artifact contract, all eight seed eval cases, taxonomy referential integrity, and that every expected concept ID belongs to the committed fraction slice.
 
+The release corpus is validated separately:
+
+```bash
+npm run validate:evals
+```
+
+It contains 32 synthetic cases: eight seeds, 16 reviewed development-gold cases, and eight frozen holdouts. See `docs/EVALUATION.md` for the secret-gated live run.
+
 ## Repository map
 
 - `app/` — learner-facing shell and curated demo fixture
@@ -42,6 +50,7 @@ The Phase 0 validator checks the artifact contract, all eight seed eval cases, t
 - `data/fixtures/` — deterministic artifact and eight seed eval cases
 - `schemas/` — model-output and golden-eval JSON Schemas
 - `docs/` — decisions, traceability, build log, and prior-work boundary
+- `data/evals/` — reviewed development-gold and frozen holdout cases
 - `ROADMAP.md` — protected phase scope and release gates
 - `NOTICE.md` — attribution and license obligations
 

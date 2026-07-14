@@ -54,7 +54,7 @@ export function DemoJourney() {
   };
 
   return (
-    <main className="journey-shell">
+    <main className="journey-shell" id="main-content">
       <header className="journey-header">
         <Link className="back-link" href="/" aria-label="Bodh home पर वापस जाएँ">
           <span aria-hidden="true">←</span> वापस

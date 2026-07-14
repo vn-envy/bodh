@@ -27,6 +27,10 @@ function validOutput() {
         evidence: { source: "reasoning", quote: "उल्टा करके multiply" },
       },
     ],
+    languageBridge: {
+      learnerRegister: "hinglish",
+      termIds: ["unit-fraction", "equal-groups"],
+    },
     probe: {
       questionHi: "एक whole में कितने 1/4 होते हैं?",
       optionLabelsHi: ["2", "3", "4", "8"],
@@ -86,4 +90,13 @@ test("rejects malformed or unbounded mathematical notation", () => {
   assert.equal(parseFractionDivision("3/4 + 1/8 = ?"), null);
   assert.equal(parseFractionDivision("3/0 ÷ 1/8 = ?"), null);
   assert.equal(parseFractionDivision("1000/4 ÷ 1/8 = ?"), null);
+});
+
+test("rejects invented Hindi bridge terms", () => {
+  const output = validOutput();
+  output.languageBridge.termIds = ["new-made-up-label"];
+  assert.deepEqual(validateDiagnosticGuardrails(output, input), {
+    ok: false,
+    reason: "unsupported_bridge_term",
+  });
 });

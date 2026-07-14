@@ -1,5 +1,7 @@
+import { isBridgeTermId, type BridgeTermId, type LearnerRegister } from "./hindi-bridge.ts";
+
 export const DIAGNOSTIC_SCHEMA_VERSION = "1.0.0";
-export const PROMPT_VERSION = "p2.1";
+export const PROMPT_VERSION = "p3.1";
 // Kept in lockstep with data/taxonomy/fractions-division.slice.json. This
 // runtime list lets the deterministic guardrail run in both the Worker and
 // Node's lightweight test loader without importing a JSON module there.
@@ -52,6 +54,10 @@ export type DiagnosticOutput = {
       quote: string;
     };
   }>;
+  languageBridge: {
+    learnerRegister: LearnerRegister;
+    termIds: BridgeTermId[];
+  };
   probe: {
     questionHi: string;
     optionLabelsHi: string[];
@@ -85,7 +91,7 @@ function boundedString(value: unknown, min: number, max: number): value is strin
  * untrusted model data at the network boundary.
  */
 export function isDiagnosticOutputShape(value: unknown): value is DiagnosticOutput {
-  if (!isRecord(value) || !hasOnlyKeys(value, ["schemaVersion", "inputFidelity", "candidateTopicIds", "hypotheses", "probe"])) {
+  if (!isRecord(value) || !hasOnlyKeys(value, ["schemaVersion", "inputFidelity", "candidateTopicIds", "hypotheses", "languageBridge", "probe"])) {
     return false;
   }
   if (value.schemaVersion !== DIAGNOSTIC_SCHEMA_VERSION || !isRecord(value.inputFidelity)) return false;
@@ -130,6 +136,19 @@ export function isDiagnosticOutputShape(value: unknown): value is DiagnosticOutp
     ) {
       return false;
     }
+  }
+
+  if (!isRecord(value.languageBridge) || !hasOnlyKeys(value.languageBridge, ["learnerRegister", "termIds"])) return false;
+  const { learnerRegister, termIds } = value.languageBridge;
+  if (
+    !["hindi", "hinglish", "english"].includes(String(learnerRegister)) ||
+    !Array.isArray(termIds) ||
+    termIds.length < 1 ||
+    termIds.length > 3 ||
+    new Set(termIds).size !== termIds.length ||
+    !termIds.every((termId) => typeof termId === "string" && isBridgeTermId(termId))
+  ) {
+    return false;
   }
 
   if (!isRecord(value.probe) || !hasOnlyKeys(value.probe, ["questionHi", "optionLabelsHi", "distinction"])) return false;
@@ -213,6 +232,15 @@ export function validateDiagnosticGuardrails(
 ): { ok: true } | { ok: false; reason: string } {
   if (output.schemaVersion !== DIAGNOSTIC_SCHEMA_VERSION) {
     return { ok: false, reason: "schema_version" };
+  }
+
+  if (
+    output.languageBridge.termIds.length < 1 ||
+    output.languageBridge.termIds.length > 3 ||
+    new Set(output.languageBridge.termIds).size !== output.languageBridge.termIds.length ||
+    output.languageBridge.termIds.some((termId) => !isBridgeTermId(termId))
+  ) {
+    return { ok: false, reason: "unsupported_bridge_term" };
   }
 
   if (input.problemText.trim() && output.inputFidelity.canonicalEquation.trim() !== input.problemText.trim()) {

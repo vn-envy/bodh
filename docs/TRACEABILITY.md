@@ -24,3 +24,13 @@ Every requirement has one owner phase, a verification method, and a visible demo
 - Eight seeds exist before prompt work.
 - The visual-artifact fixture validates without a model.
 - A clean install can display the curated fixture.
+
+## Phase 1 evidence
+
+| Requirement | Deterministic evidence now present |
+|---|---|
+| BODH-R05 | The first learner-visible stage has no solution; the micro-probe must be answered correctly before the visual lab unlocks. |
+| BODH-R06 | The fraction-fit lab exposes only eight rendered slots, allows placement only in the six `3/4` target slots, and requires the exact six-slot predicate. |
+| BODH-R07 | The ribbon/bookmark transfer has a fixed answer (`4`) checked by shared answer-normalization code. |
+| BODH-R08 | The exact source equation returns after transfer, accepts `6`, `६`, or `6/1`, and only then opens the receipt. |
+| BODH-R11 | Every state uses the committed fixture and deterministic helpers; no API key or external model call is in the path. |

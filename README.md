@@ -4,7 +4,7 @@
 
 Bodh is a Hindi-first, visual misconception tutor for mathematics learners aged 8–12. A learner brings an English homework problem, explains the doubt in Hindi or Hinglish, repairs the underlying concept through a short visual interaction, proves transfer on a fresh problem, and then returns to solve the original problem.
 
-This repository was created during OpenAI Devpost Build Week. Phase 0 intentionally contains a runnable, deterministic fixture shell rather than live model calls.
+This repository was created during OpenAI Devpost Build Week. Phase 1 contains a complete, runnable, deterministic vertical slice rather than live model calls.
 
 ## Run locally
 
@@ -15,7 +15,7 @@ npm install
 npm run dev
 ```
 
-Open the local URL printed by the development server. No API key is required for the Phase 0 fixture.
+Open the local URL printed by the development server. No API key is required for the curated journey.
 
 ## Validate the foundation
 
@@ -36,11 +36,11 @@ The Phase 0 validator checks the artifact contract, all eight seed eval cases, t
 - `ROADMAP.md` — protected phase scope and release gates
 - `NOTICE.md` — attribution and license obligations
 
-## Phase 0 boundary
+## Current build boundary
 
-Included now: product scaffold, design tokens, deterministic demo fixture, canonical taxonomy slice, schemas, seed eval cases, traceability, and attribution.
+Included now: product scaffold, design tokens, canonical taxonomy slice, schemas, seed eval cases, traceability, and the complete deterministic hero journey: confirmation, concept path, probe, fraction-fit lab, transfer, return, and mastery receipt.
 
-Not included yet: image parsing, model diagnosis, speech, live Hindi generation, persistence, or the complete interactive journey. Those enter only in their owner phases in `ROADMAP.md`.
+Not included yet: image parsing, model diagnosis, speech, live Hindi generation, persistence, or learner-specific storage. Those enter only in their owner phases in `ROADMAP.md`.
 
 ## Privacy posture
 

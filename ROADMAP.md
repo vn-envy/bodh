@@ -50,6 +50,21 @@ No subjects beyond mathematics; no ages outside 8–12; no languages beyond Hind
 - [x] Eight seed cases created before prompt tuning
 - [x] Learner-facing fixture shell with no model dependency
 
+## Phase 1 deliverables
+
+- [x] Curated `3/4 ÷ 1/8 = ?` journey runs end to end without an API key
+- [x] Learner confirms the original question and Hindi reasoning before diagnosis
+- [x] One discriminating micro-probe appears before any solution
+- [x] Tap/select/tap fraction-fit artifact places six `1/8` tiles inside `3/4`
+- [x] Artifact completion is guarded by a deterministic six-tile predicate
+- [x] Transfer problem uses a different ribbon/bookmark surface with verified answer `4`
+- [x] Original problem returns unchanged and accepts English or Devanagari whole-number answers
+- [x] Mastery receipt reports concept evidence rather than score, XP, or streak
+
+### Phase 1 exit gate
+
+The curated journey runs from beginning to end without a model call. The source problem is not solved before the probe, the visual predicate controls progress, and transfer plus return are checked deterministically.
+
 ## Evaluation reserve
 
 The golden set grows from 8 seed cases to 16 development-gold cases and finally 8 frozen holdouts. Feature work stops before the concentrated evaluation window. Required release invariants are 100% equation preservation, schema validity, deterministic mathematical correctness, and supported taxonomy-ID validity.

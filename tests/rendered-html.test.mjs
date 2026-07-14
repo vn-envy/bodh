@@ -36,13 +36,16 @@ test("server-renders the Bodh learner shell", async () => {
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/i);
 });
 
-test("server-renders the deterministic demo fixture", async () => {
+test("server-renders the Phase 1 journey at its learner-controlled confirmation step", async () => {
   const response = await render("/demo");
   assert.equal(response.status, 200);
 
   const html = await response.text();
   assert.match(html, /तुम्हारा सवाल/);
-  assert.match(html, /unit fraction/);
-  assert.match(html, /division as an unknown factor/);
-  assert.match(html, /Phase 0 foundation ready/);
+  assert.match(html, /पहले जाँच लें कि हमने सही सुना/);
+  assert.match(html, /हाँ, यही मेरा सवाल है/);
+  assert.match(html, /3\/4/);
+  assert.match(html, /Curated fraction journey · Bodh/);
+  assert.doesNotMatch(html, /3\/4<\/span><span>÷<\/span><span>1\/8<\/span><span>= 6/);
+  assert.doesNotMatch(html, /Phase 0 foundation ready/);
 });

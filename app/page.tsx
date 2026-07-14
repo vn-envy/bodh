@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { BodhMark } from "./components/BodhMark";
+import { LearningStrip } from "./components/LearningStrip";
 
 export default function Home() {
   return (
     <main className="site-shell" id="main-content">
       <header className="site-header" aria-label="Bodh header">
         <Link className="brand" href="/" aria-label="Bodh home">
-          <BodhMark size="small" />
+          <BodhMark size="mark" motion="still" priority />
           <span className="brand-copy">
             <strong>BODH</strong>
             <span>That which is truly understood</span>
@@ -38,7 +39,7 @@ export default function Home() {
 
         <article className="doubt-card" aria-labelledby="doubt-title">
           <div className="mascot-corner">
-            <BodhMark size="large" />
+            <BodhMark pose="listen" size="large" motion="listen" priority />
             <span className="speech-pill">पहले सुनते हैं।</span>
           </div>
           <div className="card-label-row">
@@ -50,6 +51,14 @@ export default function Home() {
           <p className="equation" aria-label="three quarters divided by one eighth">
             3/4 <span>÷</span> 1/8 = ?
           </p>
+          <LearningStrip
+            total={8}
+            filled={6}
+            unit="1/8"
+            label="3/4 को eighths में देखें"
+            tone="peach"
+            compact
+          />
           <blockquote>
             “मुझे समझ नहीं आता कि इसे उल्टा करके multiply क्यों करते हैं।”
           </blockquote>

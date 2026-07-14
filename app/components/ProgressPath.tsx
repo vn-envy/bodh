@@ -7,7 +7,11 @@ export function ProgressPath({ active = 1 }: { active?: number }) {
         const position = index + 1;
         const state = position < active ? "complete" : position === active ? "active" : "future";
         return (
-          <li className={`progress-stage progress-stage-${state}`} key={stage}>
+          <li
+            className={`progress-stage progress-stage-${state}`}
+            key={stage}
+            aria-current={state === "active" ? "step" : undefined}
+          >
             <span className="progress-dot" aria-hidden="true" />
             <span>{stage}</span>
           </li>

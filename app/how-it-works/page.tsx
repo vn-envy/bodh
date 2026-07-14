@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BodhMark } from "../components/BodhMark";
+import { LearningStrip } from "../components/LearningStrip";
 
 export const metadata: Metadata = {
   title: "How Bodh works",
@@ -42,7 +43,7 @@ export default function HowItWorksPage() {
           <span aria-hidden="true">←</span> वापस
         </Link>
         <Link className="brand brand-compact" href="/" aria-label="Bodh home">
-          <BodhMark size="small" />
+          <BodhMark size="mark" motion="still" priority />
           <span className="brand-copy"><strong>BODH</strong></span>
         </Link>
         <span className="fixture-label">90-second journey</span>
@@ -58,7 +59,8 @@ export default function HowItWorksPage() {
           </p>
         </div>
         <div className="guide-mascot-card">
-          <BodhMark size="large" />
+          <BodhMark pose="guide" size="large" motion="guide" priority />
+          <LearningStrip total={8} filled={6} unit="1/8" label="picture before rule" tone="peach" compact showUnits={false} />
           <strong>“मैं तुम्हें grade नहीं कर रहा। मैं सही अगली picture ढूँढ रहा हूँ।”</strong>
         </div>
       </section>

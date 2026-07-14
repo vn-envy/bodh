@@ -1,21 +1,54 @@
+import Image from "next/image";
+
+export type BodhPose = "welcome" | "listen" | "guide" | "tinker" | "celebrate";
+export type BodhSize = "mark" | "small" | "medium" | "large" | "hero";
+export type BodhMotion = "still" | "breathe" | "listen" | "guide" | "tinker" | "celebrate";
+
 type BodhMarkProps = {
-  size?: "small" | "large";
+  pose?: BodhPose;
+  size?: BodhSize;
+  motion?: BodhMotion;
+  priority?: boolean;
+  className?: string;
+  decorative?: boolean;
 };
 
-export function BodhMark({ size = "small" }: BodhMarkProps) {
+const sizeHints: Record<BodhSize, string> = {
+  mark: "48px",
+  small: "88px",
+  medium: "148px",
+  large: "260px",
+  hero: "300px",
+};
+
+export function BodhMark({
+  pose = "welcome",
+  size = "small",
+  motion = "breathe",
+  priority = false,
+  className = "",
+  decorative = true,
+}: BodhMarkProps) {
+  const assetSize = size === "mark" || size === "small" ? 512 : 1024;
+  const src = `/art/bodh/bodh-${pose}-${assetSize}.webp`;
+
   return (
     <span
-      className={`bodh-mark bodh-mark-${size}`}
-      role="img"
-      aria-label="Bodh, a friendly elephant mentor"
+      className={`bodh-mark bodh-mark-${size} bodh-motion-${motion} bodh-pose-${pose} ${className}`.trim()}
+      role={decorative ? undefined : "img"}
+      aria-label={decorative ? undefined : "Bodh, a friendly elephant mentor"}
+      aria-hidden={decorative ? "true" : undefined}
     >
-      <span className="bodh-ear bodh-ear-left" />
-      <span className="bodh-ear bodh-ear-right" />
-      <span className="bodh-head">
-        <span className="bodh-eye bodh-eye-left" />
-        <span className="bodh-eye bodh-eye-right" />
-        <span className="bodh-trunk" />
-      </span>
+      <Image
+        className="bodh-mascot-image"
+        src={src}
+        alt=""
+        width={assetSize}
+        height={assetSize}
+        sizes={sizeHints[size]}
+        priority={priority}
+        unoptimized
+      />
     </span>
   );
 }

@@ -117,7 +117,7 @@ export function DiagnosticIntake() {
           <span aria-hidden="true">←</span> वापस
         </Link>
         <Link className="brand brand-compact" href="/" aria-label="Bodh home">
-          <BodhMark size="small" />
+          <BodhMark size="mark" motion="still" priority />
           <span className="brand-copy"><strong>BODH</strong></span>
         </Link>
         <span className="fixture-label">Listen first</span>
@@ -133,7 +133,11 @@ export function DiagnosticIntake() {
                 Hindi, Hinglish, या English—जिसमें तुम्हें आसान लगे। Bodh अभी answer नहीं देगा; पहले सही छोटी idea ढूँढेगा।
               </p>
             </div>
-            <BodhMark size="small" />
+            <BodhMark
+              pose={isSubmitting ? "tinker" : "listen"}
+              size="medium"
+              motion={isSubmitting ? "tinker" : "listen"}
+            />
           </div>
 
           <form className="intake-form" onSubmit={submit}>
@@ -188,8 +192,13 @@ export function DiagnosticIntake() {
 
         {result?.mode === "live" && (
           <article className="diagnose-card diagnosis-result-card">
-            <span className="eyebrow">Bodh ने पहले क्या सुना</span>
-            <h2 ref={resultHeadingRef} tabIndex={-1}>चलो इस idea को एक छोटी जाँच से समझें।</h2>
+            <div className="stage-with-bodh diagnosis-result-heading">
+              <div>
+                <span className="eyebrow">Bodh ने पहले क्या सुना</span>
+                <h2 ref={resultHeadingRef} tabIndex={-1}>चलो इस idea को एक छोटी जाँच से समझें।</h2>
+              </div>
+              <BodhMark pose="guide" size="medium" motion="guide" />
+            </div>
             <div className="readback-equation">
               <span>Bodh read this as</span>
               <strong>{result.diagnosis.inputFidelity.canonicalEquation}</strong>
@@ -260,7 +269,7 @@ export function DiagnosticIntake() {
 
         {result?.mode === "curated_fallback" && (
           <article className="diagnose-card fallback-card">
-            <BodhMark size="small" />
+            <BodhMark pose="listen" size="medium" motion="listen" />
             <span className="eyebrow">सुरक्षित रास्ता</span>
             <h2 ref={resultHeadingRef} tabIndex={-1}>इस बार हम guess नहीं करेंगे।</h2>
             <p>{result.messageHi}</p>

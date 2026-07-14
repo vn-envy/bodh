@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { stat } from "node:fs/promises";
 import test from "node:test";
 
 async function render(pathname = "/") {
@@ -33,7 +34,20 @@ test("server-renders the Bodh learner shell", async () => {
   assert.match(html, /अपना सवाल लाओ/);
   assert.match(html, /3\/4/);
   assert.match(html, /Curated demo/);
+  assert.match(html, /\/art\/bodh\/bodh-listen-1024\.webp/);
+  assert.match(html, /3\/4 को eighths में देखें/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/i);
+});
+
+test("ships the complete responsive Bodh pose set", async () => {
+  const poses = ["welcome", "listen", "guide", "tinker", "celebrate"];
+  for (const pose of poses) {
+    for (const size of [512, 1024]) {
+      const asset = new URL(`../public/art/bodh/bodh-${pose}-${size}.webp`, import.meta.url);
+      const details = await stat(asset);
+      assert.ok(details.size > 20_000, `${pose}-${size} should be a production image asset`);
+    }
+  }
 });
 
 test("server-renders the Phase 1 journey at its learner-controlled confirmation step", async () => {

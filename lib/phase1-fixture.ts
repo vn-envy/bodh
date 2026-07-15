@@ -8,6 +8,23 @@ export const HERO_FIXTURE = {
   totalSlots: 8,
 } as const;
 
+export const CURATED_JOURNEY_ORDER = [
+  "confirm",
+  "probe",
+  "path",
+  "lab",
+  "transfer",
+  "return",
+  "receipt",
+] as const;
+
+export type CuratedJourneyStep = (typeof CURATED_JOURNEY_ORDER)[number];
+
+export function nextCuratedJourneyStep(step: CuratedJourneyStep): CuratedJourneyStep {
+  const currentIndex = CURATED_JOURNEY_ORDER.indexOf(step);
+  return CURATED_JOURNEY_ORDER[Math.min(currentIndex + 1, CURATED_JOURNEY_ORDER.length - 1)];
+}
+
 const devanagariDigits: Record<string, string> = {
   "०": "0",
   "१": "1",

@@ -88,7 +88,7 @@
           "minItems": 1,
           "maxItems": 3,
           "uniqueItems": true,
-          "items": { "enum": ["unit-fraction", "denominator", "equal-groups", "unknown-factor", "reciprocal"] }
+          "items": { "enum": ["unit-fraction", "denominator", "numerator", "equivalent-fraction", "equal-groups", "unknown-factor", "reciprocal"] }
         }
       }
     },

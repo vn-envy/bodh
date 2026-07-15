@@ -904,6 +904,577 @@ a {
   font-size: 0.78rem;
 }
 
+/* Atomic fraction explainer. The same semantic HTML artifact transforms at every idea. */
+.atomic-explainer {
+  overflow: hidden;
+  margin-top: 30px;
+  border: 1px solid rgba(83, 107, 125, 0.16);
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 88% 8%, rgba(237, 156, 117, 0.18), transparent 13rem),
+    rgba(255, 255, 255, 0.52);
+  box-shadow: 0 18px 46px rgba(79, 67, 55, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.atomic-explainer-header {
+  min-height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 17px 13px 20px;
+  border-bottom: 1px solid rgba(83, 107, 125, 0.1);
+  background: rgba(246, 237, 223, 0.48);
+}
+
+.atomic-motion-note {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.atomic-motion-note > span {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--olive);
+  box-shadow: 0 0 0 6px rgba(114, 130, 70, 0.13);
+  animation: atomic-status-pulse 2.2s ease-in-out infinite;
+}
+
+.atomic-motion-note div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.atomic-motion-note strong {
+  color: var(--blue-grey-deep);
+  font-size: 0.76rem;
+}
+
+.atomic-motion-note small {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 0.66rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.atomic-play {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 8px 13px;
+  border: 1px solid rgba(83, 107, 125, 0.18);
+  border-radius: 13px;
+  background: rgba(255, 250, 242, 0.9);
+  color: var(--blue-grey-deep);
+  cursor: pointer;
+  font-size: 0.73rem;
+  font-weight: 850;
+}
+
+.atomic-play[aria-pressed="true"] {
+  border-color: rgba(201, 79, 116, 0.28);
+  background: var(--pink-soft);
+  color: #97425e;
+}
+
+.atomic-play > span {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--blue-grey);
+  color: white;
+  font-size: 0.52rem;
+}
+
+.atomic-play[aria-pressed="true"] > span {
+  background: var(--pink);
+}
+
+.atomic-progress {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin: 0;
+  padding: 16px 24px 4px;
+  list-style: none;
+}
+
+.atomic-progress::before {
+  content: "";
+  position: absolute;
+  top: 27px;
+  right: 30px;
+  left: 30px;
+  height: 2px;
+  background: rgba(112, 134, 152, 0.16);
+}
+
+.atomic-progress li {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.atomic-progress span {
+  width: 23px;
+  height: 23px;
+  display: grid;
+  place-items: center;
+  border: 2px solid rgba(112, 134, 152, 0.23);
+  border-radius: 50%;
+  background: var(--cream-light);
+  color: var(--ink-soft);
+  font-size: 0.6rem;
+  font-weight: 900;
+  transition: color 260ms ease, background-color 260ms ease, border-color 260ms ease, transform 260ms ease;
+}
+
+.atomic-progress-active span {
+  border-color: var(--pink);
+  background: var(--pink-soft);
+  color: #97425e;
+  transform: scale(1.08);
+}
+
+.atomic-progress-complete span {
+  border-color: var(--olive);
+  background: var(--olive);
+  color: white;
+}
+
+.atomic-explainer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(310px, 1.1fr);
+  align-items: stretch;
+  gap: 22px;
+  padding: 25px 24px 22px;
+}
+
+.atomic-stage-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.atomic-step-count {
+  color: var(--blue-grey-deep);
+  font-size: 0.64rem;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+}
+
+.atomic-eyebrow {
+  margin: 13px 0 0;
+  color: var(--pink);
+  font-size: 0.69rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.atomic-stage-copy h2 {
+  margin: 8px 0 0;
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.55rem, 3.2vw, 2.15rem);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.12;
+}
+
+.atomic-mentor-copy {
+  margin: 13px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  line-height: 1.68;
+}
+
+.atomic-evidence {
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-top: 19px;
+  padding: 12px 14px;
+  border: 1px dashed rgba(112, 134, 152, 0.3);
+  border-radius: 16px;
+  background: rgba(255, 250, 242, 0.62);
+  color: var(--blue-grey-deep);
+  transition: border-color 300ms ease, background-color 300ms ease, transform 300ms ease;
+}
+
+.atomic-evidence > span {
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: rgba(112, 134, 152, 0.12);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.atomic-evidence div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.atomic-evidence small {
+  color: var(--ink-soft);
+  font-size: 0.62rem;
+  font-weight: 750;
+}
+
+.atomic-evidence strong {
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.atomic-evidence-earned {
+  border-style: solid;
+  border-color: rgba(114, 130, 70, 0.26);
+  background: rgba(217, 223, 189, 0.55);
+  color: #53602f;
+  transform: translateY(-1px);
+}
+
+.atomic-evidence-earned > span {
+  background: var(--olive);
+  color: white;
+}
+
+.atomic-artifact {
+  position: relative;
+  min-width: 0;
+  min-height: 330px;
+  overflow: hidden;
+  padding: 19px 17px 17px;
+  border: 1px solid rgba(83, 107, 125, 0.13);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 95% 0, rgba(201, 79, 116, 0.11), transparent 10rem),
+    linear-gradient(155deg, rgba(255, 250, 242, 0.94), rgba(246, 237, 223, 0.72));
+  box-shadow: inset 0 1px 0 white, 0 14px 34px rgba(79, 67, 55, 0.07);
+}
+
+.atomic-whole-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--blue-grey-deep);
+  font-size: 0.65rem;
+  font-weight: 850;
+}
+
+.atomic-whole-label i {
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, rgba(112, 134, 152, 0.42), transparent);
+}
+
+.atomic-bar {
+  height: 118px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  overflow: hidden;
+  margin-top: 18px;
+  padding: 6px;
+  border: 2px solid rgba(83, 107, 125, 0.3);
+  border-radius: 18px;
+  background: rgba(112, 134, 152, 0.09);
+  box-shadow: inset 0 2px 6px rgba(83, 107, 125, 0.08);
+  transition: gap 620ms cubic-bezier(0.2, 0.8, 0.2, 1), border-color 400ms ease, transform 620ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.atomic-quarter {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+  border-radius: 0;
+  background: rgba(255, 250, 242, 0.8);
+  transition: border-radius 520ms ease, background-color 520ms ease, box-shadow 520ms ease, transform 520ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.atomic-eighth {
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  border-left: 2px solid transparent;
+  background: rgba(255, 250, 242, 0.8);
+  font-style: normal;
+  transition: border-color 520ms ease, background-color 520ms ease, transform 520ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.atomic-eighth small {
+  color: white;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(0.48rem, 1.1vw, 0.62rem);
+  font-style: normal;
+  font-weight: 700;
+  animation: atomic-unit-enter 420ms cubic-bezier(0.2, 0.85, 0.2, 1.1) both;
+}
+
+.atomic-eighth:nth-child(2) {
+  animation-delay: 80ms;
+}
+
+.atomic-visual-blank .atomic-bar {
+  border-style: dashed;
+  opacity: 0.42;
+  transform: scale(0.97);
+}
+
+.atomic-visual-whole .atomic-eighth,
+.atomic-visual-quarters .atomic-eighth {
+  background: var(--peach-soft);
+}
+
+.atomic-visual-quarters .atomic-bar,
+.atomic-visual-unit .atomic-bar,
+.atomic-visual-fraction .atomic-bar,
+.atomic-visual-eighths .atomic-bar,
+.atomic-visual-multiply .atomic-bar,
+.atomic-visual-divide .atomic-bar {
+  gap: 5px;
+}
+
+.atomic-visual-quarters .atomic-quarter,
+.atomic-visual-unit .atomic-quarter,
+.atomic-visual-fraction .atomic-quarter,
+.atomic-visual-eighths .atomic-quarter,
+.atomic-visual-multiply .atomic-quarter,
+.atomic-visual-divide .atomic-quarter {
+  border-radius: 11px;
+}
+
+.atomic-visual-unit .atomic-quarter-1 .atomic-eighth {
+  background: var(--olive);
+}
+
+.atomic-visual-unit .atomic-quarter-1 {
+  box-shadow: 0 9px 20px rgba(83, 96, 47, 0.2);
+  transform: translateY(-3px);
+}
+
+.atomic-visual-fraction .atomic-quarter:nth-child(-n+3) .atomic-eighth,
+.atomic-visual-eighths .atomic-quarter:nth-child(-n+3) .atomic-eighth,
+.atomic-visual-multiply .atomic-quarter:nth-child(-n+3) .atomic-eighth,
+.atomic-visual-divide .atomic-quarter:nth-child(-n+3) .atomic-eighth {
+  background: var(--peach);
+}
+
+.atomic-visual-fraction .atomic-quarter:nth-child(-n+3),
+.atomic-visual-eighths .atomic-quarter:nth-child(-n+3),
+.atomic-visual-multiply .atomic-quarter:nth-child(-n+3),
+.atomic-visual-divide .atomic-quarter:nth-child(-n+3) {
+  box-shadow: 0 8px 17px rgba(117, 75, 58, 0.12);
+}
+
+.atomic-visual-eighths .atomic-eighth:nth-child(2),
+.atomic-visual-multiply .atomic-eighth:nth-child(2),
+.atomic-visual-divide .atomic-eighth:nth-child(2) {
+  border-left-color: rgba(83, 107, 125, 0.38);
+}
+
+.atomic-visual-multiply .atomic-quarter:nth-child(-n+3) .atomic-eighth,
+.atomic-visual-divide .atomic-quarter:nth-child(-n+3) .atomic-eighth {
+  background: var(--blue-grey);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.atomic-visual-divide .atomic-bar {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 5px rgba(201, 79, 116, 0.11), inset 0 2px 6px rgba(83, 107, 125, 0.08);
+}
+
+.atomic-amount-brace {
+  width: 75%;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  margin-top: 8px;
+  color: #754b3a;
+  font-size: 0.6rem;
+  font-weight: 800;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 320ms ease, transform 320ms ease;
+}
+
+.atomic-amount-brace i {
+  width: calc(100% - 6px);
+  height: 7px;
+  border-right: 1.5px solid var(--peach);
+  border-bottom: 1.5px solid var(--peach);
+  border-left: 1.5px solid var(--peach);
+  border-radius: 0 0 7px 7px;
+}
+
+.atomic-visual-fraction .atomic-amount-brace,
+.atomic-visual-eighths .atomic-amount-brace,
+.atomic-visual-multiply .atomic-amount-brace,
+.atomic-visual-divide .atomic-amount-brace {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.atomic-equation {
+  min-height: 80px;
+  display: grid;
+  place-items: center;
+  margin-top: 7px;
+  color: var(--blue-grey-deep);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.25rem, 2.8vw, 1.9rem);
+  animation: atomic-equation-enter 460ms cubic-bezier(0.2, 0.85, 0.2, 1) both;
+}
+
+.atomic-equation-muted {
+  color: rgba(83, 107, 125, 0.55);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Kohinoor Devanagari", sans-serif;
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+
+.atomic-equation-small {
+  max-width: 250px;
+  text-align: center;
+  font-size: clamp(0.92rem, 2vw, 1.2rem);
+  line-height: 1.45;
+}
+
+.atomic-symbol-teaching {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.atomic-fraction {
+  min-width: 34px;
+  display: inline-grid;
+  grid-template-rows: 1fr 1fr;
+  place-items: center;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.atomic-fraction > span:first-child {
+  width: 100%;
+  padding-bottom: 3px;
+  border-bottom: 2px solid currentColor;
+  text-align: center;
+}
+
+.atomic-fraction > span:last-child {
+  padding-top: 3px;
+}
+
+.atomic-term-tag {
+  padding: 7px 8px;
+  border-radius: 9px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Kohinoor Devanagari", sans-serif;
+  font-size: 0.57rem;
+  font-weight: 850;
+}
+
+.atomic-term-numerator {
+  background: var(--pink-soft);
+  color: #97425e;
+}
+
+.atomic-term-denominator {
+  background: var(--olive-soft);
+  color: #53602f;
+}
+
+.atomic-equivalence,
+.atomic-operation {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 650;
+}
+
+.atomic-operation > span:first-child,
+.atomic-operation > span:last-child {
+  color: var(--pink);
+}
+
+.atomic-actions {
+  min-height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 13px 20px 17px;
+  border-top: 1px solid rgba(83, 107, 125, 0.09);
+}
+
+.atomic-back {
+  min-width: 58px;
+  min-height: 46px;
+  padding: 8px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--blue-grey-deep);
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+.atomic-back:disabled {
+  cursor: default;
+  opacity: 0.34;
+}
+
+.atomic-primary {
+  width: auto;
+  min-height: 49px;
+  margin: 0;
+  padding-inline: 17px;
+  font-size: 0.8rem;
+}
+
+.atomic-playing-status {
+  color: var(--olive-deep);
+  font-size: 0.73rem;
+  font-weight: 800;
+}
+
+@keyframes atomic-equation-enter {
+  from { opacity: 0; transform: translateY(7px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes atomic-unit-enter {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes atomic-status-pulse {
+  0%, 100% { box-shadow: 0 0 0 5px rgba(114, 130, 70, 0.12); }
+  50% { box-shadow: 0 0 0 8px rgba(114, 130, 70, 0.04); }
+}
+
 .journey-card-probe {
   background:
     radial-gradient(circle at 88% 10%, rgba(237, 156, 117, 0.2), transparent 13rem),
@@ -1930,6 +2501,66 @@ a {
     grid-template-columns: 1fr;
   }
 
+  .atomic-explainer {
+    margin-right: -9px;
+    margin-left: -9px;
+    border-radius: 22px;
+  }
+
+  .atomic-explainer-header {
+    padding-inline: 14px;
+  }
+
+  .atomic-progress {
+    padding-inline: 15px;
+  }
+
+  .atomic-progress::before {
+    right: 21px;
+    left: 21px;
+  }
+
+  .atomic-progress span {
+    width: 21px;
+    height: 21px;
+  }
+
+  .atomic-explainer-grid {
+    grid-template-columns: 1fr;
+    gap: 19px;
+    padding: 22px 15px 18px;
+  }
+
+  .atomic-stage-copy h2 {
+    font-size: clamp(1.65rem, 8vw, 2.15rem);
+  }
+
+  .atomic-artifact {
+    min-height: 310px;
+  }
+
+  .atomic-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+    gap: 4px;
+    padding-inline: 15px;
+  }
+
+  .atomic-primary {
+    width: 100%;
+  }
+
+  .atomic-back {
+    align-self: center;
+  }
+
+  .atomic-playing-status {
+    min-height: 49px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+  }
+
   .probe-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2020,6 +2651,22 @@ a {
     align-items: flex-start;
     flex-direction: column;
     gap: 2px;
+  }
+
+  .atomic-motion-note small {
+    display: none;
+  }
+
+  .atomic-play {
+    padding-inline: 10px;
+  }
+
+  .atomic-bar {
+    height: 102px;
+  }
+
+  .atomic-eighth small {
+    writing-mode: vertical-rl;
   }
 }
 

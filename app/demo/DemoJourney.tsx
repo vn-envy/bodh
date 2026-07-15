@@ -2,12 +2,19 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { HERO_FIXTURE, isCorrectWholeNumberAnswer, isLabComplete } from "../../lib/phase1-fixture";
+import {
+  HERO_FIXTURE,
+  isCorrectWholeNumberAnswer,
+  isLabComplete,
+  nextCuratedJourneyStep,
+  type CuratedJourneyStep,
+} from "../../lib/phase1-fixture";
 import { BodhMark } from "../components/BodhMark";
+import { FractionConceptExplainer } from "../components/FractionConceptExplainer";
 import { LearningStrip } from "../components/LearningStrip";
 import { ProgressPath } from "../components/ProgressPath";
 
-type JourneyStep = "confirm" | "path" | "probe" | "lab" | "transfer" | "return" | "receipt";
+type JourneyStep = CuratedJourneyStep;
 type CheckState = "idle" | "try-again" | "correct";
 
 const probeOptions = [
@@ -96,7 +103,7 @@ export function DemoJourney() {
               <p>“{HERO_FIXTURE.learnerReasoning}”</p>
             </div>
             <p className="calm-note">Bodh तुम्हें grade नहीं कर रहा। वह बस यह देख रहा है कि कौन-सी छोटी idea पहले काम आएगी।</p>
-            <button className="button button-primary journey-primary" type="button" onClick={() => setStep("path")}>
+            <button className="button button-primary journey-primary" type="button" onClick={() => setStep(nextCuratedJourneyStep("confirm"))}>
               हाँ, यही मेरा सवाल है <span aria-hidden="true">→</span>
             </button>
           </article>
@@ -110,36 +117,12 @@ export function DemoJourney() {
             </div>
             <div className="stage-with-bodh">
               <div>
-                <h1 ref={stageHeadingRef} tabIndex={-1}>शायद हमें इस छोटी-सी idea को पहले देखना चाहिए।</h1>
-                <p className="stage-lead">यह कोई कमी नहीं है—बस एक connection है जो अभी दिखाई नहीं दिया।</p>
+                <h1 ref={stageHeadingRef} tabIndex={-1}>एक ही whole को बदलते हुए देखें।</h1>
+                <p className="stage-lead">हर screen पर सिर्फ एक idea: पहले picture पर action, फिर उसी picture से evidence।</p>
               </div>
               <BodhMark pose="guide" size="medium" motion="guide" />
             </div>
-            <ol className="journey-concept-path">
-              <li className="concept-node node-olive">
-                <span>1</span>
-                <div><strong>1/8 एक size है</strong><small>इकाई भिन्न · unit fraction</small></div>
-              </li>
-              <li className="concept-node node-peach">
-                <span>2</span>
-                <div><strong>3/4 को eighths में देखो</strong><small>six pieces of 1/8</small></div>
-              </li>
-              <li className="concept-node node-pink">
-                <span>3</span>
-                <div><strong>कितने groups बैठते हैं?</strong><small>division as an unknown factor</small></div>
-              </li>
-            </ol>
-            <div className="concept-evidence-row">
-              <LearningStrip total={8} filled={1} unit="1/8" label="एक इकाई भिन्न" tone="olive" compact showUnits={false} />
-              <LearningStrip total={8} filled={6} unit="1/8" label="3/4 = six eighths" tone="peach" compact showUnits={false} />
-            </div>
-            <div className="path-reason">
-              <strong>क्यों यह रास्ता?</strong>
-              <span>तुम्हारा सवाल rule के बारे में है; पहले हम rule के पीछे की grouping देखेंगे।</span>
-            </div>
-            <button className="button button-primary journey-primary" type="button" onClick={() => setStep("probe")}>
-              एक छोटी जाँच करें <span aria-hidden="true">→</span>
-            </button>
+            <FractionConceptExplainer onFinish={() => setStep(nextCuratedJourneyStep("path"))} />
           </article>
         )}
 
@@ -185,9 +168,9 @@ export function DemoJourney() {
               className="button button-primary journey-primary"
               type="button"
               disabled={probeAnswer !== "4"}
-              onClick={() => setStep("lab")}
+              onClick={() => setStep(nextCuratedJourneyStep("probe"))}
             >
-              यही idea अपने सवाल पर लगाएँ <span aria-hidden="true">→</span>
+              अब Bodh के साथ idea बनाएँ <span aria-hidden="true">→</span>
             </button>
           </article>
         )}
@@ -257,7 +240,7 @@ export function DemoJourney() {
             )}
             <div className="lab-actions">
               <button className="quiet-action" type="button" onClick={() => setPlacedSlots([])}>फिर से देखें</button>
-              <button className="button button-primary journey-primary" type="button" disabled={!labComplete} onClick={() => setStep("transfer")}>
+              <button className="button button-primary journey-primary" type="button" disabled={!labComplete} onClick={() => setStep(nextCuratedJourneyStep("lab"))}>
                 एक नए सवाल में आज़माएँ <span aria-hidden="true">→</span>
               </button>
             </div>
@@ -285,7 +268,9 @@ export function DemoJourney() {
               <p>{HERO_FIXTURE.transferProblem}</p>
               <strong>2/3 ÷ 1/6 = ?</strong>
             </div>
-            <LearningStrip total={6} filled={4} unit="1/6" label="2/3 को sixths में देखें" tone="olive" compact />
+            {transferState === "try-again" && (
+              <LearningStrip total={6} filled={4} unit="1/6" label="Hint picture: 2/3 को sixths में देखें" tone="olive" compact showUnits={false} />
+            )}
             <label className="answer-field">
               <span>तुम्हारा जवाब</span>
               <input
@@ -296,11 +281,11 @@ export function DemoJourney() {
                   setTransferState("idle");
                 }}
                 aria-describedby="transfer-feedback"
-                placeholder="जैसे 4"
+                placeholder="यहाँ लिखो"
               />
             </label>
             {transferState === "try-again" && (
-              <p className="answer-feedback" id="transfer-feedback">एक बार वही representation देखो: 2/3 = 4/6. अब 1/6 के कितने groups दिखते हैं?</p>
+              <p className="answer-feedback" id="transfer-feedback">अब hint picture में peach हिस्से देखो। उनमें 1/6 size के groups खुद गिनो।</p>
             )}
             {transferState === "correct" && (
               <p className="answer-feedback answer-feedback-correct" id="transfer-feedback">तुमने नई कहानी में भी वही relationship पहचान लिया।</p>
@@ -308,7 +293,7 @@ export function DemoJourney() {
             <button
               className="button button-primary journey-primary"
               type="button"
-              onClick={transferState === "correct" ? () => setStep("return") : checkTransfer}
+              onClick={transferState === "correct" ? () => setStep(nextCuratedJourneyStep("transfer")) : checkTransfer}
             >
               {transferState === "correct" ? "अब अपना पहला सवाल करें" : "अपना जवाब जाँचें"} <span aria-hidden="true">→</span>
             </button>
@@ -342,7 +327,7 @@ export function DemoJourney() {
                   setReturnState("idle");
                 }}
                 aria-describedby="return-feedback"
-                placeholder="जैसे 6"
+                placeholder="यहाँ लिखो"
               />
             </label>
             {returnState === "try-again" && (
@@ -354,7 +339,7 @@ export function DemoJourney() {
             <button
               className="button button-primary journey-primary"
               type="button"
-              onClick={returnState === "correct" ? () => setStep("receipt") : checkReturn}
+              onClick={returnState === "correct" ? () => setStep(nextCuratedJourneyStep("return")) : checkReturn}
             >
               {returnState === "correct" ? "आज की समझ देखें" : "अपना जवाब जाँचें"} <span aria-hidden="true">→</span>
             </button>
@@ -385,7 +370,11 @@ export function DemoJourney() {
               </section>
               <section>
                 <span>शब्द जो याद रखें</span>
-                <strong>इकाई भिन्न <em>(unit fraction)</em></strong>
+                <strong>हर <em>(denominator)</em> size बताता है · अंश <em>(numerator)</em> units गिनता है</strong>
+              </section>
+              <section>
+                <span>Connection</span>
+                <strong>Multiplication मात्रा बनाती है; division वही missing count पूछती है।</strong>
               </section>
             </div>
             <div className="receipt-problems">

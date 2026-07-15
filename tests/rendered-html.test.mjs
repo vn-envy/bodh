@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { stat } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import test from "node:test";
 
 async function render(pathname = "/") {
@@ -62,6 +62,21 @@ test("server-renders the Phase 1 journey at its learner-controlled confirmation 
   assert.match(html, /Curated fraction journey · Bodh/);
   assert.doesNotMatch(html, /3\/4<\/span><span>÷<\/span><span>1\/8<\/span><span>= 6/);
   assert.doesNotMatch(html, /Phase 0 foundation ready/);
+});
+
+test("ships the atomic explainer without a pre-lab answer leak", async () => {
+  const [component, authoredSequence, journey] = await Promise.all([
+    readFile(new URL("../app/components/FractionConceptExplainer.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../lib/fraction-concept.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/demo/DemoJourney.tsx", import.meta.url), "utf8"),
+  ]);
+  const html = `${component}\n${authoredSequence}\n${journey}`;
+
+  assert.match(html, /Fraction किस पूरे की बात कर रहा है/);
+  assert.match(html, /पूरी पट्टी चुनो/);
+  assert.match(html, /चलाकर देखें/);
+  assert.doesNotMatch(html, /six pieces of 1\/8/);
+  assert.doesNotMatch(html, /placeholder="जैसे (4|6)"/);
 });
 
 test("server-renders the diagnostic intake and the judge-readable learning path", async () => {

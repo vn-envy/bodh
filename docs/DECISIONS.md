@@ -65,3 +65,9 @@
 **Decision:** Build and validate a 32-case synthetic corpus before collecting any learner-specific evaluation data. Development cases are reviewable; frozen holdouts are kept separate; live reports retain case IDs and checks only.
 
 **Why:** The build needs a credible correctness bar without treating child homework as an analytics dataset or tuning to an unseen holdout.
+
+## D-012 — Motion must carry conceptual evidence
+
+**Decision:** The live explainer uses learner-controlled semantic HTML/CSS motion. The same whole persists while partitions, labels, and equations change. Video renderers such as HyperFrames or Remotion remain an export path for a submission clip, not the learner interaction runtime.
+
+**Why:** The child must be able to pause, manipulate, read, and revisit each mathematical state. A rendered video is valuable for storytelling, but it would turn the core evidence-producing interaction into pixels and remove the learner’s control.

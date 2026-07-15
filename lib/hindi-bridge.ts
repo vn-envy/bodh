@@ -1,6 +1,8 @@
 export const BRIDGE_TERM_IDS = [
   "unit-fraction",
   "denominator",
+  "numerator",
+  "equivalent-fraction",
   "equal-groups",
   "unknown-factor",
   "reciprocal",
@@ -25,7 +27,19 @@ export const HINDI_BRIDGE_TERMS: Record<BridgeTermId, {
     id: "denominator",
     hindi: "हर",
     english: "denominator",
-    childMeaningHi: "नीचे वाला number; वह बताता है whole कितने बराबर parts में बँटा है।",
+    childMeaningHi: "चुना हुआ whole कितने बराबर parts में बँटा है—यही हर unit का size तय करता है।",
+  },
+  numerator: {
+    id: "numerator",
+    hindi: "अंश",
+    english: "numerator",
+    childMeaningHi: "दिए हुए size के कितने बराबर units हम गिन रहे हैं।",
+  },
+  "equivalent-fraction": {
+    id: "equivalent-fraction",
+    hindi: "समतुल्य भिन्न",
+    english: "equivalent fraction",
+    childMeaningHi: "Parts या नाम अलग, लेकिन मात्रा वही—जैसे 1/2 और 2/4।",
   },
   "equal-groups": {
     id: "equal-groups",

@@ -29,11 +29,20 @@ Every requirement has one owner phase, a verification method, and a visible demo
 
 | Requirement | Deterministic evidence now present |
 |---|---|
-| BODH-R05 | The first learner-visible stage has no solution; the micro-probe must be answered correctly before the visual lab unlocks. |
+| BODH-R05 | The first learner-visible stage has no solution; the micro-probe comes before the atomic explainer, and both must complete before the visual lab unlocks. |
 | BODH-R06 | The fraction-fit lab exposes only eight rendered slots, allows placement only in the six `3/4` target slots, and requires the exact six-slot predicate. |
 | BODH-R07 | The ribbon/bookmark transfer has a fixed answer (`4`) checked by shared answer-normalization code. |
 | BODH-R08 | The exact source equation returns after transfer, accepts `6`, `६`, or `6/1`, and only then opens the receipt. |
 | BODH-R11 | Every state uses the committed fixture and deterministic helpers; no API key or external model call is in the path. |
+
+## Atomic pedagogy and motion evidence
+
+| Requirement | Deterministic evidence now present |
+|---|---|
+| BODH-R05 | The curated journey asks the diagnostic whole/quarter probe before reteaching. The explainer then gates seven authored ideas in order: chosen whole → equal parts → unit/denominator → numerator → equivalent repartition → repeated composition → division as unknown factor. |
+| BODH-R06 | One persistent semantic HTML fraction bar transforms across every idea. The final explainer frame remains `3/4 ÷ 1/8 = ?`; the answer appears only after the exact six-slot lab predicate succeeds. |
+| BODH-R07 | The transfer begins without its completed strip or an answer-like placeholder. The deterministic visual hint appears only after an incorrect attempt. |
+| BODH-R09 | The committed bridge now includes `हर (denominator)`, `अंश (numerator)`, and `समतुल्य भिन्न (equivalent fraction)` with fixed child meanings. |
 
 ## Phase 2 implementation evidence
 

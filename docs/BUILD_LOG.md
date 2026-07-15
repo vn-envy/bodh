@@ -47,3 +47,15 @@ The P1 demo is intentionally curated. Live model diagnosis, image intake, speech
 - Expanded the evaluation corpus to 32 synthetic cases and added a live evaluator that writes only case IDs and check outcomes.
 - Added the Open Graph social card, Devpost submission draft, and narrated demo script.
 - The remaining release gate is deliberate: configure the hosted API secret, run and review the live 32-case report, then record/submit the final demo.
+
+## 2026-07-15 — Atomic fraction pedagogy and motion pass
+
+- Replaced the static three-card concept preview with seven evidence-gated ideas using one persistent fraction bar.
+- Reordered the curated journey so the discriminating whole/quarter probe comes before reteaching.
+- Taught the denominator as the chosen unit size before using the numerator to count those units.
+- Added the missing equivalence bridge: each quarter splits into two eighth-size pieces while the selected amount stays fixed.
+- Added learner-controlled HTML/CSS motion plus an optional presentation playback; reduced-motion preferences still collapse all transitions.
+- Kept the answer gated: the explainer ends at `? × 1/8 = 3/4` / `3/4 ÷ 1/8 = ?`, and only the completed six-slot lab reveals `6`.
+- Removed transfer and return placeholder answers; the completed transfer strip now appears only as a post-attempt hint.
+- Expanded the deterministic bilingual glossary with numerator and equivalent-fraction meanings.
+- Added concept-order, quantity-invariance, visual-state, and pre-lab answer-leak tests.

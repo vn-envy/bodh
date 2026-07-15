@@ -3,10 +3,16 @@ import test from "node:test";
 import { inferLearnerRegister, resolveBridgeTerms } from "../lib/hindi-bridge.ts";
 
 test("Bodh keeps the same bilingual teaching terms across learner registers", () => {
-  const terms = resolveBridgeTerms(["unit-fraction", "equal-groups"]);
+  const terms = resolveBridgeTerms(["unit-fraction", "denominator", "numerator", "equivalent-fraction", "equal-groups"]);
   assert.deepEqual(
     terms.map((term) => [term.hindi, term.english]),
-    [["इकाई भिन्न", "unit fraction"], ["बराबर समूह", "equal groups"]],
+    [
+      ["इकाई भिन्न", "unit fraction"],
+      ["हर", "denominator"],
+      ["अंश", "numerator"],
+      ["समतुल्य भिन्न", "equivalent fraction"],
+      ["बराबर समूह", "equal groups"],
+    ],
   );
   assert.equal(inferLearnerRegister("मुझे समझ नहीं आता"), "hindi");
   assert.equal(inferLearnerRegister("Mujhe fraction ka meaning nahi samajh aata"), "english");

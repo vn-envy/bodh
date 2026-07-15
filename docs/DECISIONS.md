@@ -71,3 +71,9 @@
 **Decision:** The live explainer uses learner-controlled semantic HTML/CSS motion. The same whole persists while partitions, labels, and equations change. Video renderers such as HyperFrames or Remotion remain an export path for a submission clip, not the learner interaction runtime.
 
 **Why:** The child must be able to pause, manipulate, read, and revisit each mathematical state. A rendered video is valuable for storytelling, but it would turn the core evidence-producing interaction into pixels and remove the learner’s control.
+
+## D-013 — Spoken depth, visual restraint
+
+**Decision:** Keep one short mathematical anchor on screen while Bodh speaks the deeper explanation in reviewed sentence-sized beats. Every beat owns one visible pointer target; play, pause, and replay control voice and pointing together. The runtime Speech route accepts authored IDs only, never learner text, and device speech plus a transcript remain available when OpenAI narration is unavailable.
+
+**Why:** A child should be able to listen closely without reading a paragraph and searching the artifact at the same time. Sentence-sized ownership makes the deictic language—“यह हिस्सा,” “नीचे का 4,” “यही मात्रा”—visually unambiguous, while the allowlist protects cost, privacy, mathematical correctness, and the pre-lab answer gate.

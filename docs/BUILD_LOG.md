@@ -59,3 +59,14 @@ The P1 demo is intentionally curated. Live model diagnosis, image intake, speech
 - Removed transfer and return placeholder answers; the completed transfer strip now appears only as a post-attempt hint.
 - Expanded the deterministic bilingual glossary with numerator and equivalent-fraction meanings.
 - Added concept-order, quantity-invariance, visual-state, and pre-lab answer-leak tests.
+
+## 2026-07-15 — Bodh narration and pointing pass
+
+- Replaced long on-screen mentor paragraphs with one short mathematical anchor per idea and an optional full transcript.
+- Authored the seven-stage explanation as 24 calm Hindi/Hinglish narration beats. Meaning always comes before the formal English curriculum term.
+- Bound every beat to exactly one code-native arrow and target halo on the persistent fraction artifact.
+- Added learner-controlled play, pause, resume, and replay. Audio completion—not a fixed animation timer—moves the explanation to its next beat.
+- Added an allowlisted Speech API route using the reviewed script only; it never accepts arbitrary learner text.
+- Added a no-key device Hindi voice fallback and visible AI-voice disclosure, while keeping the visual journey and transcript fully usable without sound.
+- Preserved the answer gate: the narrated explainer asks for the missing count but never speaks or renders it before the six-slot lab.
+- Added narration allowlist, fallback, cache, endpoint, pointer-target, concise-copy, and answer-leak regression tests.

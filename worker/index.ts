@@ -2,12 +2,16 @@
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
 import { handleDiagnosis, handleTrace } from "./diagnose";
+import { handleNarration } from "./narration";
 
 interface Env {
   ASSETS: Fetcher;
   DB?: D1Database;
   OPENAI_API_KEY?: string;
   BODH_MODEL?: string;
+  BODH_TTS_MODEL?: string;
+  BODH_TTS_VOICE?: string;
+  BODH_TTS_RUNTIME_ENABLED?: string;
   IMAGES: {
     input(stream: ReadableStream): {
       transform(options: Record<string, unknown>): {
@@ -39,6 +43,13 @@ const worker = {
     const traceMatch = url.pathname.match(/^\/api\/trace\/([0-9a-f-]{36})$/i);
     if (traceMatch) {
       return handleTrace(request, env, traceMatch[1]);
+    }
+
+    const narrationMatch = url.pathname.match(
+      /^\/api\/narration\/fractions-v1\/([a-z0-9-]+)\/([a-z0-9-]+)\.mp3$/i,
+    );
+    if (narrationMatch) {
+      return handleNarration(request, env, narrationMatch[1], narrationMatch[2]);
     }
 
     if (url.pathname === "/_vinext/image") {

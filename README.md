@@ -22,9 +22,14 @@ To enable the live diagnostic intake, put the following in an ignored `.env.loca
 ```bash
 OPENAI_API_KEY=your_key_here
 BODH_MODEL=gpt-5.6
+BODH_TTS_MODEL=gpt-4o-mini-tts-2025-12-15
+BODH_TTS_VOICE=marin
+BODH_TTS_RUNTIME_ENABLED=true
 ```
 
-The live path uses the Responses API with strict structured output and optional image input. It never receives an executable interface from the model, rejects ungrounded taxonomy IDs/evidence/notation changes, and falls back to the curated demo if validation fails.
+The live diagnostic path uses the Responses API with strict structured output and optional image input. It never receives an executable interface from the model, rejects ungrounded taxonomy IDs/evidence/notation changes, and falls back to the curated demo if validation fails.
+
+The deterministic fraction explainer also offers learner-triggered Bodh narration. Each reviewed Hindi/Hinglish sentence is allowlisted, paired with exactly one artifact pointer, and sent to the Speech API only after the learner asks to prepare it. Runtime synthesis is opt-in, canonical edge-cached, and single-flight protected. Without that runtime setting, the same script and arrow sequence use the device speech voice; the complete transcript remains available either way.
 
 ## Validate the foundation
 
@@ -56,11 +61,11 @@ It contains 32 synthetic cases: eight seeds, 16 reviewed development-gold cases,
 
 ## Current build boundary
 
-Included now: product scaffold, design tokens, canonical taxonomy slice, schemas, seed eval cases, traceability, and the complete deterministic hero journey: confirmation, concept path, probe, fraction-fit lab, transfer, return, and mastery receipt.
+Included now: product scaffold, design tokens, canonical taxonomy slice, schemas, seed eval cases, traceability, and the complete deterministic hero journey: confirmation, concept path, probe, narrated atomic explainer, fraction-fit lab, transfer, return, and mastery receipt.
 
 Included in the Phase 2 code path: typed Hindi/Hinglish reasoning, optional homework-photo context, constrained model diagnosis, one pre-teaching probe, privacy-minimised inspectable traces, and safe fallback.
 
-Still deliberately deferred: voice, open-ended teaching generation, learner accounts, long-term mastery claims, and a broad curriculum surface. The private deployment needs an `OPENAI_API_KEY` environment secret before the live path can be exercised.
+Still deliberately deferred: arbitrary generated teaching speech, learner accounts, long-term mastery claims, and a broad curriculum surface. The private deployment needs an `OPENAI_API_KEY` environment secret before OpenAI narration and the live diagnostic path can be exercised; the curated interaction and device-voice fallback do not require it.
 
 ## Privacy posture
 

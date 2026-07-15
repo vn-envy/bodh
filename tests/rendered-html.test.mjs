@@ -72,9 +72,16 @@ test("ships the atomic explainer without a pre-lab answer leak", async () => {
   ]);
   const html = `${component}\n${authoredSequence}\n${journey}`;
 
-  assert.match(html, /Fraction किस पूरे की बात कर रहा है/);
+  assert.match(html, /पहले, पूरा चुनो/);
   assert.match(html, /पूरी पट्टी चुनो/);
-  assert.match(html, /चलाकर देखें/);
+  assert.match(html, /Bodh से सुनो/);
+  assert.match(html, /AI से बनी Bodh की आवाज़ · इंसान की recording नहीं/);
+  assert.match(html, /Bodh की पूरी बात पढ़ें/);
+  assert.match(html, /atomic-pointer/);
+  assert.match(component, /const pointerBeat = activeBeat;/);
+  assert.match(component, /media\.onplaying = \(\) =>/);
+  assert.match(component, /utterance\.onstart = \(\) =>/);
+  assert.doesNotMatch(component, /pointerBeat = activeBeat \?\?/);
   assert.doesNotMatch(html, /six pieces of 1\/8/);
   assert.doesNotMatch(html, /placeholder="जैसे (4|6)"/);
 });

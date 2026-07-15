@@ -43,6 +43,7 @@ Every requirement has one owner phase, a verification method, and a visible demo
 | BODH-R06 | One persistent semantic HTML fraction bar transforms across every idea. The final explainer frame remains `3/4 ÷ 1/8 = ?`; the answer appears only after the exact six-slot lab predicate succeeds. |
 | BODH-R07 | The transfer begins without its completed strip or an answer-like placeholder. The deterministic visual hint appears only after an incorrect attempt. |
 | BODH-R09 | The committed bridge now includes `हर (denominator)`, `अंश (numerator)`, and `समतुल्य भिन्न (equivalent fraction)` with fixed child meanings. |
+| BODH-R02 | The seven-stage explainer has reviewed Hindi/Hinglish narration, learner-controlled pause/replay, one pointer target per spoken beat, a complete transcript, and a device Hindi voice fallback. The allowlisted Speech route never receives learner text. |
 
 ## Phase 2 implementation evidence
 

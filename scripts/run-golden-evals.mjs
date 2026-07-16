@@ -122,6 +122,7 @@ function isTimeoutError(error) {
 
 const TRANSIENT_FALLBACK_REASONS = new Set([
   "live_unavailable",
+  "model_response_invalid",
 ]);
 
 function transientResponse(httpStatus, body) {
@@ -264,6 +265,7 @@ async function scoreResponse(evalCase, body, httpStatus) {
   const expected = evalCase.expected;
   if (body?.mode === "curated_fallback") {
     const traceAudit = await inspectTrace(body.trace, "curated_fallback");
+    const fallbackReason = boundedMetadataId(body.reason);
     const checks = {
       safeFallback: httpStatus >= 200 && httpStatus < 300,
       expectedClarification: expected.disposition === "clarify_input",
@@ -274,6 +276,7 @@ async function scoreResponse(evalCase, body, httpStatus) {
         caseId: evalCase.caseId,
         mode: "curated_fallback",
         httpStatus,
+        fallbackReason,
         pass: Object.values(checks).every(Boolean),
         checks,
       },

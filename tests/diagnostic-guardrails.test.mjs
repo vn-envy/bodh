@@ -160,6 +160,7 @@ test("uses reviewed deterministic signals for answer-seeking and denominator-rul
   };
   const ruleOnlyOutput = applyDeterministicDiagnosticSignals(modelOutputFor(ruleOnlyInput), ruleOnlyInput);
   assert.equal(ruleOnlyOutput.hypotheses[0].id, "reciprocal-rule-without-meaning");
+  assert.equal(ruleOnlyOutput.hypotheses.length, 1);
   assert.deepEqual(validateDiagnosticGuardrails(ruleOnlyOutput, ruleOnlyInput), { ok: true });
 });
 

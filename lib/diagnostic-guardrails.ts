@@ -1,7 +1,7 @@
 import { isBridgeTermId, type BridgeTermId, type LearnerRegister } from "./hindi-bridge.ts";
 
 export const DIAGNOSTIC_SCHEMA_VERSION = "1.0.0";
-export const PROMPT_VERSION = "p3.5";
+export const PROMPT_VERSION = "p3.6";
 // Kept in lockstep with data/taxonomy/fractions-division.slice.json. This
 // runtime list lets the deterministic guardrail run in both the Worker and
 // Node's lightweight test loader without importing a JSON module there.
@@ -134,10 +134,7 @@ function reviewedSignal(
   return {
     ...output,
     candidateTopicIds: signal.topicIds,
-    hypotheses: [
-      signal.hypothesis,
-      ...output.hypotheses.filter((hypothesis) => hypothesis.id !== signal.hypothesis.id),
-    ].slice(0, 3),
+    hypotheses: [signal.hypothesis],
     probe: signal.probe,
   };
 }

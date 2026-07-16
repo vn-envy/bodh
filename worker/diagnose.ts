@@ -3,10 +3,10 @@ import taxonomy from "../data/taxonomy/fractions-division.slice.json";
 import {
   DIAGNOSTIC_SCHEMA_VERSION,
   PROMPT_VERSION,
+  applyDeterministicDiagnosticSignals,
   artifactForEquation,
   extractPreservedMathTokens,
   isDiagnosticOutputShape,
-  type DiagnosticOutput,
   type DiagnosticRequestInput,
   validateDiagnosticGuardrails,
 } from "../lib/diagnostic-guardrails";
@@ -323,7 +323,7 @@ export async function handleDiagnosis(request: Request, env: DiagnosticEnv) {
     return fallback(env, input, "model_response_invalid", model, inputFingerprint);
   }
 
-  const diagnostic: DiagnosticOutput = output;
+  const diagnostic = applyDeterministicDiagnosticSignals(output, input);
   const deterministicTokens = extractPreservedMathTokens(input);
   if (deterministicTokens.length > 0) {
     diagnostic.inputFidelity.preservedTokens = deterministicTokens;

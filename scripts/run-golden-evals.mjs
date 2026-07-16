@@ -81,7 +81,10 @@ const cases = requestedCaseIds.length > 0
   ? availableCases.filter((evalCase) => requestedCaseIdSet.has(evalCase.caseId))
   : availableCases;
 
-if (requestedCaseIdSet.size !== requestedCaseIds.length || cases.length !== requestedCaseIdSet.size) {
+if (
+  requestedCaseIds.length > 0 &&
+  (requestedCaseIdSet.size !== requestedCaseIds.length || cases.length !== requestedCaseIdSet.size)
+) {
   console.error("Every --case ID must be unique and present in the selected evaluation suites.");
   process.exit(1);
 }

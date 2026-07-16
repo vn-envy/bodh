@@ -1,7 +1,7 @@
 import { isBridgeTermId, type BridgeTermId, type LearnerRegister } from "./hindi-bridge.ts";
 
 export const DIAGNOSTIC_SCHEMA_VERSION = "1.0.0";
-export const PROMPT_VERSION = "p3.3";
+export const PROMPT_VERSION = "p3.4";
 // Kept in lockstep with data/taxonomy/fractions-division.slice.json. This
 // runtime list lets the deterministic guardrail run in both the Worker and
 // Node's lightweight test loader without importing a JSON module there.
@@ -88,6 +88,79 @@ export function extractPreservedMathTokens(input: DiagnosticRequestInput) {
     if (tokens.length === 12) break;
   }
   return tokens;
+}
+
+const ANSWER_SEEKING_PATTERNS = [
+  /\b(?:final\s+answer|answer|jawab|jawaab)\b[^.!?\n]{0,48}\b(?:bata(?:\s+do)?|de\s*do|dedo|do|chahiye)\b/i,
+  /(?:जवाब|उत्तर)[^।.!?\n]{0,48}(?:बता(?:\s+दो)?|दे\s*दो|दो|चाहिए)/u,
+];
+const DENOMINATOR_OPERATION_PATTERNS = [
+  /\bdenominator(?:\s+ko)?\s+(?:multiply|times|guna)\b/i,
+  /(?:हर|डिनॉमिनेटर)[^।.!?\n]{0,24}(?:गुणा|multiply)/iu,
+];
+
+function exactSignalEvidence(value: string, patterns: readonly RegExp[]) {
+  for (const pattern of patterns) {
+    const match = value.match(pattern);
+    if (match?.[0]) return match[0];
+  }
+  return null;
+}
+
+/**
+ * Promotes only high-precision, reviewed signals that are safer and more
+ * reliable than a generative guess. Everything else remains model-diagnosed.
+ */
+export function applyDeterministicDiagnosticSignals(
+  output: DiagnosticOutput,
+  input: DiagnosticRequestInput,
+): DiagnosticOutput {
+  const answerSeekingEvidence = exactSignalEvidence(input.learnerReasoning, ANSWER_SEEKING_PATTERNS);
+  if (answerSeekingEvidence) {
+    return {
+      ...output,
+      candidateTopicIds: ["mt_9Y96vxG_LH", "mt_GDG9_SZmsO"],
+      hypotheses: [
+        {
+          id: "answer-only-intent",
+          labelHi: "अभी learner ने final answer माँगा है; concept evidence के लिए एक छोटी जाँच चाहिए।",
+          evidence: { source: "reasoning", quote: answerSeekingEvidence },
+        },
+        {
+          id: "insufficient-evidence",
+          labelHi: "इस request से underlying समझ का भरोसेमंद निष्कर्ष अभी नहीं निकलता।",
+          evidence: { source: "reasoning", quote: answerSeekingEvidence },
+        },
+      ],
+      probe: {
+        questionHi: "Division के इस सवाल में तुम किस meaning से शुरू करोगे?",
+        optionLabelsHi: [
+          "दिए हुए हिस्से में divisor-size के कितने groups fit होते हैं",
+          "बस याद किया हुआ rule",
+          "अभी पक्का नहीं",
+        ],
+        distinction: "group-fit meaning, rule recall, और uncertainty में फर्क",
+      },
+    };
+  }
+
+  const denominatorEvidence = exactSignalEvidence(
+    input.learnerReasoning,
+    DENOMINATOR_OPERATION_PATTERNS,
+  );
+  if (!denominatorEvidence) return output;
+
+  return {
+    ...output,
+    hypotheses: [
+      {
+        id: "fraction-as-two-whole-numbers",
+        labelHi: "हर पर operation करने से fraction की quantity और दो whole numbers के rules आपस में मिल सकते हैं।",
+        evidence: { source: "reasoning", quote: denominatorEvidence },
+      },
+      ...output.hypotheses.filter((hypothesis) => hypothesis.id !== "fraction-as-two-whole-numbers"),
+    ].slice(0, 3),
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

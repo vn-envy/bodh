@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  applyDeterministicDiagnosticSignals,
   artifactForEquation,
   extractPreservedMathTokens,
   includesFinalAnswerToken,
@@ -78,6 +79,36 @@ test("derives bounded input-fidelity tokens deterministically from typed work", 
   });
   assert.deepEqual(tokens, ["3/4", "÷", "1/8", "=", "?", "×", "8/1", "24/4", "6"]);
   assert.equal(extractPreservedMathTokens({ problemText: "[photo only]", learnerReasoning: "" }).length, 0);
+});
+
+test("uses reviewed deterministic signals for answer-seeking and denominator-rule evidence", () => {
+  const answerInput = {
+    problemText: "3/4 ÷ 1/8 = ?",
+    learnerReasoning: "Bas final answer dedo, mujhe jaldi hai.",
+  };
+  const answerOutput = applyDeterministicDiagnosticSignals(validOutput(), answerInput);
+  assert.deepEqual(answerOutput.candidateTopicIds, ["mt_9Y96vxG_LH", "mt_GDG9_SZmsO"]);
+  assert.deepEqual(answerOutput.hypotheses.map((hypothesis) => hypothesis.id), [
+    "answer-only-intent",
+    "insufficient-evidence",
+  ]);
+  assert.equal(answerOutput.hypotheses[0].evidence.quote, "final answer dedo");
+  assert.equal(answerOutput.probe.optionLabelsHi.length, 3);
+  assert.deepEqual(validateDiagnosticGuardrails(answerOutput, answerInput), { ok: true });
+
+  const denominatorInput = {
+    problemText: "5/8 ÷ 1/16 = ?",
+    learnerReasoning: "Maine denominator multiply kar diya but not sure.",
+    visibleWorkText: "5/8 ÷ 1/16 = 5/128",
+  };
+  const modelOutput = validOutput();
+  modelOutput.inputFidelity.canonicalEquation = denominatorInput.problemText;
+  modelOutput.inputFidelity.preservedTokens = ["5/8", "÷", "1/16"];
+  modelOutput.hypotheses[0].evidence.quote = "not sure";
+  const denominatorOutput = applyDeterministicDiagnosticSignals(modelOutput, denominatorInput);
+  assert.equal(denominatorOutput.hypotheses[0].id, "fraction-as-two-whole-numbers");
+  assert.equal(denominatorOutput.hypotheses[0].evidence.quote, "denominator multiply");
+  assert.deepEqual(validateDiagnosticGuardrails(denominatorOutput, denominatorInput), { ok: true });
 });
 
 test("rejects equation mutation before a diagnosis can reach the learner", () => {

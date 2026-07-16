@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   artifactForEquation,
+  includesFinalAnswerToken,
   parseFractionDivision,
   validateDiagnosticGuardrails,
 } from "../lib/diagnostic-guardrails.ts";
@@ -48,6 +49,24 @@ test("parses bounded fraction division and recognizes the curated hero artifact"
   });
   assert.equal(artifactForEquation("3/4 ÷ 1/8 = ?"), "fraction-fit-3-4-div-1-8");
   assert.equal(artifactForEquation("2/3 ÷ 1/6 = ?"), null);
+  assert.deepEqual(parseFractionDivision("4 ÷ 1/5 = ?"), {
+    dividendNumerator: 4,
+    dividendDenominator: 1,
+    divisorNumerator: 1,
+    divisorDenominator: 5,
+  });
+  assert.deepEqual(parseFractionDivision("1/3 ÷ 4 = ?"), {
+    dividendNumerator: 1,
+    dividendDenominator: 3,
+    divisorNumerator: 4,
+    divisorDenominator: 1,
+  });
+  assert.deepEqual(parseFractionDivision("3/4 / 1/8 = ?"), {
+    dividendNumerator: 3,
+    dividendDenominator: 4,
+    divisorNumerator: 1,
+    divisorDenominator: 8,
+  });
 });
 
 test("rejects equation mutation before a diagnosis can reach the learner", () => {
@@ -86,10 +105,88 @@ test("rejects a model response that leaks the original final answer into a probe
   });
 });
 
+test("detects English and Hindi number-word answers from zero through twenty", () => {
+  const english = [
+    "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+    "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen",
+    "nineteen", "twenty",
+  ];
+  const hindi = [
+    "शून्य", "एक", "दो", "तीन", "चार", "पाँच", "छह", "सात", "आठ", "नौ", "दस", "ग्यारह",
+    "बारह", "तेरह", "चौदह", "पंद्रह", "सोलह", "सत्रह", "अठारह", "उन्नीस", "बीस",
+  ];
+
+  for (let answer = 0; answer <= 20; answer += 1) {
+    assert.equal(includesFinalAnswerToken(`The answer is ${english[answer]}.`, String(answer)), true);
+    assert.equal(includesFinalAnswerToken(`उत्तर ${hindi[answer]} है।`, String(answer)), true);
+  }
+  assert.equal(includesFinalAnswerToken("उत्तर ६ है।", "6"), true);
+  assert.equal(includesFinalAnswerToken("छहवाँ हिस्सा", "6"), false);
+  assert.equal(includesFinalAnswerToken("sixteen", "6"), false);
+  assert.equal(includesFinalAnswerToken("1/4", "4"), false);
+  assert.equal(includesFinalAnswerToken("one fourth", "4"), false);
+});
+
+test("detects numeric, English, and Hindi fraction answer forms", () => {
+  for (const phrase of ["३⁄२", "three halves", "three over two", "तीन बटे दो", "डेढ़"]) {
+    assert.equal(includesFinalAnswerToken(`उत्तर ${phrase} है।`, "3/2"), true, phrase);
+  }
+  assert.equal(includesFinalAnswerToken("उत्तर ½ है।", "1/2"), true);
+  for (const phrase of ["five halves", "पाँच बटे दो", "ढाई", "two and a half", "दो और आधा"]) {
+    assert.equal(includesFinalAnswerToken(`उत्तर ${phrase} है।`, "5/2"), true, phrase);
+  }
+  assert.equal(includesFinalAnswerToken("एक twelfth कितना छोटा है?", "1/12"), true);
+  assert.equal(includesFinalAnswerToken("three quarters", "3/2"), false);
+});
+
+test("rejects localized answer words through the complete diagnostic guard", () => {
+  for (const leakedAnswer of ["शायद जवाब छह है।", "Maybe the answer is six."]) {
+    const output = validOutput();
+    output.hypotheses[0].labelHi = leakedAnswer;
+    assert.deepEqual(validateDiagnosticGuardrails(output, input), {
+      ok: false,
+      reason: "direct_answer_leak",
+    });
+  }
+});
+
+test("allows an exact learner quote to contain an answer the learner already supplied", () => {
+  const answerInput = {
+    problemText: "2/3 ÷ 1/6 = ?",
+    learnerReasoning: "Answer 4 hai because flip karte hain, bas yaad hai.",
+  };
+  const output = validOutput();
+  output.inputFidelity.canonicalEquation = answerInput.problemText;
+  output.inputFidelity.preservedTokens = ["2/3", "÷", "1/6", "?"];
+  output.hypotheses[0].evidence.quote = "Answer 4 hai";
+  output.probe.optionLabelsHi = ["groups", "rule", "पक्का नहीं"];
+  assert.deepEqual(validateDiagnosticGuardrails(output, answerInput), { ok: true });
+});
+
+test("accepts bounded synthetic visible work and rejects an invented visible-work quote", () => {
+  const workInput = {
+    ...input,
+    visibleWorkText: "3/4 × 8/1 = 24/4",
+  };
+  const output = validOutput();
+  output.inputFidelity.preservedTokens.push("24/4");
+  output.hypotheses[0].evidence = { source: "visible_work", quote: "24/4" };
+  assert.deepEqual(validateDiagnosticGuardrails(output, workInput), { ok: true });
+  output.hypotheses[0].evidence.quote = "invented work";
+  assert.deepEqual(validateDiagnosticGuardrails(output, workInput), {
+    ok: false,
+    reason: "visible_work_evidence_not_exact",
+  });
+});
+
 test("rejects malformed or unbounded mathematical notation", () => {
   assert.equal(parseFractionDivision("3/4 + 1/8 = ?"), null);
   assert.equal(parseFractionDivision("3/0 ÷ 1/8 = ?"), null);
   assert.equal(parseFractionDivision("1000/4 ÷ 1/8 = ?"), null);
+  assert.equal(parseFractionDivision("3/4/1/8 = ?"), null);
+  assert.equal(parseFractionDivision("3 / 4 / 1 / 8 = ?"), null);
+  assert.equal(parseFractionDivision("4 / 1/5 = ?"), null);
+  assert.equal(parseFractionDivision("3/4 / 8 = ?"), null);
 });
 
 test("rejects invented Hindi bridge terms", () => {

@@ -1,7 +1,7 @@
 import { isBridgeTermId, type BridgeTermId, type LearnerRegister } from "./hindi-bridge.ts";
 
 export const DIAGNOSTIC_SCHEMA_VERSION = "1.0.0";
-export const PROMPT_VERSION = "p3.1";
+export const PROMPT_VERSION = "p3.3";
 // Kept in lockstep with data/taxonomy/fractions-division.slice.json. This
 // runtime list lets the deterministic guardrail run in both the Worker and
 // Node's lightweight test loader without importing a JSON module there.
@@ -35,6 +35,7 @@ const EVIDENCE_SOURCES = new Set(["problem", "reasoning", "visible_work"]);
 export type DiagnosticRequestInput = {
   problemText: string;
   learnerReasoning: string;
+  visibleWorkText?: string;
   imageDataUrl?: string;
 };
 
@@ -164,15 +165,20 @@ export function isDiagnosticOutputShape(value: unknown): value is DiagnosticOutp
   );
 }
 
-const FRACTION_DIVISION = /^\s*(\d{1,3})\s*\/\s*(\d{1,3})\s*(?:÷|\/|divided\s+by)\s*(\d{1,3})\s*\/\s*(\d{1,3})\s*(?:=\s*\?)?\s*$/i;
+const FRACTION_DIVISION = /^\s*(\d{1,3})(?:\s*\/\s*(\d{1,3}))?\s*(?:÷|divided\s+by)\s*(\d{1,3})(?:\s*\/\s*(\d{1,3}))?\s*(?:=\s*\?)?\s*$/i;
+// A plain slash is accepted only when both operands use compact fraction
+// notation and the division slash is surrounded by whitespace. That keeps
+// `3/4 / 1/8` useful without guessing at ambiguous chains such as `3/4/1/8`.
+const SPACED_FRACTION_SLASH_DIVISION = /^\s*(\d{1,3})\/(\d{1,3})\s+\/\s+(\d{1,3})\/(\d{1,3})\s*(?:=\s*\?)?\s*$/;
 
 export function parseFractionDivision(value: string): FractionDivision | null {
-  const match = value.match(FRACTION_DIVISION);
+  const match = value.match(FRACTION_DIVISION) ?? value.match(SPACED_FRACTION_SLASH_DIVISION);
   if (!match) return null;
 
-  const [dividendNumerator, dividendDenominator, divisorNumerator, divisorDenominator] = match
-    .slice(1)
-    .map(Number);
+  const dividendNumerator = Number(match[1]);
+  const dividendDenominator = match[2] ? Number(match[2]) : 1;
+  const divisorNumerator = Number(match[3]);
+  const divisorDenominator = match[4] ? Number(match[4]) : 1;
 
   if (
     ![dividendNumerator, dividendDenominator, divisorNumerator, divisorDenominator].every(
@@ -203,6 +209,196 @@ function greatestCommonDivisor(left: number, right: number): number {
   return a;
 }
 
+const ENGLISH_NUMBER_WORDS: Readonly<Record<number, readonly string[]>> = {
+  0: ["zero"],
+  1: ["one"],
+  2: ["two"],
+  3: ["three"],
+  4: ["four"],
+  5: ["five"],
+  6: ["six"],
+  7: ["seven"],
+  8: ["eight"],
+  9: ["nine"],
+  10: ["ten"],
+  11: ["eleven"],
+  12: ["twelve"],
+  13: ["thirteen"],
+  14: ["fourteen"],
+  15: ["fifteen"],
+  16: ["sixteen"],
+  17: ["seventeen"],
+  18: ["eighteen"],
+  19: ["nineteen"],
+  20: ["twenty"],
+};
+
+const HINDI_NUMBER_WORDS: Readonly<Record<number, readonly string[]>> = {
+  0: ["शून्य", "ज़ीरो", "जीरो"],
+  1: ["एक"],
+  2: ["दो"],
+  3: ["तीन"],
+  4: ["चार"],
+  5: ["पाँच", "पांच"],
+  6: ["छह", "छः", "छ:"],
+  7: ["सात"],
+  8: ["आठ"],
+  9: ["नौ"],
+  10: ["दस"],
+  11: ["ग्यारह"],
+  12: ["बारह"],
+  13: ["तेरह"],
+  14: ["चौदह"],
+  15: ["पंद्रह", "पन्द्रह"],
+  16: ["सोलह"],
+  17: ["सत्रह"],
+  18: ["अठारह"],
+  19: ["उन्नीस"],
+  20: ["बीस"],
+};
+
+const ENGLISH_FRACTION_WORDS: Readonly<Record<number, readonly string[]>> = {
+  2: ["half", "halves"],
+  3: ["third", "thirds"],
+  4: ["quarter", "quarters", "fourth", "fourths"],
+  5: ["fifth", "fifths"],
+  6: ["sixth", "sixths"],
+  7: ["seventh", "sevenths"],
+  8: ["eighth", "eighths"],
+  9: ["ninth", "ninths"],
+  10: ["tenth", "tenths"],
+  11: ["eleventh", "elevenths"],
+  12: ["twelfth", "twelfths"],
+  13: ["thirteenth", "thirteenths"],
+  14: ["fourteenth", "fourteenths"],
+  15: ["fifteenth", "fifteenths"],
+  16: ["sixteenth", "sixteenths"],
+  17: ["seventeenth", "seventeenths"],
+  18: ["eighteenth", "eighteenths"],
+  19: ["nineteenth", "nineteenths"],
+  20: ["twentieth", "twentieths"],
+};
+
+const HINDI_FRACTION_WORDS: Readonly<Record<number, readonly string[]>> = {
+  2: ["आधा", "आधी", "आधे", "अर्ध"],
+  3: ["तिहाई", "तिहाइयाँ", "तिहाइयां"],
+  4: ["चौथाई", "चौथाइयाँ", "चौथाइयां"],
+};
+
+const HINDI_SPECIAL_FRACTIONS: Readonly<Record<string, readonly string[]>> = {
+  "1/2": ["आधा", "आधी", "अर्ध"],
+  "1/4": ["चौथाई"],
+  "3/4": ["पौन"],
+  "3/2": ["डेढ़", "डेढ"],
+  "5/2": ["ढाई"],
+};
+
+function normalizeAnswerText(value: string) {
+  return value
+    .normalize("NFKC")
+    .replace(/\p{Cf}/gu, "")
+    .replace(/[०-९]/g, (digit) => String("०१२३४५६७८९".indexOf(digit)))
+    .replace(/[⁄∕]/g, "/")
+    .toLocaleLowerCase("en");
+}
+
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function numberForms(value: number) {
+  return [
+    String(value),
+    ...(ENGLISH_NUMBER_WORDS[value] ?? []),
+    ...(HINDI_NUMBER_WORDS[value] ?? []),
+  ];
+}
+
+function alternativesPattern(values: readonly string[]) {
+  const alternatives = [...new Set(values.map(normalizeAnswerText))]
+    .sort((left, right) => right.length - left.length)
+    .map(escapeRegex)
+    .join("|");
+  return alternatives ? `(?:${alternatives})` : "";
+}
+
+function hasUnicodeBoundedPattern(value: string, pattern: string) {
+  if (!pattern) return false;
+  const tokenCharacters = "\\p{L}\\p{M}\\p{N}_/";
+  return new RegExp(`(^|[^${tokenCharacters}])(?:${pattern})(?=$|[^${tokenCharacters}])`, "iu").test(value);
+}
+
+/**
+ * Detects a final answer in model-authored text without treating a digit inside
+ * another number or fraction as that answer. Besides ASCII/Devanagari notation,
+ * this covers English and Hindi number words through 20 and common spoken
+ * fraction forms such as “five halves”, “पाँच बटे दो”, and “ढाई”.
+ */
+export function includesFinalAnswerToken(value: string, answer: string) {
+  const normalizedValue = normalizeAnswerText(value);
+  const normalizedAnswer = normalizeAnswerText(answer).trim();
+  const match = normalizedAnswer.match(/^(\d+)(?:\s*\/\s*(\d+))?$/);
+  if (!match) return false;
+
+  let numerator = Number(match[1]);
+  let denominator = match[2] ? Number(match[2]) : 1;
+  if (!Number.isSafeInteger(numerator) || !Number.isSafeInteger(denominator) || denominator === 0) return false;
+
+  const divisor = greatestCommonDivisor(numerator, denominator);
+  numerator /= divisor;
+  denominator /= divisor;
+
+  if (denominator === 1) {
+    return hasUnicodeBoundedPattern(normalizedValue, alternativesPattern(numberForms(numerator)));
+  }
+
+  const numeratorPattern = alternativesPattern(numberForms(numerator));
+  const denominatorPattern = alternativesPattern(numberForms(denominator));
+  const separator = "[\\s\\p{Pd}]+";
+  const patterns = [
+    `${escapeRegex(String(numerator))}\\s*\/\\s*${escapeRegex(String(denominator))}`,
+    `${numeratorPattern}${separator}(?:over|divided${separator}by|बटे|बटा|भाग)${separator}${denominatorPattern}`,
+  ];
+
+  const denominatorWords = [
+    ...(ENGLISH_FRACTION_WORDS[denominator] ?? []),
+    ...(HINDI_FRACTION_WORDS[denominator] ?? []),
+  ];
+  if (denominatorWords.length > 0) {
+    const denominatorWordPattern = alternativesPattern(denominatorWords);
+    patterns.push(`${numeratorPattern}${separator}(?:${denominatorWordPattern})`);
+    if (numerator === 1) patterns.push(denominatorWordPattern);
+  }
+
+  const reducedKey = `${numerator}/${denominator}`;
+  const specialHindiForms = HINDI_SPECIAL_FRACTIONS[reducedKey] ?? [];
+  if (specialHindiForms.length > 0) patterns.push(alternativesPattern(specialHindiForms));
+
+  const whole = Math.floor(numerator / denominator);
+  const remainder = numerator % denominator;
+  if (whole > 0 && remainder > 0) {
+    const wholePattern = alternativesPattern(numberForms(whole));
+    const remainderPattern = alternativesPattern(numberForms(remainder));
+    if (denominatorWords.length > 0) {
+      const denominatorWordPattern = alternativesPattern(denominatorWords);
+      const englishRemainder = remainder === 1 ? `(?:a|${remainderPattern})` : remainderPattern;
+      patterns.push(`${wholePattern}${separator}and${separator}${englishRemainder}${separator}(?:${denominatorWordPattern})`);
+      patterns.push(`${wholePattern}${separator}और${separator}(?:${remainderPattern}${separator})?(?:${denominatorWordPattern})`);
+    }
+    patterns.push(
+      `${wholePattern}${separator}(?:and|और)${separator}${remainderPattern}${separator}(?:over|divided${separator}by|बटे|बटा|भाग)${separator}${denominatorPattern}`,
+    );
+    if (denominator === 2 && remainder === 1) {
+      const hindiWholeWords = HINDI_NUMBER_WORDS[whole] ?? [];
+      if (hindiWholeWords.length > 0) {
+        patterns.push(`साढ़े${separator}(?:${alternativesPattern(hindiWholeWords)})`);
+      }
+    }
+  }
+
+  return patterns.some((pattern) => hasUnicodeBoundedPattern(normalizedValue, pattern));
+}
+
 function finalAnswerToken(equation: string) {
   const parsed = parseFractionDivision(equation);
   if (!parsed) return null;
@@ -213,13 +409,6 @@ function finalAnswerToken(equation: string) {
   const reducedNumerator = numerator / divisor;
   const reducedDenominator = denominator / divisor;
   return reducedDenominator === 1 ? String(reducedNumerator) : `${reducedNumerator}/${reducedDenominator}`;
-}
-
-function includesFinalAnswer(value: string, answer: string) {
-  const devanagari = answer.replace(/\d/g, (digit) => "०१२३४५६७८९"[Number(digit)]);
-  const escaped = answer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const escapedDevanagari = devanagari.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(^|[^0-9०-९])(?:${escaped}|${escapedDevanagari})(?=$|[^0-9०-९])`).test(value);
 }
 
 function hasExactQuote(source: string, quote: string) {
@@ -247,10 +436,8 @@ export function validateDiagnosticGuardrails(
     return { ok: false, reason: "equation_not_preserved" };
   }
 
-  if (
-    input.problemText.trim() &&
-    output.inputFidelity.preservedTokens.some((token) => !input.problemText.includes(token))
-  ) {
+  const inspectableInput = `${input.problemText}\n${input.visibleWorkText ?? ""}`;
+  if (inspectableInput.trim() && output.inputFidelity.preservedTokens.some((token) => !inspectableInput.includes(token))) {
     return { ok: false, reason: "token_not_preserved" };
   }
 
@@ -261,12 +448,12 @@ export function validateDiagnosticGuardrails(
   const answerToken = finalAnswerToken(output.inputFidelity.canonicalEquation);
   if (!answerToken) return { ok: false, reason: "unsupported_math" };
   const modelWords = [
-    ...output.hypotheses.flatMap((hypothesis) => [hypothesis.labelHi, hypothesis.evidence.quote]),
+    ...output.hypotheses.map((hypothesis) => hypothesis.labelHi),
     output.probe.questionHi,
     output.probe.distinction,
     ...output.probe.optionLabelsHi,
   ];
-  if (modelWords.some((word) => includesFinalAnswer(word, answerToken))) {
+  if (modelWords.some((word) => includesFinalAnswerToken(word, answerToken))) {
     return { ok: false, reason: "direct_answer_leak" };
   }
 
@@ -281,8 +468,15 @@ export function validateDiagnosticGuardrails(
     if (hypothesis.evidence.source === "reasoning" && !hasExactQuote(input.learnerReasoning, hypothesis.evidence.quote)) {
       return { ok: false, reason: "reasoning_evidence_not_exact" };
     }
-    if (hypothesis.evidence.source === "visible_work" && !input.imageDataUrl) {
+    if (hypothesis.evidence.source === "visible_work" && !input.imageDataUrl && !input.visibleWorkText) {
       return { ok: false, reason: "missing_visible_work" };
+    }
+    if (
+      hypothesis.evidence.source === "visible_work" &&
+      input.visibleWorkText &&
+      !hasExactQuote(input.visibleWorkText, hypothesis.evidence.quote)
+    ) {
+      return { ok: false, reason: "visible_work_evidence_not_exact" };
     }
   }
 

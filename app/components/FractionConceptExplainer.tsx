@@ -14,8 +14,12 @@ import {
 import { type LocalizedText, type NarrationLanguage, NARRATION_SPEECH_LOCALE } from "../../lib/narration-language";
 import { useNarrationLanguage } from "./NarrationLanguageToggle";
 
+export type FractionConceptStageId = (typeof FRACTION_CONCEPT_STAGES)[number]["id"];
+
 type FractionConceptExplainerProps = {
   onFinish: () => void;
+  initialStageId?: FractionConceptStageId;
+  onStageEvidence?: (stageId: FractionConceptStageId) => void;
 };
 
 type VoiceState = "idle" | "loading" | "ready" | "playing" | "paused" | "ended" | "unavailable";
@@ -25,12 +29,13 @@ type ActivePlayer =
   | { kind: "audio"; media: HTMLAudioElement; run: number; resolve: (result: PlaybackResult) => void }
   | { kind: "speech"; utterance: SpeechSynthesisUtterance; run: number; resolve: (result: PlaybackResult) => void };
 type PreparedVoice = {
-  stageId: string;
+  stageId: FractionConceptStageId;
   language: NarrationLanguage;
   source: Exclude<VoiceSource, null>;
   urls?: string[];
 };
 type PointerPosition = { x: number; y: number; side: "top" | "right" | "bottom" | "left" };
+type ProgressState = "not-repeated" | "complete" | "active" | "future";
 
 const hiEn = (hi: string, en: string): LocalizedText => ({ hi, en });
 
@@ -353,10 +358,42 @@ function detachPlayerHandlers(player: ActivePlayer) {
   }
 }
 
-export function FractionConceptExplainer({ onFinish }: FractionConceptExplainerProps) {
+function initialIndexFor(stageId: FractionConceptStageId | undefined) {
+  if (!stageId) return 0;
+  const index = FRACTION_CONCEPT_STAGES.findIndex((stage) => stage.id === stageId);
+  return index >= 0 ? index : 0;
+}
+
+function progressLabel(
+  state: ProgressState,
+  index: number,
+  language: NarrationLanguage,
+) {
+  const number = index + 1;
+  if (language === "hi") {
+    if (state === "not-repeated") return `बात ${number}: इस रास्ते में दोहराई नहीं गई; पूरी journey में review उपलब्ध है`;
+    if (state === "complete") return `बात ${number}: evidence के साथ पूरी हुई`;
+    if (state === "active") return `बात ${number}: अभी चल रही है`;
+    return `बात ${number}: आगे आएगी`;
+  }
+  if (state === "not-repeated") return `Concept step ${number}: not repeated on this route; review is available in the full journey`;
+  if (state === "complete") return `Concept step ${number}: completed with evidence`;
+  if (state === "active") return `Concept step ${number}: current`;
+  return `Concept step ${number}: upcoming`;
+}
+
+export function FractionConceptExplainer({
+  onFinish,
+  initialStageId,
+  onStageEvidence,
+}: FractionConceptExplainerProps) {
   const language = useNarrationLanguage();
-  const [stageIndex, setStageIndex] = useState(0);
+  const [entryStageIndex] = useState(() => initialIndexFor(initialStageId));
+  const [stageIndex, setStageIndex] = useState(entryStageIndex);
   const [proved, setProved] = useState(false);
+  const [evidencedStageIds, setEvidencedStageIds] = useState<ReadonlySet<FractionConceptStageId>>(
+    () => new Set(),
+  );
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [voiceSource, setVoiceSource] = useState<VoiceSource>(null);
   const [activeBeatIndex, setActiveBeatIndex] = useState(-1);
@@ -394,6 +431,18 @@ export function FractionConceptExplainer({ onFinish }: FractionConceptExplainerP
   const preparedVoiceRef = useRef<PreparedVoice | null>(null);
   const stageIdRef = useRef(`${language}/${stage.id}`);
   const mountedRef = useRef(true);
+  const reportedEvidenceRef = useRef(new Set<FractionConceptStageId>());
+
+  const markStageEvidence = useCallback((stageId: FractionConceptStageId) => {
+    if (reportedEvidenceRef.current.has(stageId)) return;
+    reportedEvidenceRef.current.add(stageId);
+    setEvidencedStageIds((current) => {
+      const next = new Set(current);
+      next.add(stageId);
+      return next;
+    });
+    onStageEvidence?.(stageId);
+  }, [onStageEvidence]);
 
   const settlePlayer = useCallback((player: ActivePlayer, result: PlaybackResult) => {
     if (playerRef.current !== player || player.run !== runRef.current) return;
@@ -552,14 +601,16 @@ export function FractionConceptExplainer({ onFinish }: FractionConceptExplainerP
       }
     }
 
-    if (run === runRef.current) setVoiceState("ended");
-  }, [cancelPlayer, language, narration, playAudio, playDeviceSpeech, stage.id]);
+    if (run === runRef.current) {
+      markStageEvidence(stage.id);
+      setVoiceState("ended");
+    }
+  }, [cancelPlayer, language, markStageEvidence, narration, playAudio, playDeviceSpeech, stage.id]);
 
   const prepareNarration = useCallback(async () => {
     const run = runRef.current + 1;
     runRef.current = run;
     cancelPlayer();
-    setProved(true);
     setActiveBeatIndex(-1);
     setVoiceSource(null);
     setVoiceState("loading");
@@ -636,7 +687,7 @@ export function FractionConceptExplainer({ onFinish }: FractionConceptExplainerP
       setProved(false);
       return;
     }
-    if (stageIndex > 0) {
+    if (stageIndex > entryStageIndex) {
       setStageIndex((current) => current - 1);
       setProved(true);
     }
@@ -645,9 +696,11 @@ export function FractionConceptExplainer({ onFinish }: FractionConceptExplainerP
   const takePrimaryAction = () => {
     stopNarration();
     if (!proved) {
+      markStageEvidence(stage.id);
       setProved(true);
       return;
     }
+    markStageEvidence(stage.id);
     if (isLastStage) {
       onFinish();
       return;
@@ -709,7 +762,11 @@ export function FractionConceptExplainer({ onFinish }: FractionConceptExplainerP
   }, [cancelPlayer]);
 
   return (
-    <section className="atomic-explainer" aria-label={language === "hi" ? "फ्रैक्शन concept explainer" : "Fraction concept explainer"}>
+    <section
+      className="atomic-explainer"
+      aria-label={language === "hi" ? "फ्रैक्शन concept explainer" : "Fraction concept explainer"}
+      lang={language}
+    >
       <header className="atomic-explainer-header">
         <div className="atomic-motion-note">
           <span aria-hidden="true" />
@@ -753,12 +810,26 @@ export function FractionConceptExplainer({ onFinish }: FractionConceptExplainerP
 
       <ol className="atomic-progress" aria-label={`${language === "hi" ? "Concept बात" : "Concept step"} ${stageIndex + 1} ${language === "hi" ? "में से" : "of"} ${FRACTION_CONCEPT_STAGES.length}`}>
         {FRACTION_CONCEPT_STAGES.map((conceptStage, index) => {
-          const state = index < stageIndex || (index === stageIndex && proved)
-            ? "complete"
-            : index === stageIndex
-              ? "active"
-              : "future";
-          return <li className={`atomic-progress-${state}`} key={conceptStage.id}><span>{index + 1}</span></li>;
+          const state: ProgressState = index < entryStageIndex
+            ? "not-repeated"
+            : evidencedStageIds.has(conceptStage.id)
+              ? "complete"
+              : index === stageIndex
+                ? "active"
+                : "future";
+          const isCurrent = index === stageIndex;
+          return (
+            <li
+              className={`${state === "complete" && isCurrent ? "atomic-progress-active " : ""}atomic-progress-${state}`}
+              data-progress-state={state}
+              aria-current={isCurrent ? "step" : undefined}
+              aria-label={progressLabel(state, index, language)}
+              title={progressLabel(state, index, language)}
+              key={conceptStage.id}
+            >
+              <span aria-hidden="true">{state === "not-repeated" ? "↺" : index + 1}</span>
+            </li>
+          );
         })}
       </ol>
 
@@ -809,7 +880,12 @@ export function FractionConceptExplainer({ onFinish }: FractionConceptExplainerP
       </div>
 
       <footer className="atomic-actions">
-        <button className="atomic-back" type="button" onClick={goBack} disabled={stageIndex === 0 && !proved}>
+        <button
+          className="atomic-back"
+          type="button"
+          onClick={goBack}
+          disabled={stageIndex === entryStageIndex && !proved}
+        >
           <span aria-hidden="true">←</span> {language === "hi" ? "पीछे" : "Back"}
         </button>
         {(voiceState === "playing" || voiceState === "paused" || voiceState === "loading") && (

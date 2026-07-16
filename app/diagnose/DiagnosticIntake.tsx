@@ -2,8 +2,16 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState } from "react";
+import {
+  ADAPTIVE_SESSION_STORAGE_KEY,
+  adaptiveProbeById,
+  serializeAdaptiveSessionPayload,
+  sessionPayloadForSelection,
+  type AdaptiveProbeId,
+} from "../../lib/adaptive-repair";
+import type { NarrationLanguage } from "../../lib/narration-language";
 import { BodhMark } from "../components/BodhMark";
-import { NarrationLanguageToggle } from "../components/NarrationLanguageToggle";
+import { NarrationLanguageToggle, useNarrationLanguage } from "../components/NarrationLanguageToggle";
 
 type Trace = {
   id: string;
@@ -24,6 +32,7 @@ type LiveResult = {
       terms: Array<{ id: string; hindi: string; english: string; childMeaningHi: string }>;
     };
     probe: { questionHi: string; optionLabelsHi: string[]; distinction: string };
+    adaptiveProbeId: AdaptiveProbeId | null;
   };
   next: { kind: "curated_artifact" | "curated_demo"; href: string; artifactKey?: string };
   trace: Trace;
@@ -50,6 +59,7 @@ function dataUrlFor(file: File) {
 }
 
 export function DiagnosticIntake() {
+  const language = useNarrationLanguage();
   const [problemText, setProblemText] = useState("");
   const [learnerReasoning, setLearnerReasoning] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -58,7 +68,24 @@ export function DiagnosticIntake() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedProbe, setSelectedProbe] = useState<string | null>(null);
+  const [notationConfirmed, setNotationConfirmed] = useState(false);
   const resultHeadingRef = useRef<HTMLHeadingElement>(null);
+  const problemInputRef = useRef<HTMLInputElement>(null);
+  const liveDiagnosis = result?.mode === "live" ? result.diagnosis : null;
+  const adaptiveProbe = liveDiagnosis ? adaptiveProbeById(liveDiagnosis.adaptiveProbeId) : null;
+  const probeLanguage: NarrationLanguage = adaptiveProbe ? language : "hi";
+  const needsNotationConfirmation = Boolean(
+    imageFile && liveDiagnosis && liveDiagnosis.inputFidelity.confidence < 0.85,
+  );
+  const canUseProbe = !needsNotationConfirmation || notationConfirmed;
+  const visibleProbe = liveDiagnosis
+    ? {
+        question: adaptiveProbe?.question[probeLanguage] ?? liveDiagnosis.probe.questionHi,
+        options: adaptiveProbe
+          ? adaptiveProbe.options.map((option) => ({ id: option.id, label: option.label[probeLanguage] }))
+          : liveDiagnosis.probe.optionLabelsHi.map((label, index) => ({ id: `generated-${index}`, label })),
+      }
+    : null;
 
   useEffect(() => {
     if (result) resultHeadingRef.current?.focus();
@@ -84,6 +111,12 @@ export function DiagnosticIntake() {
     setError("");
     setResult(null);
     setSelectedProbe(null);
+    setNotationConfirmed(false);
+    try {
+      window.sessionStorage.removeItem(ADAPTIVE_SESSION_STORAGE_KEY);
+    } catch {
+      // A fresh diagnosis still works when session storage is unavailable.
+    }
 
     if (!problemText.trim() && !imageFile) {
       setError("सवाल लिखो या उसकी photo जोड़ो।");
@@ -109,6 +142,29 @@ export function DiagnosticIntake() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const prepareLearningHandoff = () => {
+    if (!adaptiveProbe || !selectedProbe || !canUseProbe) return;
+    const payload = sessionPayloadForSelection(adaptiveProbe.id, selectedProbe);
+    const serialized = serializeAdaptiveSessionPayload(payload);
+    if (!serialized) return;
+    try {
+      window.sessionStorage.setItem(ADAPTIVE_SESSION_STORAGE_KEY, serialized);
+    } catch {
+      // The destination safely falls back to the full curated journey.
+    }
+  };
+
+  const toggleNotationConfirmation = () => {
+    if (notationConfirmed) setSelectedProbe(null);
+    setNotationConfirmed(!notationConfirmed);
+  };
+
+  const editNotation = () => {
+    setNotationConfirmed(false);
+    setSelectedProbe(null);
+    window.requestAnimationFrame(() => problemInputRef.current?.focus());
   };
 
   return (
@@ -149,6 +205,7 @@ export function DiagnosticIntake() {
               <span>Maths का सवाल</span>
               <small>जैसे 3/4 ÷ 1/8 = ?</small>
               <input
+                ref={problemInputRef}
                 id="problem-text"
                 name="problemText"
                 value={problemText}
@@ -210,6 +267,34 @@ export function DiagnosticIntake() {
                 <small>Photo से पढ़ा गया है—आगे बढ़ने से पहले notation check कर लेना।</small>
               )}
             </div>
+            {needsNotationConfirmation && (
+              <section
+                className="notation-confirmation"
+                aria-labelledby="notation-confirmation-title"
+                lang={language}
+              >
+                <p id="notation-confirmation-title">
+                  {language === "hi"
+                    ? "Photo से पढ़ी notation पर confidence कम है। छोटी जाँच से पहले ऊपर की equation को ध्यान से मिलाएँ।"
+                    : "Bodh is less confident about the notation read from this photo. Check the equation before the short probe."}
+                </p>
+                <div className="notation-confirmation-actions">
+                  <button
+                    className={notationConfirmed ? "notation-confirmed" : ""}
+                    type="button"
+                    aria-pressed={notationConfirmed}
+                    onClick={toggleNotationConfirmation}
+                  >
+                    {notationConfirmed
+                      ? language === "hi" ? "✓ Notation confirm हो गई" : "✓ Notation confirmed"
+                      : language === "hi" ? "हाँ, notation बिल्कुल सही है" : "Yes, the notation is exact"}
+                  </button>
+                  <button type="button" onClick={editNotation}>
+                    {language === "hi" ? "सवाल लिखकर ठीक करूँ" : "I’ll type a correction"}
+                  </button>
+                </div>
+              </section>
+            )}
 
             <div className="diagnosis-section">
               <span className="reasoning-label">जिस idea को check करें</span>
@@ -236,37 +321,73 @@ export function DiagnosticIntake() {
               <div className="bridge-terms">
                 {result.diagnosis.languageBridge.terms.map((term) => (
                   <article key={term.id}>
-                    <strong>{term.hindi}</strong>
-                    <span>{term.english}</span>
-                    <p>{term.childMeaningHi}</p>
+                    <strong lang="hi">{term.hindi}</strong>
+                    <span lang="en">{term.english}</span>
+                    <p lang="hi">{term.childMeaningHi}</p>
                   </article>
                 ))}
               </div>
             </section>
 
             <section className="live-probe" aria-labelledby="live-probe-title">
-              <span className="reasoning-label">पहले एक छोटी जाँच</span>
-              <h3 id="live-probe-title">{result.diagnosis.probe.questionHi}</h3>
-              <div className="live-probe-options" role="group" aria-label={result.diagnosis.probe.questionHi}>
-                {result.diagnosis.probe.optionLabelsHi.map((option) => (
+              <span className="reasoning-label" lang="hi">पहले एक छोटी जाँच</span>
+              <h3 id="live-probe-title" lang={probeLanguage}>{visibleProbe?.question}</h3>
+              <div
+                className="live-probe-options"
+                role="group"
+                aria-label={visibleProbe?.question}
+                aria-describedby={needsNotationConfirmation && !notationConfirmed ? "notation-confirmation-title" : undefined}
+                lang={probeLanguage}
+              >
+                {visibleProbe?.options.map((option) => (
                   <button
-                    className={selectedProbe === option ? "live-probe-selected" : ""}
+                    className={selectedProbe === option.id ? "live-probe-selected" : ""}
                     type="button"
-                    key={option}
-                    aria-pressed={selectedProbe === option}
-                    onClick={() => setSelectedProbe(option)}
+                    key={option.id}
+                    aria-pressed={selectedProbe === option.id}
+                    disabled={!canUseProbe}
+                    onClick={() => setSelectedProbe(option.id)}
                   >
-                    {option}
+                    {option.label}
                   </button>
                 ))}
               </div>
-              {selectedProbe && <p>ठीक है—Bodh इस answer को सीखने की अगली छोटी step में इस्तेमाल करेगा।</p>}
+              {selectedProbe && (
+                <p lang={probeLanguage}>
+                  {adaptiveProbe
+                    ? probeLanguage === "hi"
+                      ? "ठीक है—यह सही या गलत का label नहीं है। इससे Bodh तय करेगा कि समझ की यात्रा कहाँ से शुरू हो।"
+                      : "This is not a right-or-wrong label. Bodh will use it only to choose where the learning journey begins."
+                    : "ठीक है—Bodh इस answer को सीखने की अगली छोटी step में इस्तेमाल करेगा।"}
+                </p>
+              )}
             </section>
 
-            <Link className="button button-primary next-lab-action" href={result.next.href}>
-              {result.next.kind === "curated_artifact" ? "guided fraction lab खोलें" : "curated fraction demo देखें"}
-              <span aria-hidden="true">→</span>
-            </Link>
+            {selectedProbe && canUseProbe ? (
+              <Link
+                className="button button-primary next-lab-action"
+                href={result.next.href}
+                lang={probeLanguage}
+                onClick={prepareLearningHandoff}
+              >
+                {result.next.kind === "curated_artifact"
+                  ? language === "hi" ? "मेरी starting point से शुरू करें" : "Start from my learning point"
+                  : "curated fraction demo देखें"}
+                <span aria-hidden="true">→</span>
+              </Link>
+            ) : (
+              <button
+                className="button button-primary next-lab-action"
+                type="button"
+                disabled
+                lang={probeLanguage}
+              >
+                {needsNotationConfirmation && !notationConfirmed
+                  ? probeLanguage === "hi" ? "पहले notation confirm करें" : "Confirm the notation first"
+                  : probeLanguage === "hi" ? "पहले छोटी जाँच चुनें" : "Choose the short probe first"}
+                <span aria-hidden="true">→</span>
+              </button>
+            )}
             <TraceDetails trace={result.trace} />
           </article>
         )}

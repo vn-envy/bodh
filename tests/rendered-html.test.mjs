@@ -53,17 +53,16 @@ test("ships the complete responsive Bodh pose set", async () => {
   }
 });
 
-test("server-renders the Phase 1 journey at its learner-controlled confirmation step", async () => {
+test("server-renders a stable hydration handoff shell before choosing the journey route", async () => {
   const response = await render("/demo");
   assert.equal(response.status, 200);
 
   const html = await response.text();
-  assert.match(html, /तुम्हारा सवाल/);
-  assert.match(html, /पहले जाँच लें कि हमने सही सुना/);
-  assert.match(html, /हाँ, यही मेरा सवाल है/);
-  assert.match(html, /3\/4/);
+  assert.match(html, /तुम्हारा रास्ता तैयार हो रहा है/);
+  assert.match(html, /aria-busy="true"/);
   assert.match(html, /Curated fraction journey · Bodh/);
   assert.match(html, /Bodh voice/);
+  assert.doesNotMatch(html, /पहले जाँच लें कि हमने सही सुना/);
   assert.doesNotMatch(html, /3\/4<\/span><span>÷<\/span><span>1\/8<\/span><span>= 6/);
   assert.doesNotMatch(html, /Phase 0 foundation ready/);
 });
@@ -89,9 +88,45 @@ test("ships the atomic explainer without a pre-lab answer leak", async () => {
   assert.match(component, /querySelectorAll<HTMLElement>/);
   assert.match(component, /media\.onplaying = \(\) =>/);
   assert.match(component, /utterance\.onstart = \(\) =>/);
+  assert.match(component, /data-progress-state/);
+  assert.match(component, /not repeated on this route; review is available in the full journey/);
+  assert.doesNotMatch(component, /checked by the probe/);
+  assert.match(component, /lang=\{language\}/);
+  assert.match(journey, /ADAPTIVE_SESSION_STORAGE_KEY/);
+  assert.match(journey, /सिर्फ answer नहीं—meaning भी/);
+  assert.match(journey, /long-term mastery, grade, या score का दावा नहीं/);
   assert.doesNotMatch(component, /pointerBeat = activeBeat \?\?/);
   assert.doesNotMatch(html, /six pieces of 1\/8/);
   assert.doesNotMatch(html, /placeholder="जैसे (4|6)"/);
+
+  const playbackBlock = component.slice(
+    component.indexOf("const playNarration"),
+    component.indexOf("const prepareNarration"),
+  );
+  const preparationBlock = component.slice(
+    component.indexOf("const prepareNarration"),
+    component.indexOf("const handleVoiceButton"),
+  );
+  assert.match(playbackBlock, /markStageEvidence\(stage\.id\);\s+setVoiceState\("ended"\)/);
+  assert.doesNotMatch(preparationBlock, /markStageEvidence|setProved\(true\)/);
+  assert.match(component, /disabled=\{stageIndex === entryStageIndex && !proved\}/);
+});
+
+test("requires explicit confirmation for low-confidence photo notation", async () => {
+  const [intake, styles] = await Promise.all([
+    readFile(new URL("../app/diagnose/DiagnosticIntake.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(intake, /imageFile && liveDiagnosis && liveDiagnosis\.inputFidelity\.confidence < 0\.85/);
+  assert.match(intake, /aria-pressed=\{notationConfirmed\}/);
+  assert.match(intake, /disabled=\{!canUseProbe\}/);
+  assert.match(intake, /!adaptiveProbe \|\| !selectedProbe \|\| !canUseProbe/);
+  assert.match(intake, /lang=\{probeLanguage\}/);
+  assert.match(intake, /notation-confirmation-title/);
+  assert.match(styles, /\.atomic-progress-not-repeated span/);
+  assert.doesNotMatch(styles, /\.atomic-progress-checked span/);
+  assert.match(styles, /\.adaptive-route-checked \{[^}]*opacity: 1;/s);
 });
 
 test("server-renders the diagnostic intake and the judge-readable learning path", async () => {

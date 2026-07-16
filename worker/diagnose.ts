@@ -11,6 +11,7 @@ import {
 } from "../lib/diagnostic-guardrails";
 import { HINDI_BRIDGE_TERMS, resolveBridgeTerms } from "../lib/hindi-bridge";
 import { toOpenAiStructuredOutputSchema } from "../lib/openai-structured-schema";
+import { selectAdaptiveProbe } from "../lib/adaptive-repair";
 
 export type DiagnosticEnv = {
   DB?: D1Database;
@@ -33,7 +34,9 @@ type DiagnosticTrace = {
 
 const MAX_PROBLEM_LENGTH = 500;
 const MAX_REASONING_LENGTH = 1000;
+const MAX_VISIBLE_WORK_LENGTH = 500;
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+const OPENAI_TIMEOUT_MS = 35_000;
 const DEFAULT_MODEL = "gpt-5.6";
 const FALLBACK_ARTIFACT = "curated-demo";
 const OPENAI_DIAGNOSTIC_SCHEMA = toOpenAiStructuredOutputSchema(diagnosticSchema);
@@ -46,9 +49,10 @@ Your job is to identify a likely conceptual bottleneck in a fraction-division qu
 
 Rules:
 - Preserve a typed problem exactly as canonicalEquation, including notation and the question mark. When there is only a photo, transcribe the equation conservatively and set confidence to reflect ambiguity.
+- Include every mathematical token from the canonical equation and supplied learnerVisibleWork in preservedTokens.
 - Use only taxonomy IDs provided in the curriculum context. Choose at most three.
 - Form one to three tentative hypotheses. They are possibilities, not labels for the learner.
-- For text evidence, quote a short exact substring from either the problem or reasoning. Use visible_work only when the supplied image visibly supports the quote.
+- For text evidence, quote a short exact substring from the problem, reasoning, or learnerVisibleWork. Use visible_work for an exact learnerVisibleWork quote, or for a quote visibly supported by the supplied image. Never claim image-only evidence unless the image visibly supports that exact quote.
 - Select one to three term IDs from the provided Hindi bridge. The interface, not you, will render the Hindi and English labels. Match learnerRegister to the learner's Hindi, Hinglish, or English input.
 - The probe must distinguish among the hypotheses, be answerable without the original answer, and use 2–4 short Hindi options.
 - Never include an answer, worked calculation, solution steps, or a recommendation to use a rule. Never include fields outside the schema.`;
@@ -83,9 +87,12 @@ function parseInput(value: unknown): { ok: true; input: DiagnosticRequestInput }
 
   const problemText = getString(value.problemText, MAX_PROBLEM_LENGTH);
   const learnerReasoning = getString(value.learnerReasoning, MAX_REASONING_LENGTH);
+  const visibleWorkText = value.visibleWorkText === undefined
+    ? undefined
+    : getString(value.visibleWorkText, MAX_VISIBLE_WORK_LENGTH);
   const imageDataUrl = value.imageDataUrl === undefined ? undefined : getString(value.imageDataUrl, MAX_IMAGE_BYTES * 2);
 
-  if (problemText === null || learnerReasoning === null) {
+  if (problemText === null || learnerReasoning === null || visibleWorkText === null) {
     return { ok: false, message: "सवाल या तुम्हारी बात बहुत लंबी है। उसे छोटा करके फिर भेजो।" };
   }
   if (imageDataUrl !== undefined && !validImageDataUrl(imageDataUrl)) {
@@ -95,13 +102,14 @@ function parseInput(value: unknown): { ok: true; input: DiagnosticRequestInput }
     return { ok: false, message: "सवाल लिखो या उसकी photo जोड़ो।" };
   }
 
-  return { ok: true, input: { problemText, learnerReasoning, imageDataUrl } };
+  return { ok: true, input: { problemText, learnerReasoning, visibleWorkText, imageDataUrl } };
 }
 
 async function fingerprint(input: DiagnosticRequestInput) {
   const payload = JSON.stringify({
     problemText: input.problemText,
     learnerReasoning: input.learnerReasoning,
+    visibleWorkText: input.visibleWorkText ?? "",
     imageDataUrl: input.imageDataUrl ?? "",
   });
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload));
@@ -247,6 +255,7 @@ export async function handleDiagnosis(request: Request, env: DiagnosticEnv) {
       text: JSON.stringify({
         learnerProblem: input.problemText || "[photo only]",
         learnerReasoning: input.learnerReasoning || "[not provided]",
+        learnerVisibleWork: input.visibleWorkText || "[not supplied as text]",
         curriculumContext: taxonomy.topics.map((topic) => ({
           id: topic.id,
           name: topic.name,
@@ -263,6 +272,7 @@ export async function handleDiagnosis(request: Request, env: DiagnosticEnv) {
   try {
     modelResponse = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
+      signal: AbortSignal.timeout(OPENAI_TIMEOUT_MS),
       headers: {
         authorization: `Bearer ${env.OPENAI_API_KEY}`,
         "content-type": "application/json",
@@ -319,6 +329,9 @@ export async function handleDiagnosis(request: Request, env: DiagnosticEnv) {
   }
 
   const artifactKey = artifactForEquation(diagnostic.inputFidelity.canonicalEquation);
+  const adaptiveProbeId = artifactKey
+    ? selectAdaptiveProbe(diagnostic.hypotheses.map((hypothesis) => hypothesis.id)).id
+    : null;
   const trace: DiagnosticTrace = {
     id: crypto.randomUUID(),
     createdAt: Date.now(),
@@ -344,6 +357,7 @@ export async function handleDiagnosis(request: Request, env: DiagnosticEnv) {
         terms: resolveBridgeTerms(diagnostic.languageBridge.termIds),
       },
       probe: diagnostic.probe,
+      adaptiveProbeId,
     },
     next: artifactKey
       ? { kind: "curated_artifact", href: "/demo", artifactKey }
@@ -376,7 +390,6 @@ export async function handleTrace(request: Request, env: DiagnosticEnv, id: stri
       status: result.status,
       artifactKey: result.artifact_key,
       fallbackReason: result.fallback_reason,
-      inputFingerprint: result.input_fingerprint,
       outputSchemaVersion: result.output_schema_version,
       privacy: "No raw learner text, images, evidence quotes, or model response are stored in this trace.",
     });

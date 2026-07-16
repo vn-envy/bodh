@@ -80,10 +80,15 @@ test("sends an OpenAI-compatible structured-output schema and accepts a guarded 
   );
 
   assert.equal(response.status, 200);
-  assert.equal((await response.json()).mode, "live");
+  const body = await response.json();
+  assert.equal(body.mode, "live");
+  assert.equal(body.diagnosis.adaptiveProbeId, "probe-same-amount");
   assert.equal(capturedBody.model, "gpt-5.6");
   assert.equal(capturedBody.text.format.type, "json_schema");
   assert.equal(capturedBody.text.format.strict, true);
+  assert.match(capturedBody.input[0].content[0].text, /learnerVisibleWork/);
+  assert.match(capturedBody.instructions, /exact learnerVisibleWork quote/);
+  assert.match(capturedBody.instructions, /Never claim image-only evidence unless the image visibly supports that exact quote/);
   assert.deepEqual(
     capturedBody.text.format.schema.properties.schemaVersion.enum,
     ["1.0.0"],
@@ -101,4 +106,37 @@ test("sends an OpenAI-compatible structured-output schema and accepts a guarded 
   ]) {
     assert.equal(outboundKeys.has(unsupported), false, `${unsupported} must not reach OpenAI`);
   }
+});
+
+test("falls back when model-authored Hindi words reveal the final answer", async (t) => {
+  const originalFetch = globalThis.fetch;
+  const leakingOutput = structuredClone(validOutput);
+  leakingOutput.hypotheses[0].labelHi = "शायद जवाब छह है।";
+  globalThis.fetch = async () => new Response(JSON.stringify({ output_text: JSON.stringify(leakingOutput) }), {
+    headers: { "content-type": "application/json" },
+  });
+  t.after(() => { globalThis.fetch = originalFetch; });
+
+  const worker = await loadWorker();
+  const response = await worker.fetch(
+    new Request("https://bodh.test/api/diagnose", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        problemText: "3/4 ÷ 1/8 = ?",
+        learnerReasoning: "मुझे समझ नहीं आता कि इसे उल्टा करके multiply क्यों करते हैं।",
+      }),
+    }),
+    {
+      ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) },
+      OPENAI_API_KEY: "test-key",
+      BODH_MODEL: "gpt-5.6",
+    },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.mode, "curated_fallback");
+  assert.equal(body.reason, "direct_answer_leak");
 });

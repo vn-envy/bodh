@@ -5,8 +5,10 @@ import {
   PROMPT_VERSION,
   applyDeterministicDiagnosticSignals,
   artifactForEquation,
+  deterministicDiagnosticForInput,
   extractPreservedMathTokens,
   isDiagnosticOutputShape,
+  type DiagnosticOutput,
   type DiagnosticRequestInput,
   validateDiagnosticGuardrails,
 } from "../lib/diagnostic-guardrails";
@@ -227,102 +229,13 @@ function topicSummary(topicIds: string[]) {
   return selected.map((topic) => ({ id: topic.id, name: topic.name, domain: topic.domain }));
 }
 
-export async function handleDiagnosis(request: Request, env: DiagnosticEnv) {
-  if (request.method !== "POST") {
-    return json({ error: "method_not_allowed" }, 405);
-  }
-
-  let raw: unknown;
-  try {
-    raw = await request.json();
-  } catch {
-    return json({ error: "invalid_json", messageHi: "सवाल भेजने का format ठीक नहीं था।" }, 400);
-  }
-
-  const parsedInput = parseInput(raw);
-  if (!parsedInput.ok) return json({ error: "invalid_input", messageHi: parsedInput.message }, 400);
-
-  const input = parsedInput.input;
-  const model = env.BODH_MODEL || DEFAULT_MODEL;
-  const inputFingerprint = await fingerprint(input);
-
-  if (!env.OPENAI_API_KEY) {
-    return fallback(env, input, "live_not_configured", model, inputFingerprint);
-  }
-
-  const content: Array<Record<string, string>> = [
-    {
-      type: "input_text",
-      text: JSON.stringify({
-        learnerProblem: input.problemText || "[photo only]",
-        learnerReasoning: input.learnerReasoning || "[not provided]",
-        learnerVisibleWork: input.visibleWorkText || "[not supplied as text]",
-        curriculumContext: taxonomy.topics.map((topic) => ({
-          id: topic.id,
-          name: topic.name,
-          domain: topic.domain,
-          description: topic.description,
-        })),
-        hindiBridge: Object.values(HINDI_BRIDGE_TERMS),
-      }),
-    },
-  ];
-  if (input.imageDataUrl) content.push({ type: "input_image", image_url: input.imageDataUrl });
-
-  let modelResponse: Response;
-  try {
-    modelResponse = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      signal: AbortSignal.timeout(OPENAI_TIMEOUT_MS),
-      headers: {
-        authorization: `Bearer ${env.OPENAI_API_KEY}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        store: false,
-        reasoning: { effort: "low" },
-        instructions: SYSTEM_INSTRUCTIONS,
-        input: [{ role: "user", content }],
-        text: {
-          format: {
-            type: "json_schema",
-            name: "bodh_diagnosis",
-            strict: true,
-            schema: OPENAI_DIAGNOSTIC_SCHEMA,
-          },
-        },
-      }),
-    });
-  } catch {
-    return fallback(env, input, "live_unavailable", model, inputFingerprint);
-  }
-
-  if (!modelResponse.ok) {
-    return fallback(env, input, "live_unavailable", model, inputFingerprint);
-  }
-
-  let modelPayload: unknown;
-  try {
-    modelPayload = await modelResponse.json();
-  } catch {
-    return fallback(env, input, "model_response_invalid", model, inputFingerprint);
-  }
-
-  const outputText = textFromResponse(modelPayload);
-  if (!outputText) return fallback(env, input, "model_response_invalid", model, inputFingerprint);
-
-  let output: unknown;
-  try {
-    output = JSON.parse(outputText);
-  } catch {
-    return fallback(env, input, "model_response_invalid", model, inputFingerprint);
-  }
-
-  if (!isDiagnosticOutputShape(output)) {
-    return fallback(env, input, "model_response_invalid", model, inputFingerprint);
-  }
-
+async function liveDiagnosisResponse(
+  env: DiagnosticEnv,
+  input: DiagnosticRequestInput,
+  model: string,
+  inputFingerprint: string,
+  output: DiagnosticOutput,
+) {
   const diagnostic = applyDeterministicDiagnosticSignals(output, input);
   const deterministicTokens = extractPreservedMathTokens(input);
   if (deterministicTokens.length > 0) {
@@ -369,6 +282,108 @@ export async function handleDiagnosis(request: Request, env: DiagnosticEnv) {
       : { kind: "curated_demo", href: "/demo" },
     trace: traceResponse(trace, persisted),
   });
+}
+
+export async function handleDiagnosis(request: Request, env: DiagnosticEnv) {
+  if (request.method !== "POST") {
+    return json({ error: "method_not_allowed" }, 405);
+  }
+
+  let raw: unknown;
+  try {
+    raw = await request.json();
+  } catch {
+    return json({ error: "invalid_json", messageHi: "सवाल भेजने का format ठीक नहीं था।" }, 400);
+  }
+
+  const parsedInput = parseInput(raw);
+  if (!parsedInput.ok) return json({ error: "invalid_input", messageHi: parsedInput.message }, 400);
+
+  const input = parsedInput.input;
+  const model = env.BODH_MODEL || DEFAULT_MODEL;
+  const inputFingerprint = await fingerprint(input);
+
+  if (!env.OPENAI_API_KEY) {
+    return fallback(env, input, "live_not_configured", model, inputFingerprint);
+  }
+  const deterministicRecovery = deterministicDiagnosticForInput(input);
+  const recoverOrFallback = (reason: string) => deterministicRecovery
+    ? liveDiagnosisResponse(env, input, model, inputFingerprint, deterministicRecovery)
+    : fallback(env, input, reason, model, inputFingerprint);
+
+  const content: Array<Record<string, string>> = [
+    {
+      type: "input_text",
+      text: JSON.stringify({
+        learnerProblem: input.problemText || "[photo only]",
+        learnerReasoning: input.learnerReasoning || "[not provided]",
+        learnerVisibleWork: input.visibleWorkText || "[not supplied as text]",
+        curriculumContext: taxonomy.topics.map((topic) => ({
+          id: topic.id,
+          name: topic.name,
+          domain: topic.domain,
+          description: topic.description,
+        })),
+        hindiBridge: Object.values(HINDI_BRIDGE_TERMS),
+      }),
+    },
+  ];
+  if (input.imageDataUrl) content.push({ type: "input_image", image_url: input.imageDataUrl });
+
+  let modelResponse: Response;
+  try {
+    modelResponse = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      signal: AbortSignal.timeout(OPENAI_TIMEOUT_MS),
+      headers: {
+        authorization: `Bearer ${env.OPENAI_API_KEY}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        store: false,
+        reasoning: { effort: "low" },
+        instructions: SYSTEM_INSTRUCTIONS,
+        input: [{ role: "user", content }],
+        text: {
+          format: {
+            type: "json_schema",
+            name: "bodh_diagnosis",
+            strict: true,
+            schema: OPENAI_DIAGNOSTIC_SCHEMA,
+          },
+        },
+      }),
+    });
+  } catch {
+    return recoverOrFallback("live_unavailable");
+  }
+
+  if (!modelResponse.ok) {
+    return recoverOrFallback("live_unavailable");
+  }
+
+  let modelPayload: unknown;
+  try {
+    modelPayload = await modelResponse.json();
+  } catch {
+    return recoverOrFallback("model_response_invalid");
+  }
+
+  const outputText = textFromResponse(modelPayload);
+  if (!outputText) return recoverOrFallback("model_response_invalid");
+
+  let output: unknown;
+  try {
+    output = JSON.parse(outputText);
+  } catch {
+    return recoverOrFallback("model_response_invalid");
+  }
+
+  if (!isDiagnosticOutputShape(output)) {
+    return recoverOrFallback("model_response_invalid");
+  }
+  return liveDiagnosisResponse(env, input, model, inputFingerprint, output);
 }
 
 export async function handleTrace(request: Request, env: DiagnosticEnv, id: string) {

@@ -141,3 +141,37 @@ test("falls back when model-authored Hindi words reveal the final answer", async
   assert.equal(body.mode, "curated_fallback");
   assert.equal(body.reason, "direct_answer_leak");
 });
+
+test("recovers an incomplete model response with a reviewed high-confidence signal", async (t) => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ status: "incomplete", output: [] }), {
+    headers: { "content-type": "application/json" },
+  });
+  t.after(() => { globalThis.fetch = originalFetch; });
+
+  const worker = await loadWorker();
+  const response = await worker.fetch(
+    new Request("https://bodh.test/api/diagnose", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        problemText: "2/3 ÷ 1/6 = ?",
+        learnerReasoning: "Answer 4 hai because flip karte hain, bas yaad hai.",
+        visibleWorkText: "2/3 × 6/1 = 4",
+      }),
+    }),
+    {
+      ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) },
+      OPENAI_API_KEY: "test-key",
+      BODH_MODEL: "gpt-5.6",
+    },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.mode, "live");
+  assert.equal(body.diagnosis.hypotheses.length, 1);
+  assert.equal(body.diagnosis.hypotheses[0].id, "reciprocal-rule-without-meaning");
+  assert.deepEqual(body.trace.taxonomyIds, ["mt_9Y96vxG_LH", "mt_GDG9_SZmsO"]);
+});

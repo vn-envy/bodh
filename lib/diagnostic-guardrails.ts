@@ -1,7 +1,12 @@
-import { isBridgeTermId, type BridgeTermId, type LearnerRegister } from "./hindi-bridge.ts";
+import {
+  inferLearnerRegister,
+  isBridgeTermId,
+  type BridgeTermId,
+  type LearnerRegister,
+} from "./hindi-bridge.ts";
 
 export const DIAGNOSTIC_SCHEMA_VERSION = "1.0.0";
-export const PROMPT_VERSION = "p3.6";
+export const PROMPT_VERSION = "p3.7";
 // Kept in lockstep with data/taxonomy/fractions-division.slice.json. This
 // runtime list lets the deterministic guardrail run in both the Worker and
 // Node's lightweight test loader without importing a JSON module there.
@@ -275,6 +280,46 @@ export function applyDeterministicDiagnosticSignals(
       distinction: "number rule और fraction quantity में फर्क",
     },
   });
+}
+
+/**
+ * Builds a complete reviewed diagnosis only when an input matches a promoted
+ * high-precision signal. This is a safe recovery path for an incomplete model
+ * response, not a generic keyword classifier.
+ */
+export function deterministicDiagnosticForInput(input: DiagnosticRequestInput): DiagnosticOutput | null {
+  const preservedTokens = extractPreservedMathTokens(input);
+  if (!parseFractionDivision(input.problemText) || preservedTokens.length === 0 || !input.learnerReasoning.trim()) {
+    return null;
+  }
+
+  const placeholder: DiagnosticOutput = {
+    schemaVersion: DIAGNOSTIC_SCHEMA_VERSION,
+    inputFidelity: {
+      canonicalEquation: input.problemText.trim(),
+      preservedTokens,
+      confidence: 1,
+    },
+    candidateTopicIds: ["mt_9Y96vxG_LH"],
+    hypotheses: [
+      {
+        id: "insufficient-evidence",
+        labelHi: "Underlying समझ के लिए अभी और evidence चाहिए।",
+        evidence: { source: "reasoning", quote: input.learnerReasoning.trim() },
+      },
+    ],
+    languageBridge: {
+      learnerRegister: inferLearnerRegister(`${input.learnerReasoning}\n${input.problemText}`),
+      termIds: ["unit-fraction", "denominator", "equal-groups"],
+    },
+    probe: {
+      questionHi: "इस division में group-size का क्या काम है?",
+      optionLabelsHi: ["groups का size बताता है", "सिर्फ rule बताता है", "अभी पक्का नहीं"],
+      distinction: "group-size और rule recall में फर्क",
+    },
+  };
+  const promoted = applyDeterministicDiagnosticSignals(placeholder, input);
+  return promoted === placeholder ? null : promoted;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

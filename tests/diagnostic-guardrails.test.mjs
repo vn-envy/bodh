@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   applyDeterministicDiagnosticSignals,
   artifactForEquation,
+  deterministicDiagnosticForInput,
   extractPreservedMathTokens,
   includesFinalAnswerToken,
   parseFractionDivision,
@@ -162,6 +163,10 @@ test("uses reviewed deterministic signals for answer-seeking and denominator-rul
   assert.equal(ruleOnlyOutput.hypotheses[0].id, "reciprocal-rule-without-meaning");
   assert.equal(ruleOnlyOutput.hypotheses.length, 1);
   assert.deepEqual(validateDiagnosticGuardrails(ruleOnlyOutput, ruleOnlyInput), { ok: true });
+  const recoveredRuleOnly = deterministicDiagnosticForInput(ruleOnlyInput);
+  assert.equal(recoveredRuleOnly?.hypotheses[0].id, "reciprocal-rule-without-meaning");
+  assert.deepEqual(validateDiagnosticGuardrails(recoveredRuleOnly, ruleOnlyInput), { ok: true });
+  assert.equal(deterministicDiagnosticForInput(input), null);
 });
 
 test("rejects equation mutation before a diagnosis can reach the learner", () => {

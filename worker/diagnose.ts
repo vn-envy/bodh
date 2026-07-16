@@ -10,6 +10,7 @@ import {
   validateDiagnosticGuardrails,
 } from "../lib/diagnostic-guardrails";
 import { HINDI_BRIDGE_TERMS, resolveBridgeTerms } from "../lib/hindi-bridge";
+import { toOpenAiStructuredOutputSchema } from "../lib/openai-structured-schema";
 
 export type DiagnosticEnv = {
   DB?: D1Database;
@@ -35,6 +36,7 @@ const MAX_REASONING_LENGTH = 1000;
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 const DEFAULT_MODEL = "gpt-5.6";
 const FALLBACK_ARTIFACT = "curated-demo";
+const OPENAI_DIAGNOSTIC_SCHEMA = toOpenAiStructuredOutputSchema(diagnosticSchema);
 
 const SYSTEM_INSTRUCTIONS = `You are Bodh's diagnostic layer for a Hindi-first math tutor for learners aged 8–12.
 
@@ -276,7 +278,7 @@ export async function handleDiagnosis(request: Request, env: DiagnosticEnv) {
             type: "json_schema",
             name: "bodh_diagnosis",
             strict: true,
-            schema: diagnosticSchema,
+            schema: OPENAI_DIAGNOSTIC_SCHEMA,
           },
         },
       }),

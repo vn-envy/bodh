@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BodhMark } from "./components/BodhMark";
 import { LearningStrip } from "./components/LearningStrip";
+import { NarrationLanguageToggle } from "./components/NarrationLanguageToggle";
 
 export default function Home() {
   return (
@@ -13,7 +14,7 @@ export default function Home() {
             <span>That which is truly understood</span>
           </span>
         </Link>
-        <span className="language-chip">हिंदी + English</span>
+        <NarrationLanguageToggle />
       </header>
 
       <section className="hero" aria-labelledby="hero-title">

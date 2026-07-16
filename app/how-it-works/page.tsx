@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BodhMark } from "../components/BodhMark";
 import { LearningStrip } from "../components/LearningStrip";
+import { NarrationLanguageToggle } from "../components/NarrationLanguageToggle";
 
 export const metadata: Metadata = {
   title: "How Bodh works",
@@ -46,7 +47,10 @@ export default function HowItWorksPage() {
           <BodhMark size="mark" motion="still" priority />
           <span className="brand-copy"><strong>BODH</strong></span>
         </Link>
-        <span className="fixture-label">90-second journey</span>
+        <div className="journey-header-tools">
+          <span className="fixture-label">90-second journey</span>
+          <NarrationLanguageToggle compact />
+        </div>
       </header>
 
       <section className="guide-hero" aria-labelledby="guide-title">

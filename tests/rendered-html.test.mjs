@@ -36,6 +36,9 @@ test("server-renders the Bodh learner shell", async () => {
   assert.match(html, /Curated demo/);
   assert.match(html, /\/art\/bodh\/bodh-listen-1024\.webp/);
   assert.match(html, /3\/4 को eighths में देखें/);
+  assert.match(html, /Bodh voice/);
+  assert.match(html, /हिंदी/);
+  assert.match(html, /English/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/i);
 });
 
@@ -60,6 +63,7 @@ test("server-renders the Phase 1 journey at its learner-controlled confirmation 
   assert.match(html, /हाँ, यही मेरा सवाल है/);
   assert.match(html, /3\/4/);
   assert.match(html, /Curated fraction journey · Bodh/);
+  assert.match(html, /Bodh voice/);
   assert.doesNotMatch(html, /3\/4<\/span><span>÷<\/span><span>1\/8<\/span><span>= 6/);
   assert.doesNotMatch(html, /Phase 0 foundation ready/);
 });
@@ -77,8 +81,12 @@ test("ships the atomic explainer without a pre-lab answer leak", async () => {
   assert.match(html, /Bodh से सुनो/);
   assert.match(html, /AI से बनी Bodh की आवाज़ · इंसान की recording नहीं/);
   assert.match(html, /Bodh की पूरी बात पढ़ें/);
-  assert.match(html, /atomic-pointer/);
+  assert.match(html, /Replay from start/);
+  assert.match(html, /atomic-pointer-tip/);
+  assert.match(html, /atomic-artifact-caption/);
   assert.match(component, /const pointerBeat = activeBeat;/);
+  assert.match(component, /preparedVoiceRef\.current\.language === language/);
+  assert.match(component, /querySelectorAll<HTMLElement>/);
   assert.match(component, /media\.onplaying = \(\) =>/);
   assert.match(component, /utterance\.onstart = \(\) =>/);
   assert.doesNotMatch(component, /pointerBeat = activeBeat \?\?/);

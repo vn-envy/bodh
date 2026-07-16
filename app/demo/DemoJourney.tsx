@@ -12,6 +12,7 @@ import {
 import { BodhMark } from "../components/BodhMark";
 import { FractionConceptExplainer } from "../components/FractionConceptExplainer";
 import { LearningStrip } from "../components/LearningStrip";
+import { NarrationLanguageToggle } from "../components/NarrationLanguageToggle";
 import { ProgressPath } from "../components/ProgressPath";
 
 type JourneyStep = CuratedJourneyStep;
@@ -76,7 +77,10 @@ export function DemoJourney() {
           <BodhMark size="mark" motion="still" priority />
           <span className="brand-copy"><strong>BODH</strong></span>
         </Link>
-        <span className="fixture-label">Curated demo</span>
+        <div className="journey-header-tools">
+          <span className="fixture-label">Curated demo</span>
+          <NarrationLanguageToggle compact />
+        </div>
       </header>
 
       <ProgressPath active={progressFor(step)} />

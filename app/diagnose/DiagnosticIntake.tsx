@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { BodhMark } from "../components/BodhMark";
+import { NarrationLanguageToggle } from "../components/NarrationLanguageToggle";
 
 type Trace = {
   id: string;
@@ -120,7 +121,10 @@ export function DiagnosticIntake() {
           <BodhMark size="mark" motion="still" priority />
           <span className="brand-copy"><strong>BODH</strong></span>
         </Link>
-        <span className="fixture-label">Listen first</span>
+        <div className="journey-header-tools">
+          <span className="fixture-label">Listen first</span>
+          <NarrationLanguageToggle compact />
+        </div>
       </header>
 
       <section className="diagnose-layout" aria-live="polite">

@@ -7,10 +7,12 @@ import { includesFinalAnswerToken } from "../lib/diagnostic-guardrails.ts";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const readJson = (relativePath) => JSON.parse(fs.readFileSync(path.join(root, relativePath), "utf8"));
 const includeHoldout = process.argv.includes("--include-holdout");
+const caseFilterArgument = process.argv.find((argument) => argument.startsWith("--case="));
 const endpoint = process.env.BODH_EVAL_URL;
 
 const DEFAULT_TIMEOUT_MS = 45_000;
 const DEFAULT_CONCURRENCY = 3;
+const DEFAULT_MAX_ATTEMPTS = 2;
 const MIN_TIMEOUT_MS = 1_000;
 const MAX_TIMEOUT_MS = 120_000;
 const MAX_CONCURRENCY = 12;
@@ -56,9 +58,11 @@ function configuredInteger(name, fallback, minimum, maximum) {
 
 let timeoutMs;
 let concurrency;
+let maxAttempts;
 try {
   timeoutMs = configuredInteger("BODH_EVAL_TIMEOUT_MS", DEFAULT_TIMEOUT_MS, MIN_TIMEOUT_MS, MAX_TIMEOUT_MS);
   concurrency = configuredInteger("BODH_EVAL_CONCURRENCY", DEFAULT_CONCURRENCY, 1, MAX_CONCURRENCY);
+  maxAttempts = configuredInteger("BODH_EVAL_MAX_ATTEMPTS", DEFAULT_MAX_ATTEMPTS, 1, 3);
 } catch (error) {
   console.error(error instanceof Error ? error.message : "Invalid evaluation configuration.");
   process.exit(1);
@@ -68,7 +72,19 @@ const taxonomy = readJson("data/taxonomy/fractions-division.slice.json");
 const allowedTopicIds = new Set(taxonomy.topics.map((topic) => topic.id));
 const suites = [readJson("data/fixtures/seed-cases.json"), readJson("data/evals/development-gold.json")];
 if (includeHoldout) suites.push(readJson("data/evals/frozen-holdout.json"));
-const cases = suites.flat();
+const availableCases = suites.flat();
+const requestedCaseIds = caseFilterArgument
+  ? caseFilterArgument.slice("--case=".length).split(",").map((id) => id.trim()).filter(Boolean)
+  : [];
+const requestedCaseIdSet = new Set(requestedCaseIds);
+const cases = requestedCaseIds.length > 0
+  ? availableCases.filter((evalCase) => requestedCaseIdSet.has(evalCase.caseId))
+  : availableCases;
+
+if (requestedCaseIdSet.size !== requestedCaseIds.length || cases.length !== requestedCaseIdSet.size) {
+  console.error("Every --case ID must be unique and present in the selected evaluation suites.");
+  process.exit(1);
+}
 
 function authHeaders(includeContentType = false) {
   const headers = {};
@@ -85,6 +101,24 @@ function fetchWithTimeout(url, init = {}) {
 
 function isTimeoutError(error) {
   return error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
+}
+
+const TRANSIENT_FALLBACK_REASONS = new Set([
+  "live_unavailable",
+]);
+
+function transientResponse(httpStatus, body) {
+  return (
+    httpStatus === 408 ||
+    httpStatus === 409 ||
+    httpStatus === 429 ||
+    httpStatus >= 500 ||
+    (body?.mode === "curated_fallback" && TRANSIENT_FALLBACK_REASONS.has(body.reason))
+  );
+}
+
+function retryDelay(attempt) {
+  return new Promise((resolve) => setTimeout(resolve, 600 * (2 ** (attempt - 1))));
 }
 
 function boundedMetadataId(value) {
@@ -277,38 +311,52 @@ async function scoreResponse(evalCase, body, httpStatus) {
 }
 
 async function evaluateCase(evalCase) {
-  let response;
-  try {
-    response = await fetchWithTimeout(endpoint, {
-      method: "POST",
-      headers: authHeaders(true),
-      body: JSON.stringify({
-        problemText: evalCase.input.problemText,
-        learnerReasoning: evalCase.input.reasoning.raw,
-        visibleWorkText: evalCase.input.visibleWork ?? undefined,
-      }),
-    });
-  } catch (error) {
-    const timedOut = isTimeoutError(error);
-    return {
-      report: {
-        caseId: evalCase.caseId,
-        mode: timedOut ? "timeout" : "network_error",
-        httpStatus: 0,
-        pass: false,
-        checks: { diagnosisCompleted: false, withinTimeout: !timedOut },
-      },
-      reproducibility: { model: null, promptVersion: null },
-    };
-  }
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    let response;
+    try {
+      response = await fetchWithTimeout(endpoint, {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          problemText: evalCase.input.problemText,
+          learnerReasoning: evalCase.input.reasoning.raw,
+          visibleWorkText: evalCase.input.visibleWork ?? undefined,
+        }),
+      });
+    } catch (error) {
+      if (attempt < maxAttempts) {
+        await retryDelay(attempt);
+        continue;
+      }
+      const timedOut = isTimeoutError(error);
+      return {
+        report: {
+          caseId: evalCase.caseId,
+          mode: timedOut ? "timeout" : "network_error",
+          httpStatus: 0,
+          attempts: attempt,
+          pass: false,
+          checks: { diagnosisCompleted: false, withinTimeout: !timedOut },
+        },
+        reproducibility: { model: null, promptVersion: null },
+      };
+    }
 
-  let body;
-  try {
-    body = await response.json();
-  } catch {
-    body = null;
+    let body;
+    try {
+      body = await response.json();
+    } catch {
+      body = null;
+    }
+    if (attempt < maxAttempts && transientResponse(response.status, body)) {
+      await retryDelay(attempt);
+      continue;
+    }
+    const evaluation = await scoreResponse(evalCase, body, response.status);
+    evaluation.report.attempts = attempt;
+    return evaluation;
   }
-  return scoreResponse(evalCase, body, response.status);
+  throw new Error("Evaluation retry loop ended unexpectedly.");
 }
 
 function incrementCount(map, key) {
@@ -369,7 +417,7 @@ async function runWorker() {
 
 console.log(
   `Golden evaluation starting: ${cases.length} cases, concurrency ${Math.min(concurrency, cases.length)}, ` +
-  `timeout ${timeoutMs}ms per request.`,
+  `timeout ${timeoutMs}ms per request, up to ${maxAttempts} attempts for transient failures.`,
 );
 await Promise.all(
   Array.from({ length: Math.min(concurrency, cases.length) }, () => runWorker()),
@@ -379,8 +427,10 @@ const reports = evaluations.map((evaluation) => evaluation.report);
 const passed = reports.filter((report) => report.pass).length;
 const report = {
   generatedAt: new Date().toISOString(),
-  suite: includeHoldout ? "all-32" : "seed-and-development-24",
-  configuration: { timeoutMs, concurrency: Math.min(concurrency, cases.length) },
+  suite: requestedCaseIds.length > 0
+    ? `case-filter:${requestedCaseIds.join(",")}`
+    : includeHoldout ? "all-32" : "seed-and-development-24",
+  configuration: { timeoutMs, maxAttempts, concurrency: Math.min(concurrency, cases.length) },
   total: reports.length,
   passed,
   failed: reports.length - passed,

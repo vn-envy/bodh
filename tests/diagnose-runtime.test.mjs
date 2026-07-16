@@ -83,6 +83,7 @@ test("sends an OpenAI-compatible structured-output schema and accepts a guarded 
   const body = await response.json();
   assert.equal(body.mode, "live");
   assert.equal(body.diagnosis.adaptiveProbeId, "probe-same-amount");
+  assert.deepEqual(body.diagnosis.inputFidelity.preservedTokens, ["3/4", "÷", "1/8", "=", "?"]);
   assert.equal(capturedBody.model, "gpt-5.6");
   assert.equal(capturedBody.text.format.type, "json_schema");
   assert.equal(capturedBody.text.format.strict, true);

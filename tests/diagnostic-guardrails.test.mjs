@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   artifactForEquation,
+  extractPreservedMathTokens,
   includesFinalAnswerToken,
   parseFractionDivision,
   validateDiagnosticGuardrails,
@@ -67,6 +68,16 @@ test("parses bounded fraction division and recognizes the curated hero artifact"
     divisorNumerator: 1,
     divisorDenominator: 8,
   });
+});
+
+test("derives bounded input-fidelity tokens deterministically from typed work", () => {
+  const tokens = extractPreservedMathTokens({
+    problemText: "3/4 ÷ 1/8 = ?",
+    learnerReasoning: "",
+    visibleWorkText: "3/4 × 8/1 = 24/4 = 6",
+  });
+  assert.deepEqual(tokens, ["3/4", "÷", "1/8", "=", "?", "×", "8/1", "24/4", "6"]);
+  assert.equal(extractPreservedMathTokens({ problemText: "[photo only]", learnerReasoning: "" }).length, 0);
 });
 
 test("rejects equation mutation before a diagnosis can reach the learner", () => {

@@ -73,6 +73,23 @@ export type FractionDivision = {
   divisorDenominator: number;
 };
 
+const PRESERVED_MATH_TOKEN = /[0-9०-९]{1,3}\s*[\/⁄∕]\s*[0-9०-९]{1,3}|[0-9०-९]+(?:\.[0-9०-९]+)?|[÷×*=？?]/gu;
+
+/**
+ * Makes typed input fidelity deterministic instead of asking the model to
+ * remember its own input. Photo-only notation remains model-transcribed.
+ */
+export function extractPreservedMathTokens(input: DiagnosticRequestInput) {
+  const source = `${input.problemText}\n${input.visibleWorkText ?? ""}`;
+  const tokens: string[] = [];
+  for (const match of source.matchAll(PRESERVED_MATH_TOKEN)) {
+    const token = match[0];
+    if (!tokens.includes(token)) tokens.push(token);
+    if (tokens.length === 12) break;
+  }
+  return tokens;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }

@@ -4,6 +4,7 @@ import {
   DIAGNOSTIC_SCHEMA_VERSION,
   PROMPT_VERSION,
   artifactForEquation,
+  extractPreservedMathTokens,
   isDiagnosticOutputShape,
   type DiagnosticOutput,
   type DiagnosticRequestInput,
@@ -323,6 +324,10 @@ export async function handleDiagnosis(request: Request, env: DiagnosticEnv) {
   }
 
   const diagnostic: DiagnosticOutput = output;
+  const deterministicTokens = extractPreservedMathTokens(input);
+  if (deterministicTokens.length > 0) {
+    diagnostic.inputFidelity.preservedTokens = deterministicTokens;
+  }
   const guardrails = validateDiagnosticGuardrails(diagnostic, input);
   if (!guardrails.ok) {
     return fallback(env, input, guardrails.reason, model, inputFingerprint);

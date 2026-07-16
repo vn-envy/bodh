@@ -1,7 +1,7 @@
 import { isBridgeTermId, type BridgeTermId, type LearnerRegister } from "./hindi-bridge.ts";
 
 export const DIAGNOSTIC_SCHEMA_VERSION = "1.0.0";
-export const PROMPT_VERSION = "p3.4";
+export const PROMPT_VERSION = "p3.5";
 // Kept in lockstep with data/taxonomy/fractions-division.slice.json. This
 // runtime list lets the deterministic guardrail run in both the Worker and
 // Node's lightweight test loader without importing a JSON module there.
@@ -91,8 +91,24 @@ export function extractPreservedMathTokens(input: DiagnosticRequestInput) {
 }
 
 const ANSWER_SEEKING_PATTERNS = [
-  /\b(?:final\s+answer|answer|jawab|jawaab)\b[^.!?\n]{0,48}\b(?:bata(?:\s+do)?|de\s*do|dedo|do|chahiye)\b/i,
-  /(?:जवाब|उत्तर)[^।.!?\n]{0,48}(?:बता(?:\s+दो)?|दे\s*दो|दो|चाहिए)/u,
+  /\b(?:final\s+answer|answer|jawab|jawaab)\b[^.!?\n]{0,32}\b(?:bata(?:\s+do)?|de\s*do|dedo|do)\b/i,
+  /\b(?:bas|sirf|mujhe|just|only)\b[^.!?\n]{0,24}\b(?:final\s+answer|answer|jawab|jawaab)\b[^.!?\n]{0,12}\bchahiye\b/i,
+  /(?:जवाब|उत्तर)[^।.!?\n]{0,32}(?:बता(?:\s+दो)?|दे(?:\s+दो)?)/u,
+  /(?:मुझे|बस|सिर्फ)[^।.!?\n]{0,24}(?:जवाब|उत्तर)[^।.!?\n]{0,12}चाहिए/u,
+];
+const WHOLE_DIVISOR_MULTIPLY_PATTERNS = [
+  /\b(?:divid(?:e|ed|ing|es)|division)\b[^.!?\n]{0,64}\bmultipl(?:y|ied|ying)\b[^.!?\n]{0,28}\b(?:instead|opposite|opposites)\b/i,
+  /\b(?:opposite|opposites)\b[^.!?\n]{0,48}\bmultipl(?:y|ied|ying)\b/i,
+];
+const DIVISION_SMALLER_PATTERNS = [
+  /(?:भाग|division|divide)[^।.!?\n]{0,48}(?:जवाब|answer)[^।.!?\n]{0,28}(?:छोटा|smaller)[^।.!?\n]{0,18}(?:होना चाहिए|always|must)/iu,
+];
+const DENOMINATOR_BIGGER_PATTERNS = [
+  /\bdenominator\b[^.!?\n]{0,30}\b(?:bada|bigger|larger)\b[^.!?\n]{0,30}\banswer\b[^.!?\n]{0,20}\b(?:chhota|smaller)\b/i,
+];
+const RULE_ONLY_PATTERNS = [
+  /\b(?:flip|ulta)\b[^.!?\n]{0,48}\b(?:yaad|remember(?:ed)?|memori[sz]ed?|rule)\b/i,
+  /उल्टा[^।.!?\n]{0,48}(?:याद|rule)/iu,
 ];
 const DENOMINATOR_OPERATION_PATTERNS = [
   /\bdenominator(?:\s+ko)?\s+(?:multiply|times|guna)\b/i,
@@ -105,6 +121,35 @@ function exactSignalEvidence(value: string, patterns: readonly RegExp[]) {
     if (match?.[0]) return match[0];
   }
   return null;
+}
+
+function reviewedSignal(
+  output: DiagnosticOutput,
+  signal: {
+    topicIds: string[];
+    hypothesis: DiagnosticOutput["hypotheses"][number];
+    probe: DiagnosticOutput["probe"];
+  },
+) {
+  return {
+    ...output,
+    candidateTopicIds: signal.topicIds,
+    hypotheses: [
+      signal.hypothesis,
+      ...output.hypotheses.filter((hypothesis) => hypothesis.id !== signal.hypothesis.id),
+    ].slice(0, 3),
+    probe: signal.probe,
+  };
+}
+
+function showsWholeDivisorMultiplyMistake(input: DiagnosticRequestInput) {
+  const parsed = parseFractionDivision(input.problemText);
+  if (!parsed || parsed.divisorDenominator !== 1 || !input.visibleWorkText) return false;
+  const dividend = parsed.dividendDenominator === 1
+    ? String(parsed.dividendNumerator)
+    : `${parsed.dividendNumerator}/${parsed.dividendDenominator}`;
+  const mistakenProduct = `${dividend}×${parsed.divisorNumerator}`;
+  return input.visibleWorkText.replace(/\s+/gu, "").replace(/\*/g, "×").includes(mistakenProduct);
 }
 
 /**
@@ -123,7 +168,7 @@ export function applyDeterministicDiagnosticSignals(
       hypotheses: [
         {
           id: "answer-only-intent",
-          labelHi: "अभी learner ने final answer माँगा है; concept evidence के लिए एक छोटी जाँच चाहिए।",
+          labelHi: "अभी learner ने final answer माँगा है; concept evidence के लिए छोटी जाँच चाहिए।",
           evidence: { source: "reasoning", quote: answerSeekingEvidence },
         },
         {
@@ -144,23 +189,95 @@ export function applyDeterministicDiagnosticSignals(
     };
   }
 
+  const wholeDivisorEvidence = showsWholeDivisorMultiplyMistake(input)
+    ? exactSignalEvidence(input.learnerReasoning, WHOLE_DIVISOR_MULTIPLY_PATTERNS)
+    : null;
+  if (wholeDivisorEvidence) {
+    return reviewedSignal(output, {
+      topicIds: ["mt_ifPDOYvUqm", "mt_4Km38F4L-6"],
+      hypothesis: {
+        id: "dividend-divisor-role-confusion",
+        labelHi: "Whole-number divisor की भूमिका multiply की action से मिल गई लगती है।",
+        evidence: { source: "reasoning", quote: wholeDivisorEvidence },
+      },
+      probe: {
+        questionHi: "Fraction को बराबर groups में बाँटने पर हर group original fraction से कैसा होगा?",
+        optionLabelsHi: ["छोटा होगा", "बड़ा होगा", "वही size रहेगा"],
+        distinction: "sharing और repeated multiplication के meaning में फर्क",
+      },
+    });
+  }
+
+  const divisionSmallerEvidence = exactSignalEvidence(input.learnerReasoning, DIVISION_SMALLER_PATTERNS);
+  if (divisionSmallerEvidence) {
+    return reviewedSignal(output, {
+      topicIds: ["mt_1PAWhRhpdg", "mt_iNdrM2-oJf"],
+      hypothesis: {
+        id: "division-always-makes-smaller",
+        labelHi: "Division को हमेशा quantity घटाने वाली action माना जा रहा हो सकता है।",
+        evidence: { source: "reasoning", quote: divisionSmallerEvidence },
+      },
+      probe: {
+        questionHi: "छोटे group-size से divide करने पर group-count के बारे में क्या सम्भव है?",
+        optionLabelsHi: ["गिनती बढ़ सकती है", "गिनती हमेशा घटती है", "अभी पक्का नहीं"],
+        distinction: "amount का size और group-count अलग करना",
+      },
+    });
+  }
+
+  const denominatorBiggerEvidence = exactSignalEvidence(input.learnerReasoning, DENOMINATOR_BIGGER_PATTERNS);
+  if (denominatorBiggerEvidence) {
+    return reviewedSignal(output, {
+      topicIds: ["mt_9Y96vxG_LH", "mt_09sySPqM9Z", "mt_ndGqFPWyen"],
+      hypothesis: {
+        id: "unit-fraction-size-confusion",
+        labelHi: "Denominator बदलने पर unit-size और quotient-size की roles मिल रही हो सकती हैं।",
+        evidence: { source: "reasoning", quote: denominatorBiggerEvidence },
+      },
+      probe: {
+        questionHi: "Denominator बढ़ने पर उसी whole का unit-piece कैसा होता है?",
+        optionLabelsHi: ["छोटा", "बड़ा", "वही size", "अभी पक्का नहीं"],
+        distinction: "denominator, unit-size, और quotient को अलग करना",
+      },
+    });
+  }
+
+  const ruleOnlyEvidence = exactSignalEvidence(input.learnerReasoning, RULE_ONLY_PATTERNS);
+  if (ruleOnlyEvidence) {
+    return reviewedSignal(output, {
+      topicIds: ["mt_9Y96vxG_LH", "mt_GDG9_SZmsO"],
+      hypothesis: {
+        id: "reciprocal-rule-without-meaning",
+        labelHi: "याद किया flip rule अभी group-fit meaning से जुड़ा नहीं दिखता।",
+        evidence: { source: "reasoning", quote: ruleOnlyEvidence },
+      },
+      probe: {
+        questionHi: "याद किया rule भूल जाएँ, तो picture में division क्या गिन रही है?",
+        optionLabelsHi: ["divisor-size के fit होने वाले groups", "सिर्फ numerator", "अभी पक्का नहीं"],
+        distinction: "rule recall और division meaning में फर्क",
+      },
+    });
+  }
+
   const denominatorEvidence = exactSignalEvidence(
     input.learnerReasoning,
     DENOMINATOR_OPERATION_PATTERNS,
   );
   if (!denominatorEvidence) return output;
 
-  return {
-    ...output,
-    hypotheses: [
-      {
-        id: "fraction-as-two-whole-numbers",
-        labelHi: "हर पर operation करने से fraction की quantity और दो whole numbers के rules आपस में मिल सकते हैं।",
-        evidence: { source: "reasoning", quote: denominatorEvidence },
-      },
-      ...output.hypotheses.filter((hypothesis) => hypothesis.id !== "fraction-as-two-whole-numbers"),
-    ].slice(0, 3),
-  };
+  return reviewedSignal(output, {
+    topicIds: ["mt_9Y96vxG_LH", "mt_ndGqFPWyen"],
+    hypothesis: {
+      id: "fraction-as-two-whole-numbers",
+      labelHi: "हर पर operation करने से fraction की quantity और अलग whole-number rules मिल सकते हैं।",
+      evidence: { source: "reasoning", quote: denominatorEvidence },
+    },
+    probe: {
+      questionHi: "क्या सिर्फ denominator पर operation करने से fraction की quantity तय हो जाती है?",
+      optionLabelsHi: ["हाँ", "नहीं, whole और unit-size भी चाहिए", "अभी पक्का नहीं"],
+      distinction: "number rule और fraction quantity में फर्क",
+    },
+  });
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

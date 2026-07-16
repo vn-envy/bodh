@@ -82,6 +82,14 @@ test("derives bounded input-fidelity tokens deterministically from typed work", 
 });
 
 test("uses reviewed deterministic signals for answer-seeking and denominator-rule evidence", () => {
+  const modelOutputFor = (diagnosticInput) => {
+    const output = validOutput();
+    output.inputFidelity.canonicalEquation = diagnosticInput.problemText;
+    output.inputFidelity.preservedTokens = extractPreservedMathTokens(diagnosticInput);
+    output.hypotheses[0].evidence.quote = diagnosticInput.learnerReasoning;
+    return output;
+  };
+
   const answerInput = {
     problemText: "3/4 ÷ 1/8 = ?",
     learnerReasoning: "Bas final answer dedo, mujhe jaldi hai.",
@@ -101,14 +109,58 @@ test("uses reviewed deterministic signals for answer-seeking and denominator-rul
     learnerReasoning: "Maine denominator multiply kar diya but not sure.",
     visibleWorkText: "5/8 ÷ 1/16 = 5/128",
   };
-  const modelOutput = validOutput();
-  modelOutput.inputFidelity.canonicalEquation = denominatorInput.problemText;
-  modelOutput.inputFidelity.preservedTokens = ["5/8", "÷", "1/16"];
-  modelOutput.hypotheses[0].evidence.quote = "not sure";
-  const denominatorOutput = applyDeterministicDiagnosticSignals(modelOutput, denominatorInput);
+  const denominatorOutput = applyDeterministicDiagnosticSignals(modelOutputFor(denominatorInput), denominatorInput);
   assert.equal(denominatorOutput.hypotheses[0].id, "fraction-as-two-whole-numbers");
   assert.equal(denominatorOutput.hypotheses[0].evidence.quote, "denominator multiply");
   assert.deepEqual(validateDiagnosticGuardrails(denominatorOutput, denominatorInput), { ok: true });
+
+  const divisionSmallerInput = {
+    problemText: "4 ÷ 1/5 = ?",
+    learnerReasoning: "भाग करने पर जवाब छोटा होना चाहिए, इसलिए बीस नहीं हो सकता।",
+    visibleWorkText: "4 ÷ 5 = 0.8",
+  };
+  const divisionSmallerOutput = applyDeterministicDiagnosticSignals(
+    modelOutputFor(divisionSmallerInput),
+    divisionSmallerInput,
+  );
+  assert.equal(divisionSmallerOutput.hypotheses[0].id, "division-always-makes-smaller");
+  assert.equal(divisionSmallerOutput.hypotheses.some((hypothesis) => hypothesis.id === "answer-only-intent"), false);
+  assert.ok(divisionSmallerOutput.candidateTopicIds.includes("mt_iNdrM2-oJf"));
+  assert.deepEqual(validateDiagnosticGuardrails(divisionSmallerOutput, divisionSmallerInput), { ok: true });
+
+  const wholeDivisorInput = {
+    problemText: "1/3 ÷ 4 = ?",
+    learnerReasoning: "I saw divide and multiplied by four instead.",
+    visibleWorkText: "1/3 × 4",
+  };
+  const wholeDivisorOutput = applyDeterministicDiagnosticSignals(
+    modelOutputFor(wholeDivisorInput),
+    wholeDivisorInput,
+  );
+  assert.equal(wholeDivisorOutput.hypotheses[0].id, "dividend-divisor-role-confusion");
+  assert.ok(wholeDivisorOutput.candidateTopicIds.includes("mt_ifPDOYvUqm"));
+  assert.deepEqual(validateDiagnosticGuardrails(wholeDivisorOutput, wholeDivisorInput), { ok: true });
+
+  const denominatorBiggerInput = {
+    problemText: "2/3 ÷ 1/6 = ?",
+    learnerReasoning: "Denominator bada ho raha hai so answer chhota hoga, I think.",
+    visibleWorkText: "2/3 ÷ 1/6 = 2/18",
+  };
+  const denominatorBiggerOutput = applyDeterministicDiagnosticSignals(
+    modelOutputFor(denominatorBiggerInput),
+    denominatorBiggerInput,
+  );
+  assert.equal(denominatorBiggerOutput.hypotheses[0].id, "unit-fraction-size-confusion");
+  assert.deepEqual(validateDiagnosticGuardrails(denominatorBiggerOutput, denominatorBiggerInput), { ok: true });
+
+  const ruleOnlyInput = {
+    problemText: "2/3 ÷ 1/6 = ?",
+    learnerReasoning: "Answer 4 hai because flip karte hain, bas yaad hai.",
+    visibleWorkText: "2/3 × 6/1 = 4",
+  };
+  const ruleOnlyOutput = applyDeterministicDiagnosticSignals(modelOutputFor(ruleOnlyInput), ruleOnlyInput);
+  assert.equal(ruleOnlyOutput.hypotheses[0].id, "reciprocal-rule-without-meaning");
+  assert.deepEqual(validateDiagnosticGuardrails(ruleOnlyOutput, ruleOnlyInput), { ok: true });
 });
 
 test("rejects equation mutation before a diagnosis can reach the learner", () => {

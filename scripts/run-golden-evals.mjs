@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { includesFinalAnswerToken } from "../lib/diagnostic-guardrails.ts";
 
@@ -9,6 +10,19 @@ const readJson = (relativePath) => JSON.parse(fs.readFileSync(path.join(root, re
 const includeHoldout = process.argv.includes("--include-holdout");
 const caseFilterArgument = process.argv.find((argument) => argument.startsWith("--case="));
 const endpoint = process.env.BODH_EVAL_URL;
+
+function sourceCommit() {
+  try {
+    const value = execFileSync("git", ["rev-parse", "HEAD"], {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+    return /^[0-9a-f]{40}$/.test(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
 
 const DEFAULT_TIMEOUT_MS = 45_000;
 const DEFAULT_CONCURRENCY = 3;
@@ -434,6 +448,7 @@ const report = {
     ? `case-filter:${requestedCaseIds.join(",")}`
     : includeHoldout ? "all-32" : "seed-and-development-24",
   configuration: { timeoutMs, maxAttempts, concurrency: Math.min(concurrency, cases.length) },
+  sourceCommit: sourceCommit(),
   total: reports.length,
   passed,
   failed: reports.length - passed,

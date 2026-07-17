@@ -9,6 +9,8 @@ interface Env {
   DB?: D1Database;
   OPENAI_API_KEY?: string;
   BODH_MODEL?: string;
+  BODH_RATE_LIMIT_SALT?: string;
+  BODH_RATE_LIMIT_PER_HOUR?: string;
   BODH_TTS_MODEL?: string;
   BODH_TTS_VOICE?: string;
   BODH_TTS_RUNTIME_ENABLED?: string;

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState, type FormEvent } from "react";
 import {
   ADAPTIVE_SESSION_STORAGE_KEY,
   EVIDENCE_MEANING_CHOICE_ID,
@@ -9,20 +9,29 @@ import {
   REPAIR_ENTRY_ATOM_IDS,
   adaptiveProbeById,
   adaptiveReceiptSupport,
+  canIssueAdaptiveReceipt,
   createAdaptiveEvidenceState,
   parseAdaptiveSessionPayload,
   reduceAdaptiveEvidence,
   type AdaptiveSessionPayload,
   type MeaningChoiceId,
-  type RepairEntryAtomId,
 } from "../../lib/adaptive-repair";
 import {
   HERO_FIXTURE,
+  curatedProbeEntryAtomId,
   isCorrectWholeNumberAnswer,
   isLabComplete,
   nextCuratedJourneyStep,
+  toggleLabTile,
   type CuratedJourneyStep,
 } from "../../lib/phase1-fixture";
+import {
+  DEMO_JOURNEY_COPY,
+  JOURNEY_ENTRY_COPY,
+  receiptShareText,
+  routeStartButtonText,
+  type ReceiptShareVariant,
+} from "../../lib/demo-journey-copy";
 import { BodhMark } from "../components/BodhMark";
 import {
   FractionConceptExplainer,
@@ -35,6 +44,7 @@ import { ProgressPath } from "../components/ProgressPath";
 type JourneyStep = CuratedJourneyStep | "loading" | "route";
 type CheckState = "idle" | "try-again" | "correct";
 type PathReturnStep = "lab" | "transfer";
+type ShareState = "idle" | "shared" | "copied" | "failed";
 
 const probeOptions = [
   { value: "2", label: "2" },
@@ -42,69 +52,6 @@ const probeOptions = [
   { value: "4", label: "4" },
   { value: "8", label: "8" },
 ];
-
-const entryAtomCopy: Record<RepairEntryAtomId, {
-  number: number;
-  label: { hi: string; en: string };
-  reason: { hi: string; en: string };
-}> = {
-  "chosen-whole": {
-    number: 1,
-    label: { hi: "पूरा पहचानना", en: "Choose the whole" },
-    reason: {
-      hi: "पहले यह पक्का करेंगे कि फ्रैक्शन किस पूरी चीज़ का हिस्सा बता रहा है।",
-      en: "We will first make sure which complete thing the fraction is describing.",
-    },
-  },
-  "equal-parts": {
-    number: 2,
-    label: { hi: "बराबर हिस्से", en: "Equal parts" },
-    reason: {
-      hi: "तुमने पूरा सही पहचाना। अब यह देखेंगे कि fraction बनाने के लिए उस पूरे के हिस्से बराबर क्यों होने चाहिए।",
-      en: "You identified the whole. Next, we will see why a fraction needs equal parts of that whole.",
-    },
-  },
-  "unit-and-denominator": {
-    number: 3,
-    label: { hi: "एक हिस्से का size", en: "Size of one part" },
-    reason: {
-      hi: "तुम्हारा answer बताता है कि denominator और एक हिस्से के size का connection फिर से बनाना उपयोगी होगा।",
-      en: "Your answer suggests it will help to rebuild the connection between the denominator and one part's size.",
-    },
-  },
-  "numerator-count": {
-    number: 4,
-    label: { hi: "कितने हिस्से लिए", en: "Count the chosen parts" },
-    reason: {
-      hi: "तुमने उसी whole में 1/8 को छोटा पहचाना। अब numerator को उन equal-size units की गिनती से जोड़ेंगे।",
-      en: "You identified 1/8 as the smaller unit in the same whole. Next, we will connect the numerator to a count of those equal-size units.",
-    },
-  },
-  "equivalent-repartition": {
-    number: 5,
-    label: { hi: "मात्रा वही, हिस्से नए", en: "Same amount, new parts" },
-    reason: {
-      hi: "तुम्हारा answer बताता है कि हिस्सों का नाम बदलने पर मात्रा वही कैसे रहती है, उस picture को फिर से बनाना उपयोगी होगा।",
-      en: "Your answer suggests it will help to rebuild the picture of how an amount can stay the same when the parts are renamed.",
-    },
-  },
-  "repeated-composition": {
-    number: 6,
-    label: { hi: "छोटे हिस्सों से मात्रा बनाना", en: "Build an amount from units" },
-    reason: {
-      hi: "तुमने पहचान लिया कि दोबारा बाँटने से मात्रा नहीं बदलती। अब देखेंगे कि छोटे units बार-बार जोड़कर वही मात्रा कैसे बनाते हैं।",
-      en: "You saw that repartitioning does not change the amount. Next, we will build that amount by repeatedly composing the smaller units.",
-    },
-  },
-  "division-unknown-factor": {
-    number: 7,
-    label: { hi: "Division में छुपी गिनती", en: "The hidden count in division" },
-    reason: {
-      hi: "अब fraction picture को multiplication और division की missing-count relationship से जोड़ेंगे।",
-      en: "Now we will connect the fraction picture to multiplication and division as a missing-count relationship.",
-    },
-  },
-};
 
 function progressFor(step: JourneyStep) {
   if (step === "loading") return 1;
@@ -133,25 +80,24 @@ export function DemoJourney() {
   const [transferState, setTransferState] = useState<CheckState>("idle");
   const [returnState, setReturnState] = useState<CheckState>("idle");
   const [meaningChoice, setMeaningChoice] = useState<MeaningChoiceId | null>(null);
+  const [shareState, setShareState] = useState<ShareState>("idle");
   const stageHeadingRef = useRef<HTMLHeadingElement>(null);
   const meaningHeadingRef = useRef<HTMLHeadingElement>(null);
 
+  const t = (text: { hi: string; en: string }) => text[language];
   const labComplete = useMemo(() => isLabComplete(placedSlots), [placedSlots]);
   const adaptiveProbe = adaptiveSession ? adaptiveProbeById(adaptiveSession.probeId) : null;
   const adaptiveOption = adaptiveProbe?.options.find((option) => option.id === adaptiveSession?.optionId) ?? null;
-  const suggestedEntry = adaptiveSession ? entryAtomCopy[adaptiveSession.entryAtomId] : entryAtomCopy["chosen-whole"];
-  const receiptSupport = adaptiveReceiptSupport(evidence);
-  const receiptSupportReason = evidence.transfer.hintShown && evidence.repairHistory.length > 0
-    ? "hint और concept repair के बाद"
-    : evidence.repairHistory.length > 0
-      ? "concept repair के बाद"
-      : "hint के बाद";
+  const suggestedEntry = JOURNEY_ENTRY_COPY[adaptiveSession?.entryAtomId ?? "chosen-whole"];
+  const adaptiveReceiptReady = adaptiveSession ? canIssueAdaptiveReceipt(evidence) : false;
+  const receiptSupport = adaptiveReceiptReady ? adaptiveReceiptSupport(evidence) : null;
+  const canShowReceiptClaims = !adaptiveSession || adaptiveReceiptReady;
+  const receiptShareVariant: ReceiptShareVariant = receiptSupport ?? "curated";
 
   useEffect(() => {
     let parsed: AdaptiveSessionPayload | null = null;
     try {
       parsed = parseAdaptiveSessionPayload(window.sessionStorage.getItem(ADAPTIVE_SESSION_STORAGE_KEY));
-      window.sessionStorage.removeItem(ADAPTIVE_SESSION_STORAGE_KEY);
     } catch {
       // Direct /demo visits always retain the complete curated path.
     }
@@ -169,6 +115,15 @@ export function DemoJourney() {
   }, []);
 
   useEffect(() => {
+    if (step !== "receipt") return;
+    try {
+      window.sessionStorage.removeItem(ADAPTIVE_SESSION_STORAGE_KEY);
+    } catch {
+      // The receipt remains usable when storage is unavailable.
+    }
+  }, [step]);
+
+  useEffect(() => {
     if (adaptiveSession && labComplete) dispatchEvidence({ type: "lab-completed" });
   }, [adaptiveSession, labComplete]);
 
@@ -181,9 +136,10 @@ export function DemoJourney() {
   }, [step, transferState]);
 
   const chooseProbe = (value: string) => setProbeAnswer(value);
-  const placeTile = (slot: number) => {
-    if (!tileSelected || slot >= HERO_FIXTURE.targetSlots || placedSlots.includes(slot)) return;
-    setPlacedSlots((current) => [...current, slot]);
+  const toggleTile = (slot: number) => {
+    const alreadyPlaced = placedSlots.includes(slot);
+    if (!alreadyPlaced && !tileSelected) return;
+    setPlacedSlots((current) => toggleLabTile(current, slot));
   };
 
   const checkTransfer = () => {
@@ -238,30 +194,80 @@ export function DemoJourney() {
     openPath("equivalent-repartition", "transfer");
   };
 
+  const submitTransfer = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (transferState !== "correct") {
+      checkTransfer();
+      return;
+    }
+    if (meaningChoice) continueAfterTransfer();
+  };
+
+  const submitReturn = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (returnState === "correct") {
+      setStep(nextCuratedJourneyStep("return"));
+      return;
+    }
+    checkReturn();
+  };
+
+  const shareReceipt = async () => {
+    if (!canShowReceiptClaims) return;
+    const text = receiptShareText(language, receiptShareVariant);
+    setShareState("idle");
+
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: `Bodh · ${t(DEMO_JOURNEY_COPY.receipt.eyebrow)}`, text });
+        setShareState("shared");
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("clipboard_unavailable");
+      await navigator.clipboard.writeText(text);
+      setShareState("copied");
+    } catch {
+      setShareState("failed");
+    }
+  };
+
+  const startAnotherDoubt = () => {
+    try {
+      window.sessionStorage.removeItem(ADAPTIVE_SESSION_STORAGE_KEY);
+    } catch {
+      // Home remains reachable when storage is unavailable.
+    }
+  };
+
   return (
     <main className="journey-shell" id="main-content">
       <header className="journey-header">
-        <Link className="back-link" href="/" aria-label="Bodh home पर वापस जाएँ">
-          <span aria-hidden="true">←</span> वापस
+        <Link className="back-link" href="/" aria-label={t(DEMO_JOURNEY_COPY.header.backAria)}>
+          <span aria-hidden="true">←</span> {t(DEMO_JOURNEY_COPY.header.back)}
         </Link>
-        <Link className="brand brand-compact" href="/" aria-label="Bodh home">
+        <Link className="brand brand-compact" href="/" aria-label={t(DEMO_JOURNEY_COPY.header.homeAria)}>
           <BodhMark size="mark" motion="still" priority />
           <span className="brand-copy"><strong>BODH</strong></span>
         </Link>
         <div className="journey-header-tools">
-          <span className="fixture-label">Curated demo</span>
+          <span className="fixture-label" lang={language}>{t(DEMO_JOURNEY_COPY.header.demoLabel)}</span>
           <NarrationLanguageToggle compact />
         </div>
       </header>
 
-      {step !== "loading" && <ProgressPath active={progressFor(step)} />}
+      {step !== "loading" && <ProgressPath active={progressFor(step)} language={language} />}
 
       <section className="journey-stage" aria-live="polite">
         {step === "loading" && (
           <article className="journey-card journey-card-confirm" aria-busy="true" lang={language}>
             <div className="stage-with-bodh">
               <div>
-                <h1>{language === "hi" ? "तुम्हारा रास्ता तैयार हो रहा है…" : "Preparing your learning path…"}</h1>
+                <h1>{t(DEMO_JOURNEY_COPY.loading.title)}</h1>
               </div>
               <BodhMark pose="listen" size="medium" motion="listen" />
             </div>
@@ -271,45 +277,53 @@ export function DemoJourney() {
         {step === "route" && adaptiveSession && adaptiveOption && (
           <article className="journey-card journey-card-route" lang={language}>
             <div className="stage-topline">
-              <span className="eyebrow">{language === "hi" ? "तुम्हारी समझ का रास्ता" : "Your learning path"}</span>
-              <span className="stage-counter">{language === "hi" ? "Probe → idea" : "Probe → idea"}</span>
+              <span className="eyebrow">{t(DEMO_JOURNEY_COPY.route.eyebrow)}</span>
+              <span className="stage-counter">{t(DEMO_JOURNEY_COPY.route.counter)}</span>
             </div>
             <div className="stage-with-bodh">
               <div>
                 <h1 ref={stageHeadingRef} tabIndex={-1}>
-                  {language === "hi" ? "Bodh ने एक शुरुआती idea सुझाई है।" : "Bodh suggests a place to begin."}
+                  {t(DEMO_JOURNEY_COPY.route.title)}
                 </h1>
-                <p className="stage-lead">
-                  {language === "hi"
-                    ? "यह सिर्फ तुम्हारे एक probe answer से चुनी गई safe शुरुआत है। पहले की ideas को complete या mastered नहीं माना गया है।"
-                    : "This is a conservative starting point chosen from one probe answer. Earlier ideas are not marked complete or mastered."}
-                </p>
+                <p className="stage-lead">{t(DEMO_JOURNEY_COPY.route.lead)}</p>
               </div>
               <BodhMark pose="guide" size="medium" motion="guide" />
             </div>
 
             <div className="adaptive-probe-readback">
-              <small>{language === "hi" ? "तुमने चुना" : "You chose"}</small>
+              <small>{t(DEMO_JOURNEY_COPY.route.chosen)}</small>
               <strong>{adaptiveOption.label[language]}</strong>
             </div>
 
-            <ol className="adaptive-route-path" aria-label={language === "hi" ? "Bodh की सुझाई शुरुआत" : "Bodh's suggested start"}>
-              <li className="adaptive-route-start" style={{ gridColumn: "1 / -1" }}>
-                <span aria-hidden="true">{suggestedEntry.number}</span>
-                <div>
-                  <small>
-                    {language === "hi"
-                      ? `यहाँ से शुरू · idea ${suggestedEntry.number} / ${REPAIR_ENTRY_ATOM_IDS.length}`
-                      : `Start here · idea ${suggestedEntry.number} of ${REPAIR_ENTRY_ATOM_IDS.length}`}
-                  </small>
-                  <strong>{suggestedEntry.label[language]}</strong>
-                </div>
-              </li>
+            <ol className="adaptive-route-path" aria-label={t(DEMO_JOURNEY_COPY.route.pathAria)}>
+              {REPAIR_ENTRY_ATOM_IDS.map((atomId, index) => {
+                const atom = JOURNEY_ENTRY_COPY[atomId];
+                const suggestedIndex = REPAIR_ENTRY_ATOM_IDS.indexOf(adaptiveSession.entryAtomId);
+                const relation = index < suggestedIndex ? "before" : index === suggestedIndex ? "start" : "after";
+                const status = relation === "before"
+                  ? DEMO_JOURNEY_COPY.route.before
+                  : relation === "start"
+                    ? DEMO_JOURNEY_COPY.route.suggested
+                    : DEMO_JOURNEY_COPY.route.after;
+                return (
+                  <li
+                    className={`adaptive-route-node adaptive-route-${relation}`}
+                    key={atomId}
+                    aria-current={relation === "start" ? "step" : undefined}
+                  >
+                    <span aria-hidden="true">{atom.number}</span>
+                    <div>
+                      <small className="adaptive-route-status">{t(status)}</small>
+                      <strong>{t(atom.label)}</strong>
+                    </div>
+                  </li>
+                );
+              })}
             </ol>
 
             <div className="adaptive-route-reason">
               <span aria-hidden="true">↳</span>
-              <p>{suggestedEntry.reason[language]}</p>
+              <p>{t(suggestedEntry.reason)}</p>
             </div>
 
             <div className="adaptive-route-actions">
@@ -318,58 +332,68 @@ export function DemoJourney() {
                 type="button"
                 onClick={() => beginJourney(adaptiveSession.entryAtomId)}
               >
-                {language === "hi" ? `${suggestedEntry.label.hi} से शुरू करें` : `Start with ${suggestedEntry.label.en}`}
+                {routeStartButtonText(language, suggestedEntry.label)}
                 <span aria-hidden="true">→</span>
               </button>
               <button className="quiet-action" type="button" onClick={() => beginJourney("chosen-whole")}>
-                {language === "hi" ? "शुरुआत से सब देखें" : "Review everything from the beginning"}
+                {t(DEMO_JOURNEY_COPY.route.startAll)}
               </button>
             </div>
           </article>
         )}
 
         {step === "confirm" && (
-          <article className="journey-card journey-card-confirm" lang="hi">
+          <article className="journey-card journey-card-confirm" lang={language}>
             <div className="stage-topline">
-              <span className="eyebrow">तुम्हारा सवाल</span>
-              <span className="stage-counter">1 / 4</span>
+              <span className="eyebrow">{t(DEMO_JOURNEY_COPY.confirm.eyebrow)}</span>
+              <span className="stage-counter">{t(DEMO_JOURNEY_COPY.confirm.counter)}</span>
             </div>
             <div className="stage-with-bodh">
               <div>
-                <h1 ref={stageHeadingRef} tabIndex={-1}>पहले जाँच लें कि हमने सही सुना।</h1>
-                <p className="stage-lead">तुम्हारा original सवाल और तुम्हारे शब्द, बिल्कुल वैसे ही रखे गए हैं।</p>
+                <h1 ref={stageHeadingRef} tabIndex={-1}>{t(DEMO_JOURNEY_COPY.confirm.title)}</h1>
+                <p className="stage-lead">{t(DEMO_JOURNEY_COPY.confirm.lead)}</p>
               </div>
               <BodhMark pose="listen" size="medium" motion="listen" />
             </div>
-            <div className="confirmed-equation journey-equation" aria-label="three quarters divided by one eighth">
+            <div className="confirmed-equation journey-equation" aria-label={t(DEMO_JOURNEY_COPY.confirm.equationAria)}>
               <span>3/4</span><span>÷</span><span>1/8</span><span>= ?</span>
             </div>
             <div className="reasoning-box">
-              <span className="reasoning-label">तुमने कहा</span>
-              <p>“{HERO_FIXTURE.learnerReasoning}”</p>
+              <span className="reasoning-label">{t(DEMO_JOURNEY_COPY.confirm.learnerSaid)}</span>
+              <p lang="hi">“{HERO_FIXTURE.learnerReasoning}”</p>
             </div>
-            <p className="calm-note">Bodh तुम्हें grade नहीं कर रहा। वह बस यह देख रहा है कि कौन-सी छोटी idea पहले काम आएगी।</p>
+            <p className="calm-note">{t(DEMO_JOURNEY_COPY.confirm.calmNote)}</p>
             <button className="button button-primary journey-primary" type="button" onClick={() => setStep(nextCuratedJourneyStep("confirm"))}>
-              हाँ, यही मेरा सवाल है <span aria-hidden="true">→</span>
+              {t(DEMO_JOURNEY_COPY.confirm.continue)} <span aria-hidden="true">→</span>
             </button>
           </article>
         )}
 
         {step === "path" && (
-          <article className="journey-card journey-card-path" lang="hi">
+          <article className="journey-card journey-card-path" lang={language}>
             <div className="stage-topline">
-              <span className="eyebrow">छुपी हुई idea</span>
-              <span className="stage-counter">2 / 4</span>
+              <span className="eyebrow">{t(DEMO_JOURNEY_COPY.path.eyebrow)}</span>
+              <span className="stage-counter">{t(DEMO_JOURNEY_COPY.path.counter)}</span>
             </div>
             <div className="stage-with-bodh">
               <div>
-                <h1 ref={stageHeadingRef} tabIndex={-1}>एक ही whole को बदलते हुए देखें।</h1>
-                <p className="stage-lead">हर screen पर सिर्फ एक idea: पहले picture पर action, फिर उसी picture से evidence।</p>
+                <h1 ref={stageHeadingRef} tabIndex={-1}>{t(DEMO_JOURNEY_COPY.path.title)}</h1>
+                <p className="stage-lead">{t(DEMO_JOURNEY_COPY.path.lead)}</p>
+                {entryStageId !== "chosen-whole" && (
+                  <button
+                    className="quiet-action path-review-all"
+                    type="button"
+                    onClick={() => setEntryStageId("chosen-whole")}
+                  >
+                    {t(DEMO_JOURNEY_COPY.path.reviewAll)}
+                  </button>
+                )}
               </div>
               <BodhMark pose="guide" size="medium" motion="guide" />
             </div>
             <div lang={language}>
               <FractionConceptExplainer
+                key={entryStageId}
                 initialStageId={entryStageId}
                 onStageEvidence={(stageId) => {
                   if (adaptiveSession) dispatchEvidence({ type: "atom-completed", atomId: stageId });
@@ -381,15 +405,15 @@ export function DemoJourney() {
         )}
 
         {step === "probe" && (
-          <article className="journey-card journey-card-probe" lang="hi">
+          <article className="journey-card journey-card-probe" lang={language}>
             <div className="stage-topline">
-              <span className="eyebrow">एक छोटी जाँच</span>
-              <span className="stage-counter">2 / 4</span>
+              <span className="eyebrow">{t(DEMO_JOURNEY_COPY.probe.eyebrow)}</span>
+              <span className="stage-counter">{t(DEMO_JOURNEY_COPY.probe.counter)}</span>
             </div>
             <div className="stage-with-bodh">
               <div>
-                <h1 ref={stageHeadingRef} tabIndex={-1}>एक whole में कितने 1/4 आते हैं?</h1>
-                <p className="stage-lead">यह test नहीं है। इससे Bodh को सही picture चुनने में मदद मिलती है।</p>
+                <h1 ref={stageHeadingRef} tabIndex={-1}>{t(DEMO_JOURNEY_COPY.probe.title)}</h1>
+                <p className="stage-lead">{t(DEMO_JOURNEY_COPY.probe.lead)}</p>
               </div>
               <BodhMark
                 pose={probeAnswer === "4" ? "celebrate" : "listen"}
@@ -397,8 +421,16 @@ export function DemoJourney() {
                 motion={probeAnswer === "4" ? "celebrate" : "listen"}
               />
             </div>
-            <LearningStrip total={4} filled={4} unit="1/4" label="एक पूरा whole" tone="blue" compact />
-            <div className="probe-options" role="group" aria-label="एक whole में कितने एक बटे चार">
+            <LearningStrip
+              total={4}
+              filled={4}
+              unit="1/4"
+              label={t(DEMO_JOURNEY_COPY.probe.stripLabel)}
+              tone="blue"
+              compact
+              language={language}
+            />
+            <div className="probe-options" role="group" aria-label={t(DEMO_JOURNEY_COPY.probe.optionsAria)}>
               {probeOptions.map((option) => (
                 <button
                   className={`probe-option ${probeAnswer === option.value ? "probe-option-selected" : ""}`}
@@ -414,31 +446,31 @@ export function DemoJourney() {
             {probeAnswer && (
               <div className={`probe-response ${probeAnswer === "4" ? "probe-response-right" : ""}`}>
                 {probeAnswer === "4"
-                  ? "हाँ—चार बराबर 1/4 मिलकर एक whole बनाते हैं। अब यही सोच 1/8 और 3/4 पर लगाएँ।"
-                  : "करीब है। एक whole को चार बराबर हिस्सों में बाँटकर फिर देखो—तुम answer बदल सकते हो।"}
+                  ? t(DEMO_JOURNEY_COPY.probe.feedbackFour)
+                  : t(DEMO_JOURNEY_COPY.probe.feedbackOther)}
               </div>
             )}
             <button
               className="button button-primary journey-primary"
               type="button"
-              disabled={probeAnswer !== "4"}
-              onClick={() => beginJourney("chosen-whole")}
+              disabled={!probeAnswer}
+              onClick={() => beginJourney(curatedProbeEntryAtomId(probeAnswer))}
             >
-              अब Bodh के साथ idea बनाएँ <span aria-hidden="true">→</span>
+              {t(DEMO_JOURNEY_COPY.probe.continue)} <span aria-hidden="true">→</span>
             </button>
           </article>
         )}
 
         {step === "lab" && (
-          <article className="journey-card journey-card-lab" lang="hi">
+          <article className="journey-card journey-card-lab" lang={language}>
             <div className="stage-topline">
-              <span className="eyebrow">खुद करके देखो</span>
-              <span className="stage-counter">3 / 4</span>
+              <span className="eyebrow">{t(DEMO_JOURNEY_COPY.lab.eyebrow)}</span>
+              <span className="stage-counter">{t(DEMO_JOURNEY_COPY.lab.counter)}</span>
             </div>
             <div className="stage-with-bodh stage-with-bodh-lab">
               <div>
-                <h1 ref={stageHeadingRef} tabIndex={-1}>3/4 के अंदर कितने 1/8 पूरे-पूरा बैठते हैं?</h1>
-                <p className="stage-lead">पहले एक tile चुनो, फिर peach वाली जगहों पर tap करके उसे रखो।</p>
+                <h1 ref={stageHeadingRef} tabIndex={-1}>{t(DEMO_JOURNEY_COPY.lab.title)}</h1>
+                <p className="stage-lead">{t(DEMO_JOURNEY_COPY.lab.lead)}</p>
               </div>
               <BodhMark
                 pose={labComplete ? "celebrate" : "tinker"}
@@ -446,7 +478,7 @@ export function DemoJourney() {
                 motion={labComplete ? "celebrate" : "tinker"}
               />
             </div>
-            <div className="lab-equation" aria-live="polite">
+            <div className="lab-equation" aria-live="polite" aria-label={t(DEMO_JOURNEY_COPY.lab.equationAria)}>
               <span>{placedSlots.length || "?"}</span> × <span>1/8</span> = <span>3/4</span>
             </div>
             <button
@@ -456,12 +488,15 @@ export function DemoJourney() {
               onClick={() => setTileSelected(true)}
             >
               <span className="tile-swatch">1/8</span>
-              {tileSelected ? "Tile चुना गया है—अब जगह tap करो" : "एक 1/8 tile चुनें"}
+              {tileSelected ? t(DEMO_JOURNEY_COPY.lab.tileSelected) : t(DEMO_JOURNEY_COPY.lab.chooseTile)}
             </button>
             <div className="fraction-bar-wrap">
-              <div className="fraction-bar-labels" aria-hidden="true"><span>3/4</span><span>पूरा whole</span></div>
+              <div className="fraction-bar-labels" aria-hidden="true">
+                <span>{t(DEMO_JOURNEY_COPY.lab.targetLabel)}</span>
+                <span>{t(DEMO_JOURNEY_COPY.lab.wholeLabel)}</span>
+              </div>
               <div className="fraction-bar-scroll">
-                <div className="fraction-bar" aria-label="eight-part whole with three-quarters available for tiles">
+                <div className="fraction-bar" aria-label={t(DEMO_JOURNEY_COPY.lab.barAria)}>
                   {Array.from({ length: HERO_FIXTURE.totalSlots }, (_, slot) => {
                     const inTarget = slot < HERO_FIXTURE.targetSlots;
                     const placed = placedSlots.includes(slot);
@@ -470,15 +505,15 @@ export function DemoJourney() {
                         className={`fraction-slot ${inTarget ? "fraction-slot-target" : "fraction-slot-outside"} ${placed ? "fraction-slot-placed" : ""}`}
                         type="button"
                         key={slot}
-                        disabled={!inTarget || placed || !tileSelected}
+                        disabled={!inTarget || (!placed && !tileSelected)}
                         aria-label={
                           placed
-                            ? `जगह ${slot + 1}: एक बटे आठ रखा गया`
+                            ? `${t(DEMO_JOURNEY_COPY.lab.slot)} ${slot + 1}: ${t(DEMO_JOURNEY_COPY.lab.placedSlot)}`
                             : inTarget
-                              ? `जगह ${slot + 1} में एक बटे आठ रखें`
-                              : `जगह ${slot + 1}, तीन बटे चार से बाहर`
+                              ? `${t(DEMO_JOURNEY_COPY.lab.slot)} ${slot + 1}: ${t(DEMO_JOURNEY_COPY.lab.emptySlot)}`
+                              : `${t(DEMO_JOURNEY_COPY.lab.slot)} ${slot + 1}: ${t(DEMO_JOURNEY_COPY.lab.outsideSlot)}`
                         }
-                        onClick={() => placeTile(slot)}
+                        onClick={() => toggleTile(slot)}
                       >
                         {placed && <span>1/8</span>}
                       </button>
@@ -489,28 +524,28 @@ export function DemoJourney() {
             </div>
             {labComplete && (
               <div className="lab-success">
-                <strong>तुमने देख लिया:</strong> 3/4 में छह 1/8 बैठते हैं। इसलिए <span>3/4 ÷ 1/8 = 6</span>।
+                <strong>{t(DEMO_JOURNEY_COPY.lab.successLead)}</strong> {t(DEMO_JOURNEY_COPY.lab.success)}
               </div>
             )}
             <div className="lab-actions">
-              <button className="quiet-action" type="button" onClick={() => setPlacedSlots([])}>फिर से देखें</button>
+              <button className="quiet-action" type="button" onClick={() => setPlacedSlots([])}>{t(DEMO_JOURNEY_COPY.lab.reset)}</button>
               <button className="button button-primary journey-primary" type="button" disabled={!labComplete} onClick={() => setStep(nextCuratedJourneyStep("lab"))}>
-                एक नए सवाल में आज़माएँ <span aria-hidden="true">→</span>
+                {t(DEMO_JOURNEY_COPY.lab.continue)} <span aria-hidden="true">→</span>
               </button>
             </div>
           </article>
         )}
 
         {step === "transfer" && (
-          <article className="journey-card journey-card-transfer" lang="hi">
+          <article className="journey-card journey-card-transfer" lang={language}>
             <div className="stage-topline">
-              <span className="eyebrow">अब एक नया सवाल</span>
-              <span className="stage-counter">4 / 4</span>
+              <span className="eyebrow">{t(DEMO_JOURNEY_COPY.transfer.eyebrow)}</span>
+              <span className="stage-counter">{t(DEMO_JOURNEY_COPY.transfer.counter)}</span>
             </div>
             <div className="stage-with-bodh">
               <div>
-                <h1 ref={stageHeadingRef} tabIndex={-1}>क्या वही idea नई कहानी में भी काम करती है?</h1>
-                <p className="stage-lead">पहले अपने दम पर कोशिश करो। जरूरत हुई तो वही tool वापस आएगा।</p>
+                <h1 ref={stageHeadingRef} tabIndex={-1}>{t(DEMO_JOURNEY_COPY.transfer.title)}</h1>
+                <p className="stage-lead">{t(DEMO_JOURNEY_COPY.transfer.lead)}</p>
               </div>
               <BodhMark
                 pose={transferState === "correct" ? "celebrate" : "guide"}
@@ -519,192 +554,259 @@ export function DemoJourney() {
               />
             </div>
             <div className="word-problem">
-              <p>{HERO_FIXTURE.transferProblem}</p>
+              <p>{t(DEMO_JOURNEY_COPY.transfer.problem)}</p>
               <strong>2/3 ÷ 1/6 = ?</strong>
             </div>
             {transferState === "try-again" && (
-              <LearningStrip total={6} filled={4} unit="1/6" label="Hint picture: 2/3 को sixths में देखें" tone="olive" compact showUnits={false} />
-            )}
-            <label className="answer-field">
-              <span>तुम्हारा जवाब</span>
-              <input
-                inputMode="numeric"
-                value={transferAnswer}
-                onChange={(event) => {
-                  setTransferAnswer(event.target.value);
-                  setTransferState("idle");
-                  setMeaningChoice(null);
-                }}
-                aria-describedby="transfer-feedback"
-                placeholder="यहाँ लिखो"
+              <LearningStrip
+                total={6}
+                filled={4}
+                unit="1/6"
+                label={t(DEMO_JOURNEY_COPY.transfer.hintLabel)}
+                tone="olive"
+                compact
+                showUnits={false}
+                language={language}
               />
-            </label>
-            {transferState === "try-again" && (
-              <p className="answer-feedback" id="transfer-feedback">अब hint picture में peach हिस्से देखो। उनमें 1/6 size के groups खुद गिनो।</p>
             )}
-            {transferState === "correct" && (
-              <p className="answer-feedback answer-feedback-correct" id="transfer-feedback" lang={language}>
-                {language === "hi" ? "Number सही है। अब बताओ कि इस कहानी में 4 का मतलब क्या है।" : "The number is correct. Now tell Bodh what 4 means in this story."}
-              </p>
-            )}
-            {transferState === "correct" && (
-              <section className="transfer-meaning" aria-labelledby="transfer-meaning-title" lang={language}>
-                <span className="reasoning-label">{language === "hi" ? "सिर्फ answer नहीं—meaning भी" : "Not only the answer—the meaning"}</span>
-                <h2 id="transfer-meaning-title" ref={meaningHeadingRef} tabIndex={-1}>
-                  {language === "hi" ? "यहाँ 4 किस चीज़ की गिनती है?" : "What is the 4 counting here?"}
-                </h2>
-                <div className="meaning-options" role="group" aria-label={language === "hi" ? "4 का meaning चुनें" : "Choose what 4 means"}>
-                  {MEANING_CHOICES.map((choice) => (
-                    <button
-                      className={meaningChoice === choice.id ? "meaning-option-selected" : ""}
-                      type="button"
-                      aria-pressed={meaningChoice === choice.id}
-                      key={choice.id}
-                      onClick={() => chooseMeaning(choice.id)}
-                    >
-                      {choice.label[language]}
-                    </button>
-                  ))}
-                </div>
-                {meaningChoice === EVIDENCE_MEANING_CHOICE_ID && (
-                  <p className="meaning-feedback meaning-feedback-correct">
-                    {language === "hi" ? "हाँ—चार 1/6-size के groups, 2/3 ribbon में fit होते हैं।" : "Yes—four groups of size 1/6 fit inside 2/3 of the ribbon."}
-                  </p>
-                )}
-                {meaningChoice && meaningChoice !== EVIDENCE_MEANING_CHOICE_ID && (
-                  <p className="meaning-feedback">
-                    {language === "hi" ? "Number मिल गया, लेकिन relationship अभी rule से जुड़ी है। Bodh उसी छोटी idea को फिर दिखाएगा।" : "You found the number, but its meaning is still tied to a rule. Bodh will revisit that one small idea."}
-                  </p>
-                )}
-              </section>
-            )}
-            <button
-              className="button button-primary journey-primary"
-              type="button"
-              disabled={transferState === "correct" && !meaningChoice}
-              onClick={transferState === "correct" ? continueAfterTransfer : checkTransfer}
-              lang={language}
-            >
-              {transferState !== "correct"
-                ? language === "hi" ? "अपना जवाब जाँचें" : "Check my answer"
-                : meaningChoice === EVIDENCE_MEANING_CHOICE_ID
-                  ? language === "hi" ? "अब अपना पहला सवाल करें" : "Return to my first question"
-                  : meaningChoice
-                    ? language === "hi" ? "इस idea को फिर समझें" : "Repair this idea"
-                    : language === "hi" ? "पहले meaning चुनें" : "Choose the meaning first"}
-              <span aria-hidden="true">→</span>
-            </button>
+            <form className="answer-form" onSubmit={submitTransfer}>
+              <label className="answer-field">
+                <span>{t(DEMO_JOURNEY_COPY.transfer.answerLabel)}</span>
+                <input
+                  inputMode="numeric"
+                  name="transfer-answer"
+                  value={transferAnswer}
+                  onChange={(event) => {
+                    setTransferAnswer(event.target.value);
+                    setTransferState("idle");
+                    setMeaningChoice(null);
+                  }}
+                  aria-describedby={transferState === "idle" ? undefined : "transfer-feedback"}
+                  placeholder={t(DEMO_JOURNEY_COPY.transfer.answerPlaceholder)}
+                />
+              </label>
+              {transferState === "try-again" && (
+                <p className="answer-feedback" id="transfer-feedback">{t(DEMO_JOURNEY_COPY.transfer.hintFeedback)}</p>
+              )}
+              {transferState === "correct" && (
+                <p className="answer-feedback answer-feedback-correct" id="transfer-feedback">
+                  {t(DEMO_JOURNEY_COPY.transfer.correctFeedback)}
+                </p>
+              )}
+              {transferState === "correct" && (
+                <section className="transfer-meaning" aria-labelledby="transfer-meaning-title">
+                  <span className="reasoning-label">{t(DEMO_JOURNEY_COPY.transfer.meaningEyebrow)}</span>
+                  <h2 id="transfer-meaning-title" ref={meaningHeadingRef} tabIndex={-1}>
+                    {t(DEMO_JOURNEY_COPY.transfer.meaningTitle)}
+                  </h2>
+                  <div className="meaning-options" role="group" aria-label={t(DEMO_JOURNEY_COPY.transfer.meaningAria)}>
+                    {MEANING_CHOICES.map((choice) => (
+                      <button
+                        className={meaningChoice === choice.id ? "meaning-option-selected" : ""}
+                        type="button"
+                        aria-pressed={meaningChoice === choice.id}
+                        key={choice.id}
+                        onClick={() => chooseMeaning(choice.id)}
+                      >
+                        {choice.label[language]}
+                      </button>
+                    ))}
+                  </div>
+                  {meaningChoice === EVIDENCE_MEANING_CHOICE_ID && (
+                    <p className="meaning-feedback meaning-feedback-correct">
+                      {t(DEMO_JOURNEY_COPY.transfer.meaningCorrect)}
+                    </p>
+                  )}
+                  {meaningChoice && meaningChoice !== EVIDENCE_MEANING_CHOICE_ID && (
+                    <p className="meaning-feedback">{t(DEMO_JOURNEY_COPY.transfer.meaningRepair)}</p>
+                  )}
+                </section>
+              )}
+              <button
+                className="button button-primary journey-primary"
+                type="submit"
+                disabled={transferState === "correct" && !meaningChoice}
+              >
+                {transferState !== "correct"
+                  ? t(DEMO_JOURNEY_COPY.transfer.check)
+                  : meaningChoice === EVIDENCE_MEANING_CHOICE_ID
+                    ? t(DEMO_JOURNEY_COPY.transfer.return)
+                    : meaningChoice
+                      ? t(DEMO_JOURNEY_COPY.transfer.repair)
+                      : t(DEMO_JOURNEY_COPY.transfer.chooseMeaning)}
+                <span aria-hidden="true">→</span>
+              </button>
+            </form>
           </article>
         )}
 
         {step === "return" && (
-          <article className="journey-card journey-card-return" lang="hi">
+          <article className="journey-card journey-card-return" lang={language}>
             <div className="stage-topline">
-              <span className="eyebrow">वही सवाल, अब तुम्हारी समझ के साथ</span>
-              <span className="stage-counter">4 / 4</span>
+              <span className="eyebrow">{t(DEMO_JOURNEY_COPY.return.eyebrow)}</span>
+              <span className="stage-counter">{t(DEMO_JOURNEY_COPY.return.counter)}</span>
             </div>
             <div className="stage-with-bodh">
-              <h1 ref={stageHeadingRef} tabIndex={-1}>अब वही सवाल—लेकिन idea तुम्हारे पास है।</h1>
+              <h1 ref={stageHeadingRef} tabIndex={-1}>{t(DEMO_JOURNEY_COPY.return.title)}</h1>
               <BodhMark
                 pose={returnState === "correct" ? "celebrate" : "listen"}
                 size="medium"
                 motion={returnState === "correct" ? "celebrate" : "listen"}
               />
             </div>
-            <div className="confirmed-equation journey-equation">
+            <div className="confirmed-equation journey-equation" aria-label={t(DEMO_JOURNEY_COPY.return.equationAria)}>
               <span>3/4</span><span>÷</span><span>1/8</span><span>= ?</span>
             </div>
-            <label className="answer-field">
-              <span>तुम्हारा जवाब</span>
-              <input
-                inputMode="numeric"
-                value={returnAnswer}
-                onChange={(event) => {
-                  setReturnAnswer(event.target.value);
-                  setReturnState("idle");
-                }}
-                aria-describedby="return-feedback"
-                placeholder="यहाँ लिखो"
-              />
-            </label>
-            {returnState === "try-again" && (
-              <p className="answer-feedback" id="return-feedback">एक hint: सोचो कि 3/4 के अंदर कितने 1/8 पूरे-पूरा बैठते हैं।</p>
-            )}
-            {returnState === "correct" && (
-              <p className="answer-feedback answer-feedback-correct" id="return-feedback">हाँ। तुमने rule नहीं, relationship इस्तेमाल किया।</p>
-            )}
-            <button
-              className="button button-primary journey-primary"
-              type="button"
-              onClick={returnState === "correct" ? () => setStep(nextCuratedJourneyStep("return")) : checkReturn}
-            >
-              {returnState === "correct" ? "आज की समझ देखें" : "अपना जवाब जाँचें"} <span aria-hidden="true">→</span>
-            </button>
+            <form className="answer-form" onSubmit={submitReturn}>
+              <label className="answer-field">
+                <span>{t(DEMO_JOURNEY_COPY.return.answerLabel)}</span>
+                <input
+                  inputMode="numeric"
+                  name="return-answer"
+                  value={returnAnswer}
+                  onChange={(event) => {
+                    setReturnAnswer(event.target.value);
+                    setReturnState("idle");
+                  }}
+                  aria-describedby={returnState === "idle" ? undefined : "return-feedback"}
+                  placeholder={t(DEMO_JOURNEY_COPY.return.answerPlaceholder)}
+                />
+              </label>
+              {returnState === "try-again" && (
+                <p className="answer-feedback" id="return-feedback">{t(DEMO_JOURNEY_COPY.return.hint)}</p>
+              )}
+              {returnState === "correct" && (
+                <p className="answer-feedback answer-feedback-correct" id="return-feedback">{t(DEMO_JOURNEY_COPY.return.correct)}</p>
+              )}
+              <button className="button button-primary journey-primary" type="submit">
+                {returnState === "correct" ? t(DEMO_JOURNEY_COPY.return.receipt) : t(DEMO_JOURNEY_COPY.return.check)} <span aria-hidden="true">→</span>
+              </button>
+            </form>
           </article>
         )}
 
         {step === "receipt" && (
-          <article className="journey-card journey-card-receipt" lang="hi">
+          <article className="journey-card journey-card-receipt" lang={language}>
             <div className="receipt-heading">
-              <BodhMark pose="celebrate" size="medium" motion="celebrate" />
+              <BodhMark
+                pose={canShowReceiptClaims ? "celebrate" : "listen"}
+                size="medium"
+                motion={canShowReceiptClaims ? "celebrate" : "listen"}
+              />
               <div>
-                <span className="eyebrow">इस session में क्या evidence मिला</span>
+                <span className="eyebrow">{t(DEMO_JOURNEY_COPY.receipt.eyebrow)}</span>
                 <h1 ref={stageHeadingRef} tabIndex={-1}>
-                  {receiptSupport === "independent"
-                    ? "तुमने वही idea एक नए सवाल में अपने दम पर समझाई।"
-                    : receiptSupport === "supported"
-                      ? `तुमने ${receiptSupportReason} वही idea एक नए सवाल में समझाई।`
-                      : "तुमने एक idea को दो अलग सवालों में इस्तेमाल किया।"}
+                  {!canShowReceiptClaims
+                    ? t(DEMO_JOURNEY_COPY.receipt.unavailableTitle)
+                    : receiptSupport === "independent"
+                      ? t(DEMO_JOURNEY_COPY.receipt.independentTitle)
+                      : receiptSupport === "supported"
+                        ? t(DEMO_JOURNEY_COPY.receipt.supportedTitle)
+                        : t(DEMO_JOURNEY_COPY.receipt.curatedTitle)}
                 </h1>
               </div>
             </div>
-            <p className="receipt-trust-note">यह आज के actions का receipt है—long-term mastery, grade, या score का दावा नहीं।</p>
-            <div className="receipt-artifacts">
-              <LearningStrip total={8} filled={6} unit="1/8" label="तुम्हारा fraction evidence" tone="peach" compact showUnits={false} />
-              <LearningStrip total={6} filled={4} unit="1/6" label="तुम्हारा transfer evidence" tone="olive" compact showUnits={false} />
-            </div>
-            {adaptiveSession && (
-              <ol className="receipt-evidence-timeline" aria-label="इस session का evidence timeline">
-                <li><span>1</span><div><small>Probe</small><strong>Starting point चुनी गई</strong></div></li>
-                <li><span>2</span><div><small>Visual repair</small><strong>{evidence.completedAtomIds.length} concept checkpoints evidence के साथ पूरे</strong></div></li>
-                <li><span>3</span><div><small>Build</small><strong>3/4 में 1/8 tiles खुद रखे</strong></div></li>
-                <li>
-                  <span>4</span>
-                  <div>
-                    <small>Transfer</small>
-                    <strong>{receiptSupport === "independent" ? "नई कहानी बिना support समझी" : `नई कहानी ${receiptSupportReason} समझी`}</strong>
-                  </div>
-                </li>
-                <li><span>5</span><div><small>Meaning + return</small><strong>4 का meaning बताया और original सवाल पर लौटे</strong></div></li>
-              </ol>
+            <p className="receipt-trust-note">
+              {t(canShowReceiptClaims ? DEMO_JOURNEY_COPY.receipt.trust : DEMO_JOURNEY_COPY.receipt.unavailableTrust)}
+            </p>
+            {canShowReceiptClaims && (
+              <>
+                <div className="receipt-artifacts">
+                  <LearningStrip
+                    total={8}
+                    filled={6}
+                    unit="1/8"
+                    label={t(DEMO_JOURNEY_COPY.receipt.fractionEvidence)}
+                    tone="peach"
+                    compact
+                    showUnits={false}
+                    language={language}
+                  />
+                  <LearningStrip
+                    total={6}
+                    filled={4}
+                    unit="1/6"
+                    label={t(DEMO_JOURNEY_COPY.receipt.transferEvidence)}
+                    tone="olive"
+                    compact
+                    showUnits={false}
+                    language={language}
+                  />
+                </div>
+                {adaptiveSession && adaptiveReceiptReady && (
+                  <ol className="receipt-evidence-timeline" aria-label={t(DEMO_JOURNEY_COPY.receipt.timelineAria)}>
+                    <li><span>1</span><div><small>{t(DEMO_JOURNEY_COPY.receipt.timeline.probeLabel)}</small><strong>{t(DEMO_JOURNEY_COPY.receipt.timeline.probe)}</strong></div></li>
+                    <li><span>2</span><div><small>{t(DEMO_JOURNEY_COPY.receipt.timeline.repairLabel)}</small><strong>{evidence.completedAtomIds.length} {t(DEMO_JOURNEY_COPY.receipt.timeline.repairSuffix)}</strong></div></li>
+                    <li><span>3</span><div><small>{t(DEMO_JOURNEY_COPY.receipt.timeline.buildLabel)}</small><strong>{t(DEMO_JOURNEY_COPY.receipt.timeline.build)}</strong></div></li>
+                    <li>
+                      <span>4</span>
+                      <div>
+                        <small>{t(DEMO_JOURNEY_COPY.receipt.timeline.transferLabel)}</small>
+                        <strong>
+                          {t(receiptSupport === "independent"
+                            ? DEMO_JOURNEY_COPY.receipt.timeline.transferIndependent
+                            : DEMO_JOURNEY_COPY.receipt.timeline.transferSupported)}
+                        </strong>
+                      </div>
+                    </li>
+                    <li><span>5</span><div><small>{t(DEMO_JOURNEY_COPY.receipt.timeline.returnLabel)}</small><strong>{t(DEMO_JOURNEY_COPY.receipt.timeline.return)}</strong></div></li>
+                  </ol>
+                )}
+                <div className="receipt-grid">
+                  <section>
+                    <span>{t(DEMO_JOURNEY_COPY.receipt.ideaLabel)}</span>
+                    <strong>{t(DEMO_JOURNEY_COPY.receipt.idea)}</strong>
+                  </section>
+                  <section>
+                    <span>{t(DEMO_JOURNEY_COPY.receipt.evidenceLabel)}</span>
+                    <strong>{t(DEMO_JOURNEY_COPY.receipt.evidence)}</strong>
+                  </section>
+                  <section>
+                    <span>{t(DEMO_JOURNEY_COPY.receipt.wordsLabel)}</span>
+                    <strong>{t(DEMO_JOURNEY_COPY.receipt.words)}</strong>
+                  </section>
+                  <section>
+                    <span>{t(DEMO_JOURNEY_COPY.receipt.connectionLabel)}</span>
+                    <strong>{t(DEMO_JOURNEY_COPY.receipt.connection)}</strong>
+                  </section>
+                </div>
+                <div className="receipt-problems">
+                  <span>{t(DEMO_JOURNEY_COPY.receipt.original)}: <strong>3/4 ÷ 1/8 = 6</strong></span>
+                  <span>{t(DEMO_JOURNEY_COPY.receipt.transfer)}: <strong>2/3 ÷ 1/6 = 4</strong></span>
+                </div>
+              </>
             )}
-            <div className="receipt-grid">
-              <section>
-                <span>IDEA</span>
-                <strong>Division पूछ सकती है: इस size के कितने groups यहाँ fit होते हैं?</strong>
-              </section>
-              <section>
-                <span>तुमने evidence दिया</span>
-                <strong>
-                  तुमने 3/4 में छह 1/8 रखे और 2/3 में चार 1/6-size groups का meaning पहचाना
-                  {receiptSupport === "supported" ? `—${receiptSupportReason}।` : "।"}
-                </strong>
-              </section>
-              <section>
-                <span>शब्द जो याद रखें</span>
-                <strong>हर <em>(denominator)</em> size बताता है · अंश <em>(numerator)</em> units गिनता है</strong>
-              </section>
-              <section>
-                <span>Connection</span>
-                <strong>Multiplication मात्रा बनाती है; division वही missing count पूछती है।</strong>
-              </section>
+            <div className="receipt-actions mobile-action-tray">
+              <button
+                className="button receipt-share-action"
+                type="button"
+                disabled={!canShowReceiptClaims}
+                aria-label={t(DEMO_JOURNEY_COPY.receipt.shareAria)}
+                onClick={shareReceipt}
+              >
+                {t(DEMO_JOURNEY_COPY.receipt.share)}
+              </button>
+              <button
+                className="button receipt-print-action"
+                type="button"
+                disabled={!canShowReceiptClaims}
+                aria-label={t(DEMO_JOURNEY_COPY.receipt.printAria)}
+                onClick={() => window.print()}
+              >
+                {t(DEMO_JOURNEY_COPY.receipt.print)}
+              </button>
             </div>
-            <div className="receipt-problems">
-              <span>तुम्हारा original: <strong>3/4 ÷ 1/8 = 6</strong></span>
-              <span>तुम्हारा transfer: <strong>2/3 ÷ 1/6 = 4</strong></span>
-            </div>
-            <Link className="button button-primary journey-primary" href="/">
-              एक और doubt <span aria-hidden="true">→</span>
+            {shareState !== "idle" && (
+              <p className="receipt-share-status" role={shareState === "failed" ? "alert" : "status"} aria-live="polite">
+                {t(shareState === "shared"
+                  ? DEMO_JOURNEY_COPY.receipt.shared
+                  : shareState === "copied"
+                    ? DEMO_JOURNEY_COPY.receipt.copied
+                    : DEMO_JOURNEY_COPY.receipt.shareFailed)}
+              </p>
+            )}
+            <Link className="button button-primary journey-primary receipt-restart-action" href="/" onClick={startAnotherDoubt}>
+              {t(DEMO_JOURNEY_COPY.receipt.oneMore)} <span aria-hidden="true">→</span>
             </Link>
           </article>
         )}

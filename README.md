@@ -46,7 +46,7 @@ The release corpus is validated separately:
 npm run validate:evals
 ```
 
-It contains 32 synthetic cases: eight seeds, 16 reviewed development-gold cases, and eight frozen holdouts. See `docs/EVALUATION.md` for the secret-gated live run.
+It contains 32 synthetic cases: eight seeds, 16 reviewed development-gold cases, and eight frozen holdouts. The release run passed 32/32 cases with the frozen holdout passing 8/8; see `docs/EVALUATION_RELEASE.md` for the exact model, prompt, source commit, and claim boundary.
 
 ## Repository map
 
@@ -61,11 +61,11 @@ It contains 32 synthetic cases: eight seeds, 16 reviewed development-gold cases,
 
 ## Current build boundary
 
-Included now: product scaffold, design tokens, canonical taxonomy slice, schemas, seed eval cases, traceability, and the complete deterministic hero journey: confirmation, concept path, probe, narrated atomic explainer, fraction-fit lab, transfer, return, and mastery receipt.
+Included now: product scaffold, responsive matte visual system, canonical taxonomy slice, schemas, release eval corpus, traceability, and the complete deterministic hero journey: confirmation, conservative probe routing, seven-atom narrated explainer, fraction-fit lab, transfer, return, and a printable/shareable evidence receipt.
 
-Included in the Phase 2 code path: typed Hindi/Hinglish reasoning, optional homework-photo context, constrained model diagnosis, one pre-teaching probe, privacy-minimised inspectable traces, and safe fallback.
+Included in the Phase 2 code path: typed Hindi/Hinglish/English reasoning, optional homework-photo context, constrained model diagnosis, one pre-teaching probe, privacy-minimised inspectable traces, bounded request streaming, migration-backed diagnosis rate limits, and safe fallback.
 
-Still deliberately deferred: arbitrary generated teaching speech, learner accounts, long-term mastery claims, and a broad curriculum surface. The private deployment needs an `OPENAI_API_KEY` environment secret before OpenAI narration and the live diagnostic path can be exercised; the curated interaction and device-voice fallback do not require it.
+Still deliberately deferred: arbitrary generated teaching speech, learner accounts, long-term mastery claims, a broad curriculum surface, and learner-outcome claims. The private deployment has exercised the live diagnostic policy; the curated interaction and reviewed static narration remain fully usable without an API key.
 
 ## Privacy posture
 

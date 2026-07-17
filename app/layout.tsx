@@ -1,12 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
+import "./design-refinement.css";
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#f6eddf",
+  themeColor: "#fdf7ec",
 };
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -35,7 +36,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="hi">
       <body>
-        <a className="skip-link" href="#main-content">मुख्य content पर जाएँ</a>
+        <a className="skip-link" href="#main-content">मुख्य content / Main content</a>
         {children}
       </body>
     </html>

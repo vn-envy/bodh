@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import {
   DEFAULT_NARRATION_LANGUAGE,
   isNarrationLanguage,
@@ -51,9 +51,13 @@ export function useNarrationLanguage() {
 export function NarrationLanguageToggle({ compact = false }: { compact?: boolean }) {
   const language = useNarrationLanguage();
 
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
+
   return (
     <fieldset className={`narration-language-toggle ${compact ? "narration-language-compact" : ""}`}>
-      <legend>Bodh voice</legend>
+      <legend>Lesson language and Bodh voice</legend>
       <label className={language === "hi" ? "narration-language-active" : ""}>
         <input
           type="radio"

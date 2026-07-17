@@ -68,12 +68,13 @@ test("server-renders a stable hydration handoff shell before choosing the journe
 });
 
 test("ships the atomic explainer without a pre-lab answer leak", async () => {
-  const [component, authoredSequence, journey] = await Promise.all([
+  const [component, authoredSequence, journey, journeyCopy] = await Promise.all([
     readFile(new URL("../app/components/FractionConceptExplainer.tsx", import.meta.url), "utf8"),
     readFile(new URL("../lib/fraction-concept.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/demo/DemoJourney.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../lib/demo-journey-copy.ts", import.meta.url), "utf8"),
   ]);
-  const html = `${component}\n${authoredSequence}\n${journey}`;
+  const html = `${component}\n${authoredSequence}\n${journey}\n${journeyCopy}`;
 
   assert.match(html, /पहले, पूरा चुनो/);
   assert.match(html, /पूरी पट्टी चुनो/);
@@ -93,8 +94,8 @@ test("ships the atomic explainer without a pre-lab answer leak", async () => {
   assert.doesNotMatch(component, /checked by the probe/);
   assert.match(component, /lang=\{language\}/);
   assert.match(journey, /ADAPTIVE_SESSION_STORAGE_KEY/);
-  assert.match(journey, /सिर्फ answer नहीं—meaning भी/);
-  assert.match(journey, /long-term mastery, grade, या score का दावा नहीं/);
+  assert.match(journeyCopy, /सिर्फ answer नहीं—meaning भी/);
+  assert.match(journeyCopy, /long-term mastery, grade, या score का दावा नहीं/);
   assert.doesNotMatch(component, /pointerBeat = activeBeat \?\?/);
   assert.doesNotMatch(html, /six pieces of 1\/8/);
   assert.doesNotMatch(html, /placeholder="जैसे (4|6)"/);
@@ -134,7 +135,7 @@ test("server-renders the diagnostic intake and the judge-readable learning path"
   assert.equal(intake.status, 200);
   const intakeHtml = await intake.text();
   assert.match(intakeHtml, /सवाल लिखो। फिर बताओ कि कहाँ अटक गए।/);
-  assert.match(intakeHtml, /Photo जोड़ना चाहो तो जोड़ो/);
+  assert.match(intakeHtml, /चाहो तो photo जोड़ो/);
   assert.match(intakeHtml, /Bodh को समझने दें/);
 
   const guide = await render("/how-it-works");

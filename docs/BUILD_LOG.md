@@ -31,14 +31,14 @@ Live model calls, image parsing, speech, persistence, full journey interaction, 
 ### Deferred by contract
 
 The P1 demo is intentionally curated. Live model diagnosis, image intake, speech, personalization, and persistence remain out of scope until their assigned phases.
-## 2026-07-14 — Phase 2 diagnostic intelligence (code complete; live secret pending)
+## 2026-07-14 — Phase 2 diagnostic intelligence
 
 - Added a child-facing `/diagnose` intake with Hindi/Hinglish reasoning and optional homework-photo context.
 - Added a Cloudflare Worker `/api/diagnose` route that calls the Responses API only when `OPENAI_API_KEY` is present.
 - Locked model output to a strict schema containing a readback, canonical Marble IDs, tentative evidence-backed hypotheses, and one probe; no final-answer field exists.
 - Added deterministic guardrails for typed notation fidelity, quoted evidence, supported taxonomy IDs, bounded fraction-division notation, and the single validated artifact key.
 - Added a D1-backed, privacy-minimised trace contract. No raw child text, image, evidence quote, or model output is persisted.
-- The hosted secret has not yet been configured, so the deployed intake will intentionally use the curated fallback until a live smoke test is run.
+- The hosted secret was configured later in the release cycle; the live path and privacy-minimised trace were smoke-tested before the frozen evaluation run.
 
 ## 2026-07-14 — Phases 3–6 release preparation
 
@@ -46,7 +46,7 @@ The P1 demo is intentionally curated. Live model diagnosis, image intake, speech
 - Added the mobile/accessibility release pass: skip navigation, result focus return, visible keyboard focus for photo upload, and a 90-second product-story route.
 - Expanded the evaluation corpus to 32 synthetic cases and added a live evaluator that writes only case IDs and check outcomes.
 - Added the Open Graph social card, Devpost submission draft, and narrated demo script.
-- The remaining release gate is deliberate: configure the hosted API secret, run and review the live 32-case report, then record/submit the final demo.
+- The live release report later passed 32/32 synthetic cases, including the frozen 8-case holdout. Final video capture and Devpost submission remain the release tasks.
 
 ## 2026-07-15 — Atomic fraction pedagogy and motion pass
 
@@ -70,3 +70,13 @@ The P1 demo is intentionally curated. Live model diagnosis, image intake, speech
 - Added a no-key device Hindi voice fallback and visible AI-voice disclosure, while keeping the visual journey and transcript fully usable without sound.
 - Preserved the answer gate: the narrated explainer asks for the missing count but never speaks or renders it before the six-slot lab.
 - Added narration allowlist, fallback, cache, endpoint, pointer-target, concise-copy, and answer-leak regression tests.
+
+## 2026-07-17 — UX, responsive, and runtime hardening
+
+- Removed the contradictory probe gate: every answer now continues through a conservative repair entry, and skipped ideas remain explicitly available through “review everything.”
+- Made the complete journey Hindi/English, added semantic Enter-submit forms, preserved adaptive handoff across refresh, enabled per-tile undo, and added privacy-safe share/print receipt actions.
+- Extracted typed journey copy/configuration and made the full seven-idea route visible without claiming skipped ideas were assessed.
+- Applied the final matte desktop/tablet/mobile system, 44px language controls, self-hosted Baloo 2/Mukta fonts, contrast-safe text colours, reduced motion, and receipt print styles.
+- Reduced the live timeout to 15 seconds and added a six-second progress message plus an explicit bilingual client-timeout state, bounded streamed JSON parsing, early media/size rejection, migration-backed D1 rate limiting with HMAC client identifiers, opportunistic row pruning, and no request-time DDL. Hosted limiter/configuration failures now return the safe curated journey without making a model call.
+- Added regression coverage for chunked oversized bodies, the exact 4 MiB image boundary, stale-diagnosis invalidation, conservative probe routing, handoff persistence, bilingual copy, tile undo, and evidence-gated receipts.
+- Verified 67/67 automated tests plus browser passes at 320, 390, 768, and 1440 px. The final video and Devpost form remain outstanding.

@@ -1,25 +1,84 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Baloo 2";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("/fonts/baloo-2-devanagari.woff2") format("woff2");
+  unicode-range: U+0900-097F, U+1CD0-1CF9, U+200C-200D, U+20A8, U+20B9, U+20F0, U+25CC, U+A830-A839, U+A8E0-A8FF, U+11B00-11B09;
+}
+
+@font-face {
+  font-family: "Baloo 2";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("/fonts/baloo-2-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Mukta";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/mukta-400-devanagari.woff2") format("woff2");
+  unicode-range: U+0900-097F, U+1CD0-1CF9, U+200C-200D, U+20A8, U+20B9, U+20F0, U+25CC, U+A830-A839, U+A8E0-A8FF, U+11B00-11B09;
+}
+
+@font-face {
+  font-family: "Mukta";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/mukta-400-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Mukta";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/mukta-700-devanagari.woff2") format("woff2");
+  unicode-range: U+0900-097F, U+1CD0-1CF9, U+200C-200D, U+20A8, U+20B9, U+20F0, U+25CC, U+A830-A839, U+A8E0-A8FF, U+11B00-11B09;
+}
+
+@font-face {
+  font-family: "Mukta";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/mukta-700-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
-  --cream: #f6eddf;
-  --cream-light: #fffaf2;
-  --blue-grey: #708698;
-  --blue-grey-deep: #536b7d;
-  --pink: #c94f74;
-  --pink-soft: #f2c6d2;
-  --peach: #e99870;
-  --peach-soft: #f7d1b9;
-  --olive: #728246;
-  --olive-soft: #d9dfbd;
-  --olive-deep: #53602f;
-  --ink: #3f3a3f;
-  --ink-soft: #716a6d;
-  --line: rgba(63, 58, 63, 0.14);
-  --glass: rgba(255, 250, 242, 0.95);
-  --shadow: 0 30px 90px rgba(79, 67, 55, 0.13), 0 2px 8px rgba(79, 67, 55, 0.06);
-  --shadow-soft: 0 18px 52px rgba(79, 67, 55, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.76);
-  --radius-lg: 34px;
-  --radius-md: 22px;
+  --canvas: #fdf7ec;
+  --canvas-deep: #f7efe1;
+  --surface: #fffdf8;
+  --cream: #fdf7ec;
+  --cream-light: #fffdf8;
+  --blue-grey: #5e7588;
+  --blue-grey-deep: #40586b;
+  --pink: #bd3e66;
+  --pink-soft: #f7d6e0;
+  --peach: #e18a55;
+  --peach-text: #a84f24;
+  --peach-soft: #f9dcc6;
+  --olive: #6d7d40;
+  --olive-text: #58672e;
+  --olive-soft: #e3e7cd;
+  --olive-deep: #4b5926;
+  --ink: #343035;
+  --ink-soft: #6a6367;
+  --line: rgba(52, 48, 53, 0.12);
+  --glass: #fffdf8;
+  --shadow: 0 20px 50px rgba(80, 66, 54, 0.11);
+  --shadow-soft: 0 14px 36px rgba(80, 66, 54, 0.08);
+  --radius-lg: 28px;
+  --radius-md: 24px;
 }
 
 * {
@@ -28,7 +87,8 @@
 
 html {
   min-width: 320px;
-  background: var(--cream);
+  background: var(--canvas);
+  scroll-behavior: smooth;
 }
 
 body {
@@ -36,15 +96,25 @@ body {
   margin: 0;
   padding-right: env(safe-area-inset-right);
   padding-left: env(safe-area-inset-left);
-  background:
-    radial-gradient(circle at 10% 8%, rgba(201, 79, 116, 0.13), transparent 24rem),
-    radial-gradient(circle at 88% 14%, rgba(125, 139, 80, 0.14), transparent 25rem),
-    linear-gradient(180deg, rgba(255, 250, 242, 0.4), transparent 38rem),
-    var(--cream);
+  background: linear-gradient(180deg, var(--canvas), var(--canvas-deep) 34rem, var(--canvas));
   color: var(--ink);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Kohinoor Devanagari", "Noto Sans Devanagari", "Hind", Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  font-family: "Mukta", "Noto Sans Devanagari", "Kohinoor Devanagari", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 18px;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+.brand-copy strong,
+.equation,
+.confirmed-equation,
+.probe-option,
+.atomic-equation,
+.atomic-stage-copy h2,
+.receipt-problems strong {
+  font-family: "Baloo 2", "Mukta", "Noto Sans Devanagari", ui-rounded, system-ui, sans-serif;
 }
 
 a {
@@ -571,7 +641,7 @@ a {
 }
 
 .learning-segment small {
-  color: white;
+  color: var(--ink);
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(0.56rem, 1.45vw, 0.72rem);
   font-weight: 700;

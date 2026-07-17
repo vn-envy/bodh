@@ -432,6 +432,7 @@ export function FractionConceptExplainer({
   const stageIdRef = useRef(`${language}/${stage.id}`);
   const mountedRef = useRef(true);
   const reportedEvidenceRef = useRef(new Set<FractionConceptStageId>());
+  const stageHeadingRef = useRef<HTMLHeadingElement>(null);
 
   const markStageEvidence = useCallback((stageId: FractionConceptStageId) => {
     if (reportedEvidenceRef.current.has(stageId)) return;
@@ -750,6 +751,10 @@ export function FractionConceptExplainer({
   }, [cancelPlayer, language, loadClip, narration, stage.id]);
 
   useEffect(() => {
+    stageHeadingRef.current?.focus({ preventScroll: true });
+  }, [stage.id]);
+
+  useEffect(() => {
     mountedRef.current = true;
     const objectUrls = objectUrlsRef.current;
     return () => {
@@ -837,7 +842,7 @@ export function FractionConceptExplainer({
         <div className="atomic-stage-copy">
           <span className="atomic-step-count">{language === "hi" ? "बात" : "IDEA"} {stageIndex + 1} / {FRACTION_CONCEPT_STAGES.length}</span>
           <p className="atomic-eyebrow">{stage.eyebrow[language]}</p>
-          <h2>{stage.title[language]}</h2>
+          <h2 ref={stageHeadingRef} tabIndex={-1}>{stage.title[language]}</h2>
           <p className="atomic-key-copy" aria-live="polite">{visibleKey}</p>
           <div className="atomic-speaking-line">
             <span className={voiceState === "playing" ? "atomic-wave-active" : ""} aria-hidden="true">•••</span>

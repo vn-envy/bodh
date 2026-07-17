@@ -20,6 +20,8 @@ export type DiagnosticEnv = {
   DB?: D1Database;
   OPENAI_API_KEY?: string;
   BODH_MODEL?: string;
+  BODH_RATE_LIMIT_SALT?: string;
+  BODH_RATE_LIMIT_PER_HOUR?: string;
 };
 
 type DiagnosticTrace = {
@@ -39,7 +41,11 @@ const MAX_PROBLEM_LENGTH = 500;
 const MAX_REASONING_LENGTH = 1000;
 const MAX_VISIBLE_WORK_LENGTH = 500;
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
-const OPENAI_TIMEOUT_MS = 35_000;
+const MAX_REQUEST_BODY_BYTES = 6 * 1024 * 1024;
+const OPENAI_TIMEOUT_MS = 15_000;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+const DEFAULT_RATE_LIMIT_PER_HOUR = 40;
+const MAX_CONFIGURED_RATE_LIMIT_PER_HOUR = 1000;
 const DEFAULT_MODEL = "gpt-5.6";
 const FALLBACK_ARTIFACT = "curated-demo";
 const OPENAI_DIAGNOSTIC_SCHEMA = toOpenAiStructuredOutputSchema(diagnosticSchema);
@@ -60,14 +66,15 @@ Rules:
 - The probe must distinguish among the hypotheses, be answerable without the original answer, and use 2–4 short Hindi options.
 - Never include an answer, worked calculation, solution steps, or a recommendation to use a rule. Never include fields outside the schema.`;
 
-function json(body: unknown, status = 200) {
+function json(body: unknown, status = 200, extraHeaders?: HeadersInit) {
+  const headers = new Headers(extraHeaders);
+  headers.set("content-type", "application/json; charset=utf-8");
+  headers.set("cache-control", "no-store");
+  headers.set("x-content-type-options", "nosniff");
+
   return new Response(JSON.stringify(body), {
     status,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store",
-      "x-content-type-options": "nosniff",
-    },
+    headers,
   });
 }
 
@@ -82,11 +89,21 @@ function getString(value: unknown, maxLength: number) {
 function validImageDataUrl(value: string) {
   if (!/^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=\s]+$/i.test(value)) return false;
   const encoded = value.slice(value.indexOf(",") + 1).replace(/\s/g, "");
-  return Math.floor((encoded.length * 3) / 4) <= MAX_IMAGE_BYTES;
+  if (encoded.length % 4 !== 0) return false;
+  const paddingBytes = encoded.endsWith("==") ? 2 : encoded.endsWith("=") ? 1 : 0;
+  return Math.floor((encoded.length * 3) / 4) - paddingBytes <= MAX_IMAGE_BYTES;
 }
 
-function parseInput(value: unknown): { ok: true; input: DiagnosticRequestInput } | { ok: false; message: string } {
-  if (!isRecord(value)) return { ok: false, message: "सवाल भेजने का format ठीक नहीं था।" };
+function parseInput(value: unknown):
+  | { ok: true; input: DiagnosticRequestInput }
+  | { ok: false; messageHi: string; messageEn: string } {
+  if (!isRecord(value)) {
+    return {
+      ok: false,
+      messageHi: "सवाल भेजने का format ठीक नहीं था।",
+      messageEn: "The question format was not valid. Please try again.",
+    };
+  }
 
   const problemText = getString(value.problemText, MAX_PROBLEM_LENGTH);
   const learnerReasoning = getString(value.learnerReasoning, MAX_REASONING_LENGTH);
@@ -96,13 +113,25 @@ function parseInput(value: unknown): { ok: true; input: DiagnosticRequestInput }
   const imageDataUrl = value.imageDataUrl === undefined ? undefined : getString(value.imageDataUrl, MAX_IMAGE_BYTES * 2);
 
   if (problemText === null || learnerReasoning === null || visibleWorkText === null) {
-    return { ok: false, message: "सवाल या तुम्हारी बात बहुत लंबी है। उसे छोटा करके फिर भेजो।" };
+    return {
+      ok: false,
+      messageHi: "सवाल या तुम्हारी बात बहुत लंबी है। उसे छोटा करके फिर भेजो।",
+      messageEn: "The question or explanation is too long. Shorten it and try again.",
+    };
   }
   if (imageDataUrl !== undefined && !validImageDataUrl(imageDataUrl)) {
-    return { ok: false, message: "Photo PNG, JPG, या WebP में और 4 MB से छोटा रखें।" };
+    return {
+      ok: false,
+      messageHi: "Photo PNG, JPG, या WebP में और 4 MB से छोटा रखें।",
+      messageEn: "Use a PNG, JPG, or WebP photo no larger than 4 MB.",
+    };
   }
   if (!problemText.trim() && !imageDataUrl) {
-    return { ok: false, message: "सवाल लिखो या उसकी photo जोड़ो।" };
+    return {
+      ok: false,
+      messageHi: "सवाल लिखो या उसकी photo जोड़ो।",
+      messageEn: "Type the question or add a photo of it.",
+    };
   }
 
   return { ok: true, input: { problemText, learnerReasoning, visibleWorkText, imageDataUrl } };
@@ -119,29 +148,171 @@ async function fingerprint(input: DiagnosticRequestInput) {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-async function ensureTraceTable(db: D1Database) {
-  await db.batch([
-    db.prepare(`CREATE TABLE IF NOT EXISTS diagnostic_traces (
-      id TEXT PRIMARY KEY,
-      created_at INTEGER NOT NULL,
-      model TEXT NOT NULL,
-      prompt_version TEXT NOT NULL,
-      taxonomy_ids_json TEXT NOT NULL,
-      status TEXT NOT NULL,
-      artifact_key TEXT NOT NULL,
-      fallback_reason TEXT,
-      input_fingerprint TEXT NOT NULL,
-      output_schema_version TEXT NOT NULL
-    )`),
-    db.prepare("CREATE INDEX IF NOT EXISTS diagnostic_traces_created_at_idx ON diagnostic_traces(created_at)"),
-  ]);
+function isJsonContentType(request: Request) {
+  const contentType = request.headers.get("content-type");
+  if (!contentType) return false;
+  const mediaType = contentType.split(";", 1)[0]?.trim().toLowerCase();
+  return mediaType === "application/json" || Boolean(mediaType?.endsWith("+json"));
+}
+
+function declaredBodyIsTooLarge(request: Request) {
+  const header = request.headers.get("content-length");
+  if (!header || !/^\d+$/.test(header.trim())) return false;
+  const declaredBytes = Number(header);
+  return Number.isSafeInteger(declaredBytes) && declaredBytes > MAX_REQUEST_BODY_BYTES;
+}
+
+type BoundedJsonResult =
+  | { ok: true; value: unknown }
+  | { ok: false; reason: "invalid_json" | "payload_too_large" };
+
+async function readBoundedJson(request: Request): Promise<BoundedJsonResult> {
+  if (!request.body) return { ok: false, reason: "invalid_json" };
+
+  const reader = request.body.getReader();
+  const decoder = new TextDecoder();
+  let decoded = "";
+  let receivedBytes = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      receivedBytes += value.byteLength;
+      if (receivedBytes > MAX_REQUEST_BODY_BYTES) {
+        await reader.cancel().catch(() => undefined);
+        return { ok: false, reason: "payload_too_large" };
+      }
+      decoded += decoder.decode(value, { stream: true });
+    }
+    decoded += decoder.decode();
+  } catch {
+    return { ok: false, reason: "invalid_json" };
+  }
+
+  try {
+    return { ok: true, value: JSON.parse(decoded) as unknown };
+  } catch {
+    return { ok: false, reason: "invalid_json" };
+  }
+}
+
+function configuredRateLimit(env: DiagnosticEnv) {
+  const configured = Number(env.BODH_RATE_LIMIT_PER_HOUR);
+  if (
+    Number.isInteger(configured)
+    && configured >= 1
+    && configured <= MAX_CONFIGURED_RATE_LIMIT_PER_HOUR
+  ) {
+    return configured;
+  }
+  return DEFAULT_RATE_LIMIT_PER_HOUR;
+}
+
+function connectingIp(request: Request) {
+  const ip = request.headers.get("cf-connecting-ip")?.trim();
+  if (!ip || ip.length > 128 || /[,\r\n]/.test(ip)) return null;
+  return ip;
+}
+
+function isLoopbackRequest(request: Request) {
+  try {
+    const hostname = new URL(request.url).hostname;
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+  } catch {
+    return false;
+  }
+}
+
+async function hmacClientIp(ip: string, secret: string) {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const digest = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(`bodh:diagnose-rate-limit:v1:${ip}`),
+  );
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+type RateLimitResult =
+  | { state: "allowed" }
+  | { state: "unavailable" }
+  | { state: "limited"; limit: number; retryAfterSeconds: number; resetEpochSeconds: number };
+
+async function consumeDiagnosisRateLimit(request: Request, env: DiagnosticEnv): Promise<RateLimitResult> {
+  // There is no billable model call to guard when live diagnosis is disabled.
+  if (!env.OPENAI_API_KEY?.trim()) return { state: "allowed" };
+  // Loopback is an explicit developer surface, never a hosted production request.
+  if (isLoopbackRequest(request)) return { state: "allowed" };
+
+  const ip = connectingIp(request);
+  // Local development and unit tests may deliberately run without Cloudflare or D1.
+  // A hosted request has a connecting IP; never spend against it without limiter state.
+  if (!env.DB) return ip ? { state: "unavailable" } : { state: "allowed" };
+
+  const secret = env.BODH_RATE_LIMIT_SALT?.trim();
+  if (!ip || !secret) return { state: "unavailable" };
+
+  const limit = configuredRateLimit(env);
+  const now = Date.now();
+  const windowStart = Math.floor(now / RATE_LIMIT_WINDOW_MS) * RATE_LIMIT_WINDOW_MS;
+
+  try {
+    const clientHash = await hmacClientIp(ip, secret);
+    const result = await env.DB.prepare(
+      `INSERT INTO diagnosis_rate_limits (client_hash, window_start, request_count)
+      VALUES (?, ?, 1)
+      ON CONFLICT(client_hash) DO UPDATE SET
+        window_start = excluded.window_start,
+        request_count = CASE
+          WHEN diagnosis_rate_limits.window_start = excluded.window_start
+          THEN diagnosis_rate_limits.request_count + 1
+          ELSE 1
+        END
+      RETURNING request_count`,
+    )
+      .bind(clientHash, windowStart)
+      .first<{ request_count: number }>();
+
+    const requestCount = Number(result?.request_count);
+    if (requestCount === 1) {
+      try {
+        await env.DB.prepare(
+          "DELETE FROM diagnosis_rate_limits WHERE window_start < ?",
+        )
+          .bind(windowStart - RATE_LIMIT_WINDOW_MS * 24)
+          .run();
+      } catch {
+        // Cleanup is opportunistic and must never block a diagnosis.
+      }
+    }
+    if (!Number.isFinite(requestCount)) return { state: "unavailable" };
+    if (requestCount <= limit) return { state: "allowed" };
+
+    const resetAt = windowStart + RATE_LIMIT_WINDOW_MS;
+    return {
+      state: "limited",
+      limit,
+      retryAfterSeconds: Math.max(1, Math.ceil((resetAt - now) / 1000)),
+      resetEpochSeconds: Math.ceil(resetAt / 1000),
+    };
+  } catch {
+    // Keep the learning journey available, but never turn a limiter outage into model spend.
+    return { state: "unavailable" };
+  }
 }
 
 async function persistTrace(env: DiagnosticEnv, trace: DiagnosticTrace) {
   if (!env.DB) return false;
 
   try {
-    await ensureTraceTable(env.DB);
     await env.DB.prepare(
       `INSERT INTO diagnostic_traces (
         id, created_at, model, prompt_version, taxonomy_ids_json, status,
@@ -203,6 +374,8 @@ async function fallback(
     reason,
     messageHi:
       "Bodh इस सवाल को अभी safely पढ़ नहीं पाया। नीचे वाला guided fraction journey हमेशा तैयार है—वहीं से idea को आराम से देखें।",
+    messageEn:
+      "Bodh could not read this question safely yet. The guided fraction journey is ready, so you can explore the idea there without guessing.",
     next: { kind: "curated_demo", href: "/demo" },
     trace: traceResponse(trace, persisted),
   });
@@ -288,20 +461,69 @@ export async function handleDiagnosis(request: Request, env: DiagnosticEnv) {
   if (request.method !== "POST") {
     return json({ error: "method_not_allowed" }, 405);
   }
-
-  let raw: unknown;
-  try {
-    raw = await request.json();
-  } catch {
-    return json({ error: "invalid_json", messageHi: "सवाल भेजने का format ठीक नहीं था।" }, 400);
+  if (declaredBodyIsTooLarge(request)) {
+    return json({
+      error: "payload_too_large",
+      messageHi: "सवाल या photo बहुत बड़ी है।",
+      messageEn: "The question or photo is too large.",
+    }, 413);
+  }
+  if (!isJsonContentType(request)) {
+    return json({
+      error: "unsupported_media_type",
+      messageHi: "सवाल JSON format में भेजो।",
+      messageEn: "Send the question in JSON format.",
+    }, 415);
   }
 
-  const parsedInput = parseInput(raw);
-  if (!parsedInput.ok) return json({ error: "invalid_input", messageHi: parsedInput.message }, 400);
+  const boundedJson = await readBoundedJson(request);
+  if (!boundedJson.ok && boundedJson.reason === "payload_too_large") {
+    return json({
+      error: "payload_too_large",
+      messageHi: "सवाल या photo बहुत बड़ी है।",
+      messageEn: "The question or photo is too large.",
+    }, 413);
+  }
+  if (!boundedJson.ok) {
+    return json({
+      error: "invalid_json",
+      messageHi: "सवाल भेजने का format ठीक नहीं था।",
+      messageEn: "The question format was not valid. Please try again.",
+    }, 400);
+  }
+
+  const parsedInput = parseInput(boundedJson.value);
+  if (!parsedInput.ok) {
+    return json({
+      error: "invalid_input",
+      messageHi: parsedInput.messageHi,
+      messageEn: parsedInput.messageEn,
+    }, 400);
+  }
 
   const input = parsedInput.input;
   const model = env.BODH_MODEL || DEFAULT_MODEL;
   const inputFingerprint = await fingerprint(input);
+  const rateLimit = await consumeDiagnosisRateLimit(request, env);
+  if (rateLimit.state === "unavailable") {
+    return fallback(env, input, "rate_limit_unavailable", model, inputFingerprint);
+  }
+  if (rateLimit.state === "limited") {
+    return json(
+      {
+        error: "rate_limited",
+        messageHi: "थोड़ा रुकें, फिर Bodh से दोबारा पूछें।",
+        messageEn: "Please wait a little, then ask Bodh again.",
+      },
+      429,
+      {
+        "retry-after": String(rateLimit.retryAfterSeconds),
+        "x-ratelimit-limit": String(rateLimit.limit),
+        "x-ratelimit-remaining": "0",
+        "x-ratelimit-reset": String(rateLimit.resetEpochSeconds),
+      },
+    );
+  }
 
   if (!env.OPENAI_API_KEY) {
     return fallback(env, input, "live_not_configured", model, inputFingerprint);
@@ -391,7 +613,6 @@ export async function handleTrace(request: Request, env: DiagnosticEnv, id: stri
   if (!env.DB) return json({ error: "trace_unavailable" }, 404);
 
   try {
-    await ensureTraceTable(env.DB);
     const result = await env.DB.prepare(
       `SELECT id, created_at, model, prompt_version, taxonomy_ids_json, status,
       artifact_key, fallback_reason, input_fingerprint, output_schema_version

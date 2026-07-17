@@ -1,9 +1,24 @@
-const stages = ["देखें", "समझें", "आज़माएँ", "खुद करें"];
+import type { NarrationLanguage } from "../../lib/narration-language";
 
-export function ProgressPath({ active = 1 }: { active?: number }) {
+const stages = {
+  hi: ["देखें", "समझें", "आज़माएँ", "खुद करें"],
+  en: ["Check", "Understand", "Try", "Do it yourself"],
+} as const;
+
+export function ProgressPath({
+  active = 1,
+  language = "hi",
+}: {
+  active?: number;
+  language?: NarrationLanguage;
+}) {
   return (
-    <ol className="progress-path" aria-label="सीखने की journey">
-      {stages.map((stage, index) => {
+    <ol
+      className="progress-path"
+      aria-label={language === "hi" ? "सीखने की journey" : "Learning journey"}
+      lang={language}
+    >
+      {stages[language].map((stage, index) => {
         const position = index + 1;
         const state = position < active ? "complete" : position === active ? "active" : "future";
         return (

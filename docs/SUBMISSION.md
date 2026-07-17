@@ -26,4 +26,4 @@ Next.js/Vinext on Cloudflare Workers, D1, OpenAI Responses API structured output
 
 ## Current demo status
 
-The curated journey is fully runnable without a key. The live diagnostic path is deployed in safe fallback mode until the private `OPENAI_API_KEY` secret is configured and the 32-case live evaluation is run.
+The curated journey is fully runnable without a key. The private live diagnostic path has been smoke-tested with the configured OpenAI secret. Its frozen release corpus passed 32/32 synthetic safety and diagnostic cases, including 8/8 held-out cases, on `gpt-5.6` with prompt `p3.7`. These are guardrail and diagnosis results—not learner-outcome research.

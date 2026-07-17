@@ -1,3 +1,5 @@
+import type { NarrationLanguage } from "../../lib/narration-language";
+
 type LearningStripProps = {
   total: number;
   filled: number;
@@ -6,6 +8,7 @@ type LearningStripProps = {
   tone?: "peach" | "olive" | "blue";
   compact?: boolean;
   showUnits?: boolean;
+  language?: NarrationLanguage;
 };
 
 export function LearningStrip({
@@ -16,12 +19,15 @@ export function LearningStrip({
   tone = "peach",
   compact = false,
   showUnits = true,
+  language = "hi",
 }: LearningStripProps) {
   return (
     <div
       className={`learning-strip learning-strip-${tone} ${compact ? "learning-strip-compact" : ""}`}
       role="img"
-      aria-label={`${label}: ${filled} groups of ${unit} shown in ${total} equal parts`}
+      aria-label={language === "hi"
+        ? `${label}: ${total} बराबर हिस्सों में ${unit} के ${filled} groups दिखाए गए हैं`
+        : `${label}: ${filled} groups of ${unit} shown in ${total} equal parts`}
     >
       <div className="learning-strip-copy" aria-hidden="true">
         <strong>{label}</strong>

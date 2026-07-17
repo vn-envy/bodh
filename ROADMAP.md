@@ -74,8 +74,8 @@ The curated journey runs from beginning to end without a model call. The source 
 - [x] Privacy-minimised D1 trace contract plus inspectable `GET /api/trace/:id`
 - [x] Curated-demo fallback for missing key, unsupported maths, unavailable model, and invalid model output
 - [x] Unit checks for hero-artifact selection, equation mutation, unsupported taxonomy, evidence fabrication, and unsupported notation
-- [ ] Add hosted `OPENAI_API_KEY` secret and run a live smoke test
-- [ ] Expand the eight seeds into the first reviewed golden diagnostic set
+- [x] Add hosted `OPENAI_API_KEY` secret and run a live smoke test
+- [x] Expand the eight seeds into the reviewed 32-case diagnostic set
 
 ### Phase 2 exit gate
 
@@ -89,7 +89,7 @@ The hosted live path must process every reviewed seed with schema-valid, equatio
 - [x] P5: 32-case synthetic corpus: 8 seed, 16 reviewed development-gold, 8 frozen holdout
 - [x] P5: Corpus validator and privacy-minimised live evaluation runner
 - [x] P6: Open Graph card, submission draft, and 90-second demo script
-- [ ] P2/P5: Configure `OPENAI_API_KEY` and record a live 32-case evaluation report
+- [x] P2/P5: Configure `OPENAI_API_KEY` and record a live 32-case evaluation report (32/32; frozen holdout 8/8)
 - [ ] P6: Record final video, complete Devpost form, and submit
 
 ## Evaluation reserve

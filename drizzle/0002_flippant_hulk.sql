@@ -1,0 +1,1 @@
+CREATE INDEX `diagnosis_rate_limits_window_idx` ON `diagnosis_rate_limits` (`window_start`);

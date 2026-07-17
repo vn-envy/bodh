@@ -1,3 +1,5 @@
+import type { RepairEntryAtomId } from "./adaptive-repair";
+
 export const HERO_FIXTURE = {
   originalProblem: "3/4 ÷ 1/8 = ?",
   learnerReasoning: "मुझे समझ नहीं आता कि इसे उल्टा करके multiply क्यों करते हैं।",
@@ -55,4 +57,24 @@ export function isLabComplete(placedSlots: number[]) {
     uniqueSlots.size === HERO_FIXTURE.targetSlots &&
     [...uniqueSlots].every((slot) => slot >= 0 && slot < HERO_FIXTURE.targetSlots)
   );
+}
+
+/**
+ * A single curated response can only choose a safe place to begin. It never
+ * marks an earlier concept complete or mastered.
+ */
+export function curatedProbeEntryAtomId(answer: unknown): RepairEntryAtomId {
+  return answer === "4" ? "unit-and-denominator" : "chosen-whole";
+}
+
+/** Pure add/remove transition for the six interactive slots in the fraction lab. */
+export function toggleLabTile(
+  placedSlots: readonly number[],
+  slot: number,
+  targetSlots = HERO_FIXTURE.targetSlots,
+) {
+  if (!Number.isInteger(slot) || slot < 0 || slot >= targetSlots) return [...placedSlots];
+  return placedSlots.includes(slot)
+    ? placedSlots.filter((placedSlot) => placedSlot !== slot)
+    : [...placedSlots, slot];
 }

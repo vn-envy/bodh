@@ -49,16 +49,16 @@ Every requirement has one owner phase, a verification method, and a visible demo
 
 | Requirement | Constrained implementation now present | Remaining release evidence |
 |---|---|---|
-| BODH-R01 | `/diagnose` accepts a bounded typed question plus optional PNG/JPG/WebP homework photo context. Typed notation must round-trip exactly through server guardrails. | Live smoke test after the deployment secret is set; photo-only confirmation flow. |
+| BODH-R01 | `/diagnose` accepts a bounded typed question plus optional PNG/JPG/WebP homework photo context. Typed notation must round-trip exactly through server guardrails. | Live smoke and release eval complete; low-confidence photo notation still requires explicit learner confirmation. |
 | BODH-R03 | Model output allows only the ten canonical IDs in the committed fraction slice; worker resolves learner-visible concept names from that slice. | Expand only through a documented curriculum-slice change. |
 | BODH-R04 | Hypotheses require source/quote evidence. Text quotes must be an exact substring of typed problem/reasoning. | Evaluate top-1/top-3 quality on the growing golden set. |
-| BODH-R05 | The only generated learner-facing teaching-adjacent item is one 2–4 option micro-probe; no solution field exists in the schema. | Verify journey order in live end-to-end testing. |
-| BODH-R10 | `/api/trace/:id` exposes privacy-minimised model/prompt/topic/status metadata stored in D1. | Confirm D1 trace persistence in the hosted environment. |
+| BODH-R05 | The only generated learner-facing teaching-adjacent item is one 2–4 option micro-probe; no solution field exists in the schema. | Live order verified; every probe response routes conservatively and the learner can review all earlier ideas. |
+| BODH-R10 | `/api/trace/:id` exposes privacy-minimised model/prompt/topic/status metadata stored in D1. | All 32 release cases returned readable, bounded, privacy-declared traces. |
 
 ## Phases 3–5 implementation evidence
 
 | Requirement | Release implementation now present | Remaining release evidence |
 |---|---|---|
-| BODH-R02 / BODH-R09 | The model can return only approved vocabulary IDs; the learner interface renders deterministic `Hindi (English)` terms and child meanings. | Review live Hindi/Hinglish register selection after the API secret is set. |
-| BODH-R04 / BODH-R05 | The 32-case corpus includes conceptual, ambiguous, arithmetic, answer-seeking, and injection cases. The live runner checks acceptable concept/misconception overlap and that a probe arrives without an answer. | Run development first, then frozen holdouts exactly once for the release candidate. |
+| BODH-R02 / BODH-R09 | The model can return only approved vocabulary IDs; the learner interface renders deterministic `Hindi (English)` terms and child meanings. | Live Hindi/Hinglish/English register behavior is covered by the 32-case release corpus. |
+| BODH-R04 / BODH-R05 | The 32-case corpus includes conceptual, ambiguous, arithmetic, answer-seeking, and injection cases. The live runner checks acceptable concept/misconception overlap and that a probe arrives without an answer. | Complete: 24/24 seed + development, then 32/32 frozen release corpus with 8/8 holdout. |
 | BODH-R12 | The release adds skip navigation, keyboard-visible upload focus, mobile layouts, an Open Graph card, a demo script, and submission draft. | Record the final video and complete the Devpost submission. |

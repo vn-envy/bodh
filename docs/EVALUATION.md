@@ -22,6 +22,17 @@ Use `BODH_EVAL_BEARER` only when the private site requires a Sites bearer token.
 
 The Phase 5 exit gate is 100% equation/token preservation, valid in-slice topic IDs, no direct answer before a probe, and no critical fallback/privacy failure. Diagnose quality (acceptable concept/misconception overlap) is reviewed separately from strict safety checks.
 
+## Recorded release evidence
+
+The private release run completed on 2026-07-16 UTC against source commit `dc75a17f3870d80675315fe45a1b448770fb6127`, model `gpt-5.6`, and prompt `p3.7`:
+
+- seed + development: 24/24 passed;
+- complete frozen release corpus: 32/32 passed;
+- frozen holdout: 8/8 passed;
+- all 32 cases returned readable privacy-minimised traces with one consistent model/prompt pair.
+
+The subsequent hardening pass changed learner UX, responsive presentation, request bounds, migrations, and rate limiting without changing the evaluated diagnostic prompt or model pair. See `docs/EVALUATION_RELEASE.md` for the evidence boundary.
+
 ## Reserved pedagogy evaluation set
 
 Diagnosis quality and teaching repair are different claims, so the existing 32-case corpus remains unchanged. Before the next curriculum expansion, add a separate pedagogy development set and frozen holdout.

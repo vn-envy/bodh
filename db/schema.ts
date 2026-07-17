@@ -16,3 +16,13 @@ export const diagnosticTraces = sqliteTable(
   },
   (table) => [index("diagnostic_traces_created_at_idx").on(table.createdAt)],
 );
+
+export const diagnosisRateLimits = sqliteTable(
+  "diagnosis_rate_limits",
+  {
+    clientHash: text("client_hash").primaryKey(),
+    windowStart: integer("window_start").notNull(),
+    requestCount: integer("request_count").notNull().default(1),
+  },
+  (table) => [index("diagnosis_rate_limits_window_idx").on(table.windowStart)],
+);

@@ -61,7 +61,7 @@ It contains 32 synthetic cases: eight seeds, 16 reviewed development-gold cases,
 
 ## Current build boundary
 
-Included now: product scaffold, responsive matte visual system, canonical taxonomy slice, schemas, release eval corpus, traceability, and the complete deterministic hero journey: confirmation, conservative probe routing, seven-atom narrated explainer, fraction-fit lab, transfer, return, and a printable/shareable evidence receipt.
+Included now: product scaffold, responsive matte visual system, canonical taxonomy slice, schemas, release eval corpus, traceability, and the complete deterministic hero journey: confirmation, conservative probe routing, seven-atom narrated explainer, fraction-fit lab, transfer, return, and a printable/shareable evidence receipt. The diagnostic intake also exposes all eight reviewed seed doubts as safe selectable examples, while a 10-topic, 12-dependency Marble concept map shows the prerequisite climb without making a mastery claim.
 
 Included in the Phase 2 code path: typed Hindi/Hinglish/English reasoning, optional homework-photo context, constrained model diagnosis, one pre-teaching probe, privacy-minimised inspectable traces, bounded request streaming, migration-backed diagnosis rate limits, and safe fallback.
 

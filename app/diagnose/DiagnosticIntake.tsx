@@ -10,7 +10,9 @@ import {
   type AdaptiveProbeId,
 } from "../../lib/adaptive-repair";
 import type { LocalizedText, NarrationLanguage } from "../../lib/narration-language";
+import { SEEDED_DOUBTS, seededDoubtById, type SeededDoubtId } from "../../lib/seeded-doubts";
 import { BodhMark } from "../components/BodhMark";
+import { CurriculumClimb } from "../components/CurriculumClimb";
 import { NarrationLanguageToggle, useNarrationLanguage } from "../components/NarrationLanguageToggle";
 
 type Trace = {
@@ -72,6 +74,15 @@ const INTAKE_COPY = {
     "जैसे: मुझे समझ नहीं आता कि इसे उल्टा करके multiply क्यों करते हैं",
     "For example: I do not understand why we flip it and multiply",
   ),
+  sample: text("Reviewed sample doubt", "Reviewed sample doubt"),
+  sampleHelp: text(
+    "8 diagnosis examples में से चुनो। एक complete lesson है; बाकी दिखाते हैं कि Bodh अलग confusion को कैसे सुनता है।",
+    "Choose from eight diagnosis examples. One has a complete lesson; the others show how Bodh listens to different kinds of confusion.",
+  ),
+  samplePlaceholder: text("अपना सवाल लिखूँगा / लिखूँगी", "I’ll use my own question"),
+  working: text("तुमने क्या try किया?", "What did you try?"),
+  workingHelp: text("optional · exact working Bodh को arithmetic और concept में फर्क करने देता है", "Optional · exact working helps Bodh separate an arithmetic slip from a concept gap"),
+  workingPlaceholder: text("जैसे: 3/4 × 8/1", "For example: 3/4 × 8/1"),
   photo: text("चाहो तो photo जोड़ो", "Add a photo if you want"),
   photoHelp: text(
     "PNG, JPG, या WebP · 4 MB तक · photo को trace में save नहीं किया जाता",
@@ -192,6 +203,8 @@ export function DiagnosticIntake() {
   const language = useNarrationLanguage();
   const [problemText, setProblemText] = useState("");
   const [learnerReasoning, setLearnerReasoning] = useState("");
+  const [visibleWorkText, setVisibleWorkText] = useState("");
+  const [selectedSeedId, setSelectedSeedId] = useState<SeededDoubtId | "">("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageMessage, setImageMessage] = useState("");
   const [result, setResult] = useState<ApiResult | null>(null);
@@ -202,8 +215,12 @@ export function DiagnosticIntake() {
   const [notationConfirmed, setNotationConfirmed] = useState(false);
   const resultHeadingRef = useRef<HTMLHeadingElement>(null);
   const problemInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const requestAbortRef = useRef<AbortController | null>(null);
   const liveDiagnosis = result?.mode === "live" ? result.diagnosis : null;
+  const selectedSeed = seededDoubtById(selectedSeedId);
+  const mapFocusTopicId = selectedSeed?.focusTopicId ?? "mt_ndGqFPWyen";
+  const mapGoalTopicId = selectedSeed?.goalTopicId ?? liveDiagnosis?.concepts[0]?.id ?? "mt_9Y96vxG_LH";
   const adaptiveProbe = liveDiagnosis ? adaptiveProbeById(liveDiagnosis.adaptiveProbeId) : null;
   const probeLanguage: NarrationLanguage = adaptiveProbe ? language : "hi";
   const needsNotationConfirmation = Boolean(
@@ -258,6 +275,18 @@ export function DiagnosticIntake() {
     setImageMessage(language === "hi" ? `Photo तैयार है: ${file.name}` : `Photo ready: ${file.name}`);
   };
 
+  const chooseSeededDoubt = (seedId: string) => {
+    invalidateDiagnosis();
+    const sample = seededDoubtById(seedId);
+    setSelectedSeedId(sample?.id ?? "");
+    setImageFile(null);
+    setImageMessage("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setProblemText(sample?.problemText ?? "");
+    setLearnerReasoning(sample?.learnerReasoning ?? "");
+    setVisibleWorkText(sample?.visibleWorkText ?? "");
+  };
+
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
@@ -291,7 +320,7 @@ export function DiagnosticIntake() {
         method: "POST",
         signal: controller.signal,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ problemText, learnerReasoning, imageDataUrl }),
+        body: JSON.stringify({ problemText, learnerReasoning, visibleWorkText, imageDataUrl }),
       });
       const rawBody: unknown = await response.json();
       if (!response.ok) {
@@ -378,6 +407,34 @@ export function DiagnosticIntake() {
           </div>
 
           <form className="intake-form" onSubmit={submit}>
+            <label className="sample-picker" htmlFor="seeded-doubt">
+              <span>{ui(INTAKE_COPY.sample, language)}</span>
+              <small>{ui(INTAKE_COPY.sampleHelp, language)}</small>
+              <select
+                id="seeded-doubt"
+                value={selectedSeedId}
+                onChange={(event) => chooseSeededDoubt(event.target.value)}
+              >
+                <option value="">{ui(INTAKE_COPY.samplePlaceholder, language)}</option>
+                {SEEDED_DOUBTS.map((sample, index) => (
+                  <option value={sample.id} key={sample.id}>
+                    {index + 1}. {sample.title[language]}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {selectedSeed && (
+              <div className={`sample-readback sample-readback-${selectedSeed.kind}`}>
+                <span>{selectedSeed.concept[language]}</span>
+                <strong>{selectedSeed.kind === "full-journey"
+                  ? language === "hi" ? "पूरा visual lesson तैयार है" : "Complete visual lesson available"
+                  : selectedSeed.kind === "safe-retry"
+                    ? language === "hi" ? "Safe retry behavior" : "Safe retry behavior"
+                    : language === "hi" ? "Diagnosis sample · hero lesson से अलग" : "Diagnosis sample · separate from the hero lesson"}</strong>
+              </div>
+            )}
+
             <label className="input-label" htmlFor="problem-text">
               <span>{ui(INTAKE_COPY.problem, language)}</span>
               <small>{ui(INTAKE_COPY.problemExample, language)}</small>
@@ -389,6 +446,7 @@ export function DiagnosticIntake() {
                 maxLength={500}
                 onChange={(event) => {
                   setProblemText(event.target.value);
+                  setSelectedSeedId("");
                   invalidateDiagnosis();
                 }}
                 placeholder={ui(INTAKE_COPY.problemPlaceholder, language)}
@@ -405,6 +463,7 @@ export function DiagnosticIntake() {
                 maxLength={1000}
                 onChange={(event) => {
                   setLearnerReasoning(event.target.value);
+                  setSelectedSeedId("");
                   invalidateDiagnosis();
                 }}
                 placeholder={ui(INTAKE_COPY.reasoningPlaceholder, language)}
@@ -412,9 +471,28 @@ export function DiagnosticIntake() {
               />
             </label>
 
+            <label className="input-label" htmlFor="visible-work-text">
+              <span>{ui(INTAKE_COPY.working, language)}</span>
+              <small>{ui(INTAKE_COPY.workingHelp, language)}</small>
+              <textarea
+                id="visible-work-text"
+                name="visibleWorkText"
+                value={visibleWorkText}
+                maxLength={500}
+                onChange={(event) => {
+                  setVisibleWorkText(event.target.value);
+                  setSelectedSeedId("");
+                  invalidateDiagnosis();
+                }}
+                placeholder={ui(INTAKE_COPY.workingPlaceholder, language)}
+                rows={2}
+              />
+            </label>
+
             <label className="photo-drop" htmlFor="homework-photo">
               <input
                 id="homework-photo"
+                ref={fileInputRef}
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
                 onChange={(event) => chooseImage(event.target.files?.[0] ?? null)}
@@ -610,6 +688,12 @@ export function DiagnosticIntake() {
           </article>
         )}
       </section>
+
+      <CurriculumClimb
+        language={language}
+        focusTopicId={mapFocusTopicId}
+        goalTopicId={mapGoalTopicId}
+      />
     </main>
   );
 }

@@ -13,6 +13,7 @@ import {
 } from "../../lib/fraction-concept";
 import { type LocalizedText, type NarrationLanguage, NARRATION_SPEECH_LOCALE } from "../../lib/narration-language";
 import { useNarrationLanguage } from "./NarrationLanguageToggle";
+import { LessonClimb } from "./CurriculumClimb";
 
 export type FractionConceptStageId = (typeof FRACTION_CONCEPT_STAGES)[number]["id"];
 
@@ -837,6 +838,8 @@ export function FractionConceptExplainer({
           );
         })}
       </ol>
+
+      <LessonClimb stageIndex={stageIndex} language={language} />
 
       <div className="atomic-explainer-grid">
         <div className="atomic-stage-copy">

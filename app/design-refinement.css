@@ -1255,6 +1255,583 @@
   }
 }
 
+/* Reviewed doubts: expose the seed corpus without presenting eight unfinished lessons. */
+.sample-picker {
+  display: grid;
+  gap: 7px;
+  padding: 18px;
+  border: 1px solid rgba(189, 62, 102, 0.22);
+  border-radius: 20px;
+  background: var(--pink-soft);
+  color: var(--pink-text);
+}
+
+.sample-picker > span {
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.sample-picker > small {
+  max-width: 690px;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.sample-picker select {
+  width: 100%;
+  min-height: 52px;
+  margin-top: 4px;
+  padding: 11px 42px 11px 14px;
+  border: 2px solid rgba(189, 62, 102, 0.24);
+  border-radius: 15px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 700 0.96rem/1.35 "Mukta", "Noto Sans Devanagari", system-ui, sans-serif;
+}
+
+.sample-picker select:focus-visible {
+  border-color: var(--pink);
+  outline: 3px solid rgba(189, 62, 102, 0.18);
+  outline-offset: 2px;
+}
+
+.sample-readback {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: -7px;
+  padding: 11px 14px;
+  border-radius: 14px;
+  background: #f0f3e3;
+  color: var(--olive-text);
+  font-size: 0.78rem;
+}
+
+.sample-readback span {
+  color: var(--ink-soft);
+  font-weight: 650;
+}
+
+.sample-readback strong {
+  font-weight: 800;
+  text-align: right;
+}
+
+.sample-readback-full-journey {
+  background: var(--olive-soft);
+}
+
+.sample-readback-safe-retry {
+  background: var(--blue-grey-soft);
+  color: var(--blue-grey-deep);
+}
+
+/* A real, inspectable Marble prerequisite graph. CSS lines keep it code-native. */
+.curriculum-climb {
+  width: min(1120px, 100%);
+  margin: 42px auto 0;
+  padding: clamp(24px, 4vw, 40px);
+  border: 1px solid rgba(94, 117, 136, 0.18);
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 9% 7%, rgba(225, 138, 85, 0.16), transparent 18rem),
+    var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.curriculum-climb-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.curriculum-climb-heading > div:first-child {
+  max-width: 720px;
+}
+
+.curriculum-climb-heading h2 {
+  margin: 11px 0 10px;
+  font: 700 clamp(1.8rem, 3.5vw, 2.7rem)/1.12 "Baloo 2", "Mukta", ui-rounded, system-ui, sans-serif;
+  letter-spacing: -0.018em;
+}
+
+.curriculum-climb-heading p,
+.climb-boundary {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+
+.climb-source-note {
+  min-width: 180px;
+  display: grid;
+  gap: 3px;
+  padding: 13px 15px;
+  border-radius: 16px;
+  background: var(--blue-grey-soft);
+  color: var(--blue-grey-deep);
+}
+
+.climb-source-note strong {
+  font-size: 0.84rem;
+}
+
+.climb-source-note span {
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.climb-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.climb-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--canvas);
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.climb-legend span::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--blue-grey);
+}
+
+.climb-legend .climb-legend-ready::before { background: var(--olive); }
+.climb-legend .climb-legend-here::before { background: var(--pink); }
+.climb-legend .climb-legend-next::before { background: var(--peach); }
+.climb-legend .climb-legend-goal::before { background: var(--blue-grey-deep); }
+
+.climb-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  gap: 18px;
+  margin-top: 16px;
+}
+
+.climb-canvas {
+  min-width: 0;
+  height: 590px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(94, 117, 136, 0.16);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(194, 208, 218, 0.34), rgba(253, 247, 236, 0.84) 61%, rgba(217, 223, 189, 0.34));
+}
+
+.climb-sky i {
+  width: 56px;
+  height: 18px;
+  position: absolute;
+  z-index: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.52);
+}
+
+.climb-sky i:nth-child(1) { top: 10%; left: 10%; }
+.climb-sky i:nth-child(2) { top: 21%; left: 49%; transform: scale(0.72); }
+.climb-sky i:nth-child(3) { top: 8%; right: 8%; transform: scale(1.12); }
+
+.climb-ground {
+  width: 116%;
+  height: 40%;
+  position: absolute;
+  right: -8%;
+  bottom: -24%;
+  z-index: 0;
+  border-radius: 50% 50% 0 0;
+  background: rgba(158, 170, 107, 0.18);
+  transform: rotate(-4deg);
+}
+
+.climb-edges,
+.climb-nodes {
+  position: absolute;
+  inset: 0;
+}
+
+.climb-edge {
+  width: var(--edge-width);
+  height: 3px;
+  position: absolute;
+  top: var(--edge-y);
+  left: var(--edge-x);
+  z-index: 1;
+  border-radius: 999px;
+  background: rgba(94, 117, 136, 0.26);
+  transform: rotate(var(--edge-angle));
+  transform-origin: left center;
+}
+
+.climb-edge-soft {
+  height: 2px;
+  background: repeating-linear-gradient(90deg, rgba(94, 117, 136, 0.42) 0 7px, transparent 7px 12px);
+}
+
+.climb-edge-route {
+  height: 5px;
+  background: linear-gradient(90deg, var(--olive), var(--peach));
+  box-shadow: 0 0 0 2px rgba(255, 250, 242, 0.68);
+}
+
+.climb-node {
+  width: 138px;
+  min-height: 78px;
+  position: absolute;
+  top: var(--node-y);
+  left: var(--node-x);
+  z-index: 3;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  padding: 10px 11px;
+  border: 2px solid transparent;
+  border-radius: 17px;
+  background: rgba(255, 250, 242, 0.94);
+  color: var(--ink);
+  box-shadow: 0 8px 20px rgba(80, 66, 54, 0.09);
+  text-align: left;
+  transform: translate(-50%, -50%);
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.climb-node:hover,
+.climb-node:focus-visible,
+.climb-node-selected {
+  border-color: var(--pink);
+  outline: 0;
+  box-shadow: 0 10px 24px rgba(80, 66, 54, 0.14);
+  transform: translate(-50%, -50%) translateY(-2px);
+}
+
+.climb-node small {
+  color: var(--ink-soft);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.climb-node strong {
+  font: 700 0.78rem/1.22 "Baloo 2", "Mukta", ui-rounded, system-ui, sans-serif;
+}
+
+.climb-node > span:not(.climb-bodh) {
+  color: var(--ink-soft);
+  font-size: 0.65rem;
+  font-weight: 750;
+}
+
+.climb-node-ready { background: #f0f3e3; }
+.climb-node-next { border-color: rgba(225, 138, 85, 0.38); background: var(--peach-soft); }
+.climb-node-goal { border-color: rgba(94, 117, 136, 0.5); background: var(--blue-grey-soft); }
+.climb-node-here {
+  border-color: var(--pink);
+  background: var(--pink-soft);
+  box-shadow: 0 11px 26px rgba(189, 62, 102, 0.14);
+}
+
+.climb-bodh {
+  width: 58px;
+  height: 58px;
+  position: absolute;
+  top: -45px;
+  right: -18px;
+  z-index: 5;
+  filter: drop-shadow(0 7px 8px rgba(80, 66, 54, 0.14));
+}
+
+.climb-bodh .bodh-mark {
+  width: 58px;
+  height: 58px;
+}
+
+.climb-detail {
+  align-self: stretch;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 20px;
+  border-radius: 22px;
+  background: var(--canvas);
+}
+
+.climb-detail > span {
+  width: max-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--pink-soft);
+  color: var(--pink-text);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.climb-detail h3 {
+  margin: 0;
+  font: 700 1.3rem/1.2 "Baloo 2", "Mukta", ui-rounded, system-ui, sans-serif;
+}
+
+.climb-detail > small {
+  color: var(--blue-grey-deep);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.climb-detail p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.climb-detail > div {
+  display: grid;
+  gap: 6px;
+  margin-top: 5px;
+  padding: 13px;
+  border-radius: 15px;
+  background: var(--olive-soft);
+}
+
+.climb-detail > div strong {
+  color: var(--olive-text);
+  font-size: 0.74rem;
+}
+
+.climb-boundary {
+  margin-top: 14px;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+/* The lesson marker moves as atomic ideas advance, without claiming mastery. */
+.lesson-climb {
+  margin: 18px 20px 0;
+  padding: 15px;
+  border: 1px solid rgba(94, 117, 136, 0.16);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.lesson-climb-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.lesson-climb-heading > div {
+  display: grid;
+  gap: 2px;
+}
+
+.lesson-climb-heading span,
+.lesson-climb-heading small {
+  color: var(--ink-soft);
+  font-size: 0.67rem;
+  font-weight: 750;
+}
+
+.lesson-climb-heading strong {
+  font: 700 0.94rem/1.25 "Baloo 2", "Mukta", ui-rounded, system-ui, sans-serif;
+}
+
+.lesson-climb-path {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin: 13px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lesson-climb-path li {
+  min-width: 0;
+  min-height: 76px;
+  position: relative;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 5px;
+  padding: 8px 5px;
+  border-radius: 14px;
+  background: var(--canvas);
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.lesson-climb-path li:not(:last-child)::after {
+  content: "";
+  width: 12px;
+  height: 3px;
+  position: absolute;
+  top: 50%;
+  left: calc(100% - 1px);
+  z-index: 2;
+  border-radius: 999px;
+  background: rgba(94, 117, 136, 0.3);
+}
+
+.lesson-climb-path li > span {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--blue-grey-soft);
+  color: var(--blue-grey-deep);
+  font-size: 0.67rem;
+  font-weight: 850;
+}
+
+.lesson-climb-path li > strong {
+  overflow-wrap: anywhere;
+  font-size: 0.68rem;
+  line-height: 1.2;
+}
+
+.lesson-climb-path .lesson-climb-visited {
+  background: #f0f3e3;
+  color: var(--olive-text);
+}
+
+.lesson-climb-path .lesson-climb-current {
+  background: var(--pink-soft);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 2px var(--pink);
+}
+
+.lesson-climb-current .bodh-mark {
+  width: 42px;
+  height: 42px;
+  position: absolute;
+  top: -28px;
+  right: -8px;
+  filter: drop-shadow(0 5px 6px rgba(80, 66, 54, 0.12));
+}
+
+@media (max-width: 1020px) {
+  .climb-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .climb-detail {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .sample-readback,
+  .curriculum-climb-heading,
+  .lesson-climb-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .sample-readback strong {
+    text-align: left;
+  }
+
+  .climb-source-note {
+    min-width: 0;
+  }
+
+  .climb-canvas {
+    height: auto;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .climb-sky,
+  .climb-ground,
+  .climb-edges {
+    display: none;
+  }
+
+  .climb-nodes {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .climb-node {
+    width: 100%;
+    min-height: 92px;
+    position: relative;
+    top: auto;
+    left: auto;
+    order: var(--node-order);
+    transform: none;
+  }
+
+  .climb-node:hover,
+  .climb-node:focus-visible,
+  .climb-node-selected {
+    transform: translateY(-2px);
+  }
+
+  .climb-bodh {
+    top: -20px;
+    right: -4px;
+    transform: scale(0.82);
+  }
+
+  .lesson-climb-path {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .lesson-climb-path li {
+    min-height: 54px;
+    grid-template-columns: 32px minmax(0, 1fr);
+    justify-items: start;
+    text-align: left;
+  }
+
+  .lesson-climb-path li:not(:last-child)::after {
+    width: 3px;
+    height: 8px;
+    top: 100%;
+    left: 25px;
+  }
+
+  .lesson-climb-current .bodh-mark {
+    top: 4px;
+    right: 7px;
+  }
+}
+
+@media (max-width: 480px) {
+  .curriculum-climb {
+    padding: 22px 16px;
+    border-radius: 24px;
+  }
+
+  .climb-nodes {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media print {
   body {
     background: white;
@@ -1266,6 +1843,11 @@
   .receipt-restart-action,
   .site-footer,
   .narration-language-toggle {
+    display: none !important;
+  }
+
+  .curriculum-climb,
+  .lesson-climb {
     display: none !important;
   }
 

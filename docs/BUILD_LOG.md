@@ -80,3 +80,11 @@ The P1 demo is intentionally curated. Live model diagnosis, image intake, speech
 - Reduced the live timeout to 15 seconds and added a six-second progress message plus an explicit bilingual client-timeout state, bounded streamed JSON parsing, early media/size rejection, migration-backed D1 rate limiting with HMAC client identifiers, opportunistic row pruning, and no request-time DDL. Hosted limiter/configuration failures now return the safe curated journey without making a model call.
 - Added regression coverage for chunked oversized bodies, the exact 4 MiB image boundary, stale-diagnosis invalidation, conservative probe routing, handoff persistence, bilingual copy, tile undo, and evidence-gated receipts.
 - Verified 67/67 automated tests plus browser passes at 320, 390, 768, and 1440 px. The final video and Devpost form remain outstanding.
+
+## 2026-07-17 — Seed explorer and Marble pathway
+
+- Made all eight reviewed seed doubts visible as selectable, learner-safe examples in `/diagnose`; evaluator-only expected outputs remain outside the client bundle.
+- Added a child-facing 10-topic, 12-dependency prerequisite map powered directly by the committed Marble fraction slice. Each selected doubt moves the current foothold and today’s summit to its canonical path.
+- Added a compact five-step lesson climb to the atomic fraction explainer so Bodh visibly progresses through the concepts as the learner advances.
+- Kept pathway markers deliberately descriptive: they show the active teaching route, not grade placement, a mastery score, or full-curriculum coverage.
+- Verified 70/70 automated tests, lint, production build, selector-to-pathway interaction, and a 390px phone layout with no horizontal overflow.

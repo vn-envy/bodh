@@ -86,6 +86,7 @@ The hosted live path must process every reviewed seed with schema-valid, equatio
 - [x] P3: Deterministic Hindi/English teaching terms selected by bounded term ID, with register and term validation
 - [x] P3: Hindi/Hinglish/English bridge checks added to the test suite
 - [x] P4: Mobile-responsive learner intake, skip link, focus return after diagnosis, keyboard-visible photo control, and judge-readable `how-it-works` route
+- [x] P4: Editable Hindi/English voice reasoning, English-first judge tour, synchronized number-line representation, and PNG receipt sharing
 - [x] P5: 32-case synthetic corpus: 8 seed, 16 reviewed development-gold, 8 frozen holdout
 - [x] P5: Corpus validator and privacy-minimised live evaluation runner
 - [x] P6: Open Graph card, submission draft, and 90-second demo script

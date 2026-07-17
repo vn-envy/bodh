@@ -2,7 +2,7 @@
 
 > **That which is truly understood.**
 
-Bodh is a Hindi-first, visual misconception tutor for mathematics learners aged 8–12. A learner brings an English homework problem, explains the doubt in Hindi or Hinglish, repairs the underlying concept through a short visual interaction, proves transfer on a fresh problem, and then returns to solve the original problem.
+Bodh is a Hindi-first, visual misconception tutor for mathematics learners aged 8–12. A learner brings an English homework problem, types or speaks the doubt in Hindi or Hinglish, repairs the underlying concept through a short visual interaction, proves transfer on a fresh problem, and then returns to solve the original problem.
 
 This repository was created during OpenAI Devpost Build Week. It contains a complete deterministic fraction journey and a constrained Phase 2 diagnostic intake that safely falls back to that journey when live intelligence is unavailable.
 
@@ -28,6 +28,8 @@ BODH_TTS_RUNTIME_ENABLED=true
 ```
 
 The live diagnostic path uses the Responses API with strict structured output and optional image input. It never receives an executable interface from the model, rejects ungrounded taxonomy IDs/evidence/notation changes, and falls back to the curated demo if validation fails.
+
+On browsers that expose speech recognition, the reasoning field also offers Hindi (`hi-IN`) and Indian English (`en-IN`) voice input. Recognition stays a learner-editable text draft and enters the exact same bounded diagnostic pipeline; unsupported browsers simply keep the typed field.
 
 The deterministic fraction explainer also offers learner-triggered Bodh narration. Each reviewed Hindi/Hinglish sentence is allowlisted, paired with exactly one artifact pointer, and sent to the Speech API only after the learner asks to prepare it. Runtime synthesis is opt-in, canonical edge-cached, and single-flight protected. Without that runtime setting, the same script and arrow sequence use the device speech voice; the complete transcript remains available either way.
 
@@ -61,9 +63,9 @@ It contains 32 synthetic cases: eight seeds, 16 reviewed development-gold cases,
 
 ## Current build boundary
 
-Included now: product scaffold, responsive matte visual system, canonical taxonomy slice, schemas, release eval corpus, traceability, and the complete deterministic hero journey: confirmation, conservative probe routing, seven-atom narrated explainer, fraction-fit lab, transfer, return, and a printable/shareable evidence receipt. The diagnostic intake also exposes all eight reviewed seed doubts as safe selectable examples, while a 10-topic, 12-dependency Marble concept map shows the prerequisite climb without making a mastery claim.
+Included now: product scaffold, responsive matte visual system, canonical taxonomy slice, schemas, release eval corpus, traceability, and the complete deterministic hero journey: confirmation, conservative probe routing, seven-atom narrated explainer, synchronized fraction-bar/number-line lab, transfer, return, and a printable or PNG-shareable evidence receipt. The diagnostic intake exposes all eight reviewed seed doubts as safe selectable examples, while a 10-topic, 12-dependency Marble concept map shows the prerequisite climb without making a mastery claim. An English-first 90-second judge tour and the measured 32-case release evidence are available in-product.
 
-Included in the Phase 2 code path: typed Hindi/Hinglish/English reasoning, optional homework-photo context, constrained model diagnosis, one pre-teaching probe, privacy-minimised inspectable traces, bounded request streaming, migration-backed diagnosis rate limits, and safe fallback.
+Included in the Phase 2 code path: typed or browser-transcribed Hindi/Hinglish/English reasoning, optional homework-photo context, constrained model diagnosis, one pre-teaching probe, privacy-minimised inspectable traces, bounded request streaming, migration-backed diagnosis rate limits, and safe fallback.
 
 Still deliberately deferred: arbitrary generated teaching speech, learner accounts, long-term mastery claims, a broad curriculum surface, and learner-outcome claims. The private deployment has exercised the live diagnostic policy; the curated interaction and reviewed static narration remain fully usable without an API key.
 

@@ -39,6 +39,8 @@ test("server-renders the Bodh learner shell", async () => {
   assert.match(html, /Bodh voice/);
   assert.match(html, /हिंदी/);
   assert.match(html, /English/);
+  assert.match(html, /Evaluating Bodh\?/);
+  assert.match(html, /90-second guided path/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/i);
 });
 
@@ -143,5 +145,15 @@ test("server-renders the diagnostic intake and the judge-readable learning path"
   const guideHtml = await guide.text();
   assert.match(guideHtml, /Bodh का छोटा promise/);
   assert.match(guideHtml, /इसलिए demo में answer पहले नहीं आता।/);
+  assert.match(guideHtml, /32 synthetic cases/);
+  assert.match(guideHtml, /8\/8/);
   assert.match(guideHtml, /how-it-works/);
+
+  const judgeTour = await render("/judge-tour/seed-01");
+  assert.equal(judgeTour.status, 200);
+  const judgeHtml = await judgeTour.text();
+  assert.match(judgeHtml, /90-second judge tour/);
+  assert.match(judgeHtml, /Committed fixture/);
+  assert.match(judgeHtml, /seed-01/);
+  assert.doesNotMatch(judgeHtml, /= 6|answer is 6/i);
 });

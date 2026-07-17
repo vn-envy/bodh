@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import {
   ADAPTIVE_SESSION_STORAGE_KEY,
   adaptiveProbeById,
@@ -14,6 +14,8 @@ import { SEEDED_DOUBTS, seededDoubtById, type SeededDoubtId } from "../../lib/se
 import { BodhMark } from "../components/BodhMark";
 import { CurriculumClimb } from "../components/CurriculumClimb";
 import { NarrationLanguageToggle, useNarrationLanguage } from "../components/NarrationLanguageToggle";
+import { ReasoningVoiceControl } from "./ReasoningVoiceControl";
+import { useReasoningSpeechInput } from "./useReasoningSpeechInput";
 
 type Trace = {
   id: string;
@@ -236,6 +238,30 @@ export function DiagnosticIntake() {
       }
     : null;
 
+  const invalidateDiagnosis = useCallback(() => {
+    requestAbortRef.current?.abort();
+    requestAbortRef.current = null;
+    setResult(null);
+    setSelectedProbe(null);
+    setNotationConfirmed(false);
+    setError("");
+    setSubmissionStage("idle");
+    setIsSubmitting(false);
+  }, []);
+
+  const updateReasoningFromSpeech = useCallback((nextValue: string) => {
+    setLearnerReasoning(nextValue);
+    setSelectedSeedId("");
+    invalidateDiagnosis();
+  }, [invalidateDiagnosis]);
+
+  const reasoningSpeech = useReasoningSpeechInput({
+    language,
+    value: learnerReasoning,
+    maxLength: 1000,
+    onValueChange: updateReasoningFromSpeech,
+  });
+
   useEffect(() => {
     if (result) resultHeadingRef.current?.focus();
   }, [result]);
@@ -248,18 +274,8 @@ export function DiagnosticIntake() {
 
   useEffect(() => () => requestAbortRef.current?.abort(), []);
 
-  const invalidateDiagnosis = () => {
-    requestAbortRef.current?.abort();
-    requestAbortRef.current = null;
-    setResult(null);
-    setSelectedProbe(null);
-    setNotationConfirmed(false);
-    setError("");
-    setSubmissionStage("idle");
-    setIsSubmitting(false);
-  };
-
   const chooseImage = (file: File | null) => {
+    reasoningSpeech.cancel();
     invalidateDiagnosis();
     setImageMessage("");
     if (!file) {
@@ -276,6 +292,7 @@ export function DiagnosticIntake() {
   };
 
   const chooseSeededDoubt = (seedId: string) => {
+    reasoningSpeech.cancel();
     invalidateDiagnosis();
     const sample = seededDoubtById(seedId);
     setSelectedSeedId(sample?.id ?? "");
@@ -289,6 +306,7 @@ export function DiagnosticIntake() {
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    reasoningSpeech.cancel();
     setError("");
     setResult(null);
     setSelectedProbe(null);
@@ -372,6 +390,7 @@ export function DiagnosticIntake() {
 
   const editNotation = () => {
     invalidateDiagnosis();
+    reasoningSpeech.cancel();
     window.requestAnimationFrame(() => problemInputRef.current?.focus());
   };
 
@@ -445,6 +464,7 @@ export function DiagnosticIntake() {
                 value={problemText}
                 maxLength={500}
                 onChange={(event) => {
+                  reasoningSpeech.cancel();
                   setProblemText(event.target.value);
                   setSelectedSeedId("");
                   invalidateDiagnosis();
@@ -453,15 +473,17 @@ export function DiagnosticIntake() {
               />
             </label>
 
-            <label className="input-label" htmlFor="reasoning-text">
-              <span>{ui(INTAKE_COPY.reasoning, language)}</span>
-              <small>{ui(INTAKE_COPY.reasoningHelp, language)}</small>
+            <div className="input-label">
+              <label htmlFor="reasoning-text">{ui(INTAKE_COPY.reasoning, language)}</label>
+              <small id="reasoning-text-help">{ui(INTAKE_COPY.reasoningHelp, language)}</small>
               <textarea
                 id="reasoning-text"
                 name="learnerReasoning"
                 value={learnerReasoning}
                 maxLength={1000}
+                aria-describedby={`reasoning-text-help${reasoningSpeech.isSupported ? " reasoning-voice-help" : ""}`}
                 onChange={(event) => {
+                  reasoningSpeech.cancel();
                   setLearnerReasoning(event.target.value);
                   setSelectedSeedId("");
                   invalidateDiagnosis();
@@ -469,7 +491,19 @@ export function DiagnosticIntake() {
                 placeholder={ui(INTAKE_COPY.reasoningPlaceholder, language)}
                 rows={4}
               />
-            </label>
+              <ReasoningVoiceControl
+                language={language}
+                isSupported={reasoningSpeech.isSupported}
+                status={reasoningSpeech.status}
+                error={reasoningSpeech.error}
+                liveTranscript={reasoningSpeech.liveTranscript}
+                disabled={isSubmitting}
+                textareaId="reasoning-text"
+                helpId="reasoning-voice-help"
+                onStart={reasoningSpeech.start}
+                onStop={reasoningSpeech.stop}
+              />
+            </div>
 
             <label className="input-label" htmlFor="visible-work-text">
               <span>{ui(INTAKE_COPY.working, language)}</span>
@@ -480,6 +514,7 @@ export function DiagnosticIntake() {
                 value={visibleWorkText}
                 maxLength={500}
                 onChange={(event) => {
+                  reasoningSpeech.cancel();
                   setVisibleWorkText(event.target.value);
                   setSelectedSeedId("");
                   invalidateDiagnosis();

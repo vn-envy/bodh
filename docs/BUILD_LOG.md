@@ -88,3 +88,12 @@ The P1 demo is intentionally curated. Live model diagnosis, image intake, speech
 - Added a compact five-step lesson climb to the atomic fraction explainer so Bodh visibly progresses through the concepts as the learner advances.
 - Kept pathway markers deliberately descriptive: they show the active teaching route, not grade placement, a mastery score, or full-curriculum coverage.
 - Verified 70/70 automated tests, lint, production build, selector-to-pathway interaction, and a 390px phone layout with no horizontal overflow.
+
+## 2026-07-18 — Demo-moment hardening
+
+- Added feature-detected Hindi and Indian-English Web Speech input to the reasoning field. Speech remains an editable, bounded text draft and unsupported browsers retain the unchanged typed path.
+- Added a quiet English-first homepage judge lane and a four-checkpoint, 90-second tour grounded in committed `seed-01` without revealing its answer.
+- Expanded `/how-it-works` with the visible 8 + 16 + 8 corpus, exact recorded 32/32 and 8/8 release evidence, checks performed, source/model envelope, and a synthetic-safety claim boundary.
+- Rebuilt the receipt around a bold Bodh-centered card and four-step progress path. The same fixed, privacy-safe model renders to a deterministic 1200×1500 PNG for file sharing or download, with text and clipboard fallbacks.
+- Added a fraction-bar / number-line toggle to the lab. Both views edit the same six-eighth state and preserve the existing completion predicate.
+- Verified 83/83 automated tests, lint, production build, and whitespace checks.

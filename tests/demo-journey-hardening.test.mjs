@@ -13,6 +13,14 @@ const journeySource = await readFile(
   new URL("../app/demo/DemoJourney.tsx", import.meta.url),
   "utf8",
 );
+const receiptCardSource = await readFile(
+  new URL("../lib/receipt-card.ts", import.meta.url),
+  "utf8",
+);
+const labRepresentationSource = await readFile(
+  new URL("../app/components/FractionLabRepresentation.tsx", import.meta.url),
+  "utf8",
+);
 
 function assertLocalizedTree(value, path = "copy") {
   assert.ok(value && typeof value === "object", `${path} must be an object`);
@@ -79,9 +87,11 @@ test("route, lab, and receipt enforce their evidence invariants", () => {
   assert.match(journeySource, /adaptive-route-status/);
   assert.match(journeySource, /canIssueAdaptiveReceipt\(evidence\)/);
   assert.match(journeySource, /adaptiveSession && adaptiveReceiptReady/);
-  assert.match(journeySource, /disabled=\{!inTarget \|\| \(!placed && !tileSelected\)\}/);
+  assert.match(journeySource, /<FractionLabRepresentation/);
+  assert.match(labRepresentationSource, /disabled=\{!inTarget \|\| \(!placed && !tileSelected\)\}/);
   assert.match(journeySource, /toggleLabTile\(current, slot\)/);
-  assert.match(journeySource, /navigator\.share/);
-  assert.match(journeySource, /navigator\.clipboard\?\.writeText/);
+  assert.match(journeySource, /shareReceiptCard/);
+  assert.match(receiptCardSource, /navigatorBridge\.share\(fileShare\)/);
+  assert.match(receiptCardSource, /navigatorBridge\.clipboard\?\.writeText/);
   assert.match(journeySource, /window\.print\(\)/);
 });

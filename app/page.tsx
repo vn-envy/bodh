@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { BodhMark } from "./components/BodhMark";
+import { JudgeLaneLink } from "./components/JudgeLaneLink";
 import { LearningStrip } from "./components/LearningStrip";
 import { NarrationLanguageToggle, useNarrationLanguage } from "./components/NarrationLanguageToggle";
 
@@ -47,6 +48,7 @@ export default function Home() {
             <span><i aria-hidden="true" /><span lang="en">Concept grounding: Marble taxonomy</span></span>
             <span><i aria-hidden="true" />{english ? "Ages 8–12" : "उम्र 8–12"}</span>
           </div>
+          <JudgeLaneLink />
         </div>
 
         <Link

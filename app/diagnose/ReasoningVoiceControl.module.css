@@ -1,0 +1,155 @@
+.voiceControl {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid rgba(94, 117, 136, 0.2);
+  border-radius: 15px;
+  background: rgba(240, 243, 227, 0.62);
+}
+
+.controlRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.voiceButton {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 13px;
+  border: 2px solid rgba(64, 88, 107, 0.28);
+  border-radius: 13px;
+  background: var(--surface, #fffdf8);
+  color: var(--blue-grey-deep, #40586b);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.voiceButtonActive {
+  border-color: var(--pink, #bd3e66);
+  background: var(--pink-soft, #f6d7e0);
+  color: #8f294b;
+}
+
+.voiceButton:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.microphone {
+  width: 13px;
+  height: 18px;
+  position: relative;
+  flex: 0 0 auto;
+  border: 2px solid currentColor;
+  border-radius: 8px;
+}
+
+.microphone::before {
+  width: 19px;
+  height: 11px;
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  translate: -50% 0;
+  border: 2px solid currentColor;
+  border-top: 0;
+  border-radius: 0 0 12px 12px;
+}
+
+.microphone::after {
+  width: 9px;
+  height: 2px;
+  content: "";
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  translate: -50% 0;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.status {
+  min-width: 0;
+  color: var(--ink-soft, #655f62);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.listeningDot {
+  width: 8px;
+  height: 8px;
+  display: inline-block;
+  margin-inline-end: 7px;
+  border-radius: 50%;
+  background: var(--pink, #bd3e66);
+  box-shadow: 0 0 0 5px rgba(189, 62, 102, 0.13);
+  animation: voice-listening-pulse 1.5s ease-in-out infinite;
+}
+
+.liveTranscript {
+  margin: 0;
+  padding: 9px 11px;
+  border-left: 3px solid var(--olive, #64743d);
+  border-radius: 0 10px 10px 0;
+  background: rgba(255, 253, 248, 0.74);
+  color: var(--ink, #343034);
+  font-size: 0.86rem;
+  font-weight: 650;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.liveTranscript span {
+  color: var(--olive-text, #53602f);
+  font-size: 0.74rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.privacy,
+.error {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.privacy {
+  color: var(--ink-soft, #655f62);
+}
+
+.error {
+  color: #8c3943;
+}
+
+@keyframes voice-listening-pulse {
+  0%, 100% { opacity: 0.7; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+@media (max-width: 480px) {
+  .controlRow,
+  .voiceButton {
+    width: 100%;
+  }
+
+  .status {
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .listeningDot {
+    animation: none;
+  }
+}

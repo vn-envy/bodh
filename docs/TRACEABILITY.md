@@ -5,7 +5,7 @@ Every requirement has one owner phase, a verification method, and a visible demo
 | ID | Requirement | Owner phase | Verification | Demo beat |
 |---|---|---|---|---|
 | BODH-R01 | Typed problem or homework image | P2 | Input-fidelity tests; notation equality | Learner confirms `3/4 ÷ 1/8 = ?` |
-| BODH-R02 | Hindi/Hinglish reasoning and voice | P3 | Transcript preservation and permission-denial tests | Original doubt remains visible verbatim |
+| BODH-R02 | Hindi/Hinglish reasoning and voice | P3/P4 | Transcript composition, locale, feature-detection, cleanup, and permission-denial tests | Spoken doubt appears as editable text before submission |
 | BODH-R03 | Bounded Marble prerequisite graph | P0/P2 | Canonical-ID and referential-integrity validation | Bodh traces the shortest relevant path |
 | BODH-R04 | Evidence-backed misconception hypotheses | P2 | Golden diagnosis top-1/top-3 review | Trace cites the learner’s own words/work |
 | BODH-R05 | Discriminating probe before teaching | P1/P2 | Journey-order invariant and probe rubric | One small question changes the chosen path |
@@ -62,3 +62,12 @@ Every requirement has one owner phase, a verification method, and a visible demo
 | BODH-R02 / BODH-R09 | The model can return only approved vocabulary IDs; the learner interface renders deterministic `Hindi (English)` terms and child meanings. | Live Hindi/Hinglish/English register behavior is covered by the 32-case release corpus. |
 | BODH-R04 / BODH-R05 | The 32-case corpus includes conceptual, ambiguous, arithmetic, answer-seeking, and injection cases. The live runner checks acceptable concept/misconception overlap and that a probe arrives without an answer. | Complete: 24/24 seed + development, then 32/32 frozen release corpus with 8/8 holdout. |
 | BODH-R12 | The release adds skip navigation, keyboard-visible upload focus, mobile layouts, an Open Graph card, a demo script, and submission draft. | Record the final video and complete the Devpost submission. |
+
+## Phase 4 demo hardening evidence
+
+| Requirement | Deterministic evidence now present |
+|---|---|
+| BODH-R02 | Supported browsers expose `hi-IN` / `en-IN` reasoning dictation; interim and final hypotheses compose into the same bounded editable field, while unsupported browsers hide the control. |
+| BODH-R06 | The six learner-controlled eighths can be viewed and changed through either the fraction bar or a 0-to-1 number line; both representations call the same tile-state transition. |
+| BODH-R11 | A quiet English-first judge lane opens a four-checkpoint 90-second route anchored to committed `seed-01`, then enters the API-free curated journey. |
+| BODH-R12 | `/how-it-works` exposes the versioned 8 + 16 + 8 corpus, recorded 32/32 and 8/8 result, checks performed, and explicit synthetic-safety/non-efficacy boundary. The receipt renders a fixed 1200×1500 PNG with Bodh, pathway, evidence, native file sharing, and text fallback. |

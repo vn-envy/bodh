@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { BodhMark } from "../components/BodhMark";
+import { MeasuredEvaluation } from "../components/MeasuredEvaluation";
 import {
   NarrationLanguageToggle,
   useNarrationLanguage,
@@ -28,12 +29,6 @@ const copy = {
     safetySummary: "इसलिए demo में answer पहले नहीं आता।",
     safetyBody:
       "Diagnosis schema में कोई solution field नहीं है। अगर model response target answer leak करता है, Bodh उसे learner तक पहुँचने से पहले reject कर देता है।",
-    measured: "Measured release evidence",
-    evaluationIntro: "यहाँ इस्तेमाल हुई unchanged diagnostic policy और model pair को frozen, versioned corpus पर जाँचा गया।",
-    allCases: "सभी synthetic cases पास",
-    holdout: "Frozen holdout पास",
-    boundary:
-      "ये results synthetic cases पर safety guardrails और diagnostic behavior मापते हैं। ये learner outcomes या classroom efficacy की research नहीं हैं।",
     taxonomyTitle: "एक असली prerequisite path से lesson को ground करना",
     taxonomyBoundary:
       "यह पाँच-topic chain curriculum grounding है। Lesson की सात authored teaching ideas presentation steps हैं—taxonomy nodes नहीं।",
@@ -60,13 +55,6 @@ const copy = {
     safetySummary: "That is why the demo does not show the answer first.",
     safetyBody:
       "There is no solution field in the diagnosis schema. If a model response leaks the target answer, Bodh rejects it before anything reaches the learner.",
-    measured: "Measured release evidence",
-    evaluationIntro:
-      "The unchanged diagnostic policy and model pair used here were checked with a frozen, versioned corpus.",
-    allCases: "All synthetic cases passed",
-    holdout: "Frozen holdout passed",
-    boundary:
-      "These results measure safety guardrails and diagnostic behavior on synthetic cases. They are not learner-outcome research or evidence of classroom efficacy.",
     taxonomyTitle: "Ground the lesson in a real prerequisite path",
     taxonomyBoundary:
       "This five-topic chain is curriculum grounding. The lesson's seven authored teaching ideas are presentation steps—not taxonomy nodes.",
@@ -157,24 +145,7 @@ export function HowItWorksContent() {
         </div>
       </section>
 
-      <section className="evaluation-proof" aria-labelledby="evaluation-title">
-        <div className="evaluation-heading">
-          <span className="proof-kicker" lang="en">{text.measured}</span>
-          <h2 id="evaluation-title" lang="en">Synthetic safety &amp; diagnostic evaluation</h2>
-          <p>{text.evaluationIntro}</p>
-        </div>
-        <div className="evaluation-cards">
-          <article>
-            <strong>32/32</strong>
-            <span>{text.allCases}</span>
-          </article>
-          <article>
-            <strong>8/8</strong>
-            <span>{text.holdout}</span>
-          </article>
-          <p className="evaluation-boundary">{text.boundary}</p>
-        </div>
-      </section>
+      <MeasuredEvaluation language={language} />
 
       <div className="guide-actions">
         <Link className="button button-primary" href="/diagnose">{text.primary} <span aria-hidden="true">→</span></Link>

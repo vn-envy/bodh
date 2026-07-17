@@ -561,6 +561,7 @@
 }
 
 .receipt-share-action,
+.receipt-download-action,
 .receipt-print-action {
   min-height: 52px;
   display: inline-flex;
@@ -578,6 +579,12 @@
 .receipt-share-action {
   border: 0;
   background: var(--pink);
+  color: white;
+}
+
+.receipt-download-action {
+  border: 0;
+  background: var(--olive);
   color: white;
 }
 
@@ -1102,6 +1109,7 @@
   }
 
   .receipt-share-action,
+  .receipt-download-action,
   .receipt-print-action {
     width: 100%;
   }

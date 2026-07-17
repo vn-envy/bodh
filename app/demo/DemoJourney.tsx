@@ -33,6 +33,7 @@ import {
   type ReceiptShareVariant,
 } from "../../lib/demo-journey-copy";
 import { BodhMark } from "../components/BodhMark";
+import { FractionLabRepresentation } from "../components/FractionLabRepresentation";
 import {
   FractionConceptExplainer,
   type FractionConceptStageId,
@@ -40,11 +41,17 @@ import {
 import { LearningStrip } from "../components/LearningStrip";
 import { NarrationLanguageToggle, useNarrationLanguage } from "../components/NarrationLanguageToggle";
 import { ProgressPath } from "../components/ProgressPath";
+import { ReceiptImageCard } from "../components/ReceiptImageCard";
+import {
+  createReceiptCardModel,
+  downloadReceiptCardPng,
+  shareReceiptCard,
+} from "../../lib/receipt-card";
 
 type JourneyStep = CuratedJourneyStep | "loading" | "route";
 type CheckState = "idle" | "try-again" | "correct";
 type PathReturnStep = "lab" | "transfer";
-type ShareState = "idle" | "shared" | "copied" | "failed";
+type ShareState = "idle" | "preparing" | "shared-image" | "shared-text" | "copied" | "downloaded" | "failed";
 
 const probeOptions = [
   { value: "2", label: "2" },
@@ -93,6 +100,10 @@ export function DemoJourney() {
   const receiptSupport = adaptiveReceiptReady ? adaptiveReceiptSupport(evidence) : null;
   const canShowReceiptClaims = !adaptiveSession || adaptiveReceiptReady;
   const receiptShareVariant: ReceiptShareVariant = receiptSupport ?? "curated";
+  const receiptCardModel = useMemo(
+    () => createReceiptCardModel(language, receiptShareVariant),
+    [language, receiptShareVariant],
+  );
 
   useEffect(() => {
     let parsed: AdaptiveSessionPayload | null = null;
@@ -215,22 +226,27 @@ export function DemoJourney() {
   const shareReceipt = async () => {
     if (!canShowReceiptClaims) return;
     const text = receiptShareText(language, receiptShareVariant);
-    setShareState("idle");
+    setShareState("preparing");
+    const result = await shareReceiptCard(
+      receiptCardModel,
+      `Bodh · ${t(DEMO_JOURNEY_COPY.receipt.eyebrow)}`,
+      text,
+    );
+    setShareState(result === "shared-file"
+      ? "shared-image"
+      : result === "shared-text"
+        ? "shared-text"
+        : result === "cancelled"
+          ? "idle"
+          : result);
+  };
 
-    if (typeof navigator.share === "function") {
-      try {
-        await navigator.share({ title: `Bodh · ${t(DEMO_JOURNEY_COPY.receipt.eyebrow)}`, text });
-        setShareState("shared");
-        return;
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-      }
-    }
-
+  const downloadReceipt = async () => {
+    if (!canShowReceiptClaims) return;
+    setShareState("preparing");
     try {
-      if (!navigator.clipboard?.writeText) throw new Error("clipboard_unavailable");
-      await navigator.clipboard.writeText(text);
-      setShareState("copied");
+      await downloadReceiptCardPng(receiptCardModel);
+      setShareState("downloaded");
     } catch {
       setShareState("failed");
     }
@@ -490,38 +506,14 @@ export function DemoJourney() {
               <span className="tile-swatch">1/8</span>
               {tileSelected ? t(DEMO_JOURNEY_COPY.lab.tileSelected) : t(DEMO_JOURNEY_COPY.lab.chooseTile)}
             </button>
-            <div className="fraction-bar-wrap">
-              <div className="fraction-bar-labels" aria-hidden="true">
-                <span>{t(DEMO_JOURNEY_COPY.lab.targetLabel)}</span>
-                <span>{t(DEMO_JOURNEY_COPY.lab.wholeLabel)}</span>
-              </div>
-              <div className="fraction-bar-scroll">
-                <div className="fraction-bar" aria-label={t(DEMO_JOURNEY_COPY.lab.barAria)}>
-                  {Array.from({ length: HERO_FIXTURE.totalSlots }, (_, slot) => {
-                    const inTarget = slot < HERO_FIXTURE.targetSlots;
-                    const placed = placedSlots.includes(slot);
-                    return (
-                      <button
-                        className={`fraction-slot ${inTarget ? "fraction-slot-target" : "fraction-slot-outside"} ${placed ? "fraction-slot-placed" : ""}`}
-                        type="button"
-                        key={slot}
-                        disabled={!inTarget || (!placed && !tileSelected)}
-                        aria-label={
-                          placed
-                            ? `${t(DEMO_JOURNEY_COPY.lab.slot)} ${slot + 1}: ${t(DEMO_JOURNEY_COPY.lab.placedSlot)}`
-                            : inTarget
-                              ? `${t(DEMO_JOURNEY_COPY.lab.slot)} ${slot + 1}: ${t(DEMO_JOURNEY_COPY.lab.emptySlot)}`
-                              : `${t(DEMO_JOURNEY_COPY.lab.slot)} ${slot + 1}: ${t(DEMO_JOURNEY_COPY.lab.outsideSlot)}`
-                        }
-                        onClick={() => toggleTile(slot)}
-                      >
-                        {placed && <span>1/8</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+            <FractionLabRepresentation
+              language={language}
+              placedSlots={placedSlots}
+              targetSlots={HERO_FIXTURE.targetSlots}
+              totalSlots={HERO_FIXTURE.totalSlots}
+              tileSelected={tileSelected}
+              onToggle={toggleTile}
+            />
             {labComplete && (
               <div className="lab-success">
                 <strong>{t(DEMO_JOURNEY_COPY.lab.successLead)}</strong> {t(DEMO_JOURNEY_COPY.lab.success)}
@@ -687,28 +679,24 @@ export function DemoJourney() {
 
         {step === "receipt" && (
           <article className="journey-card journey-card-receipt" lang={language}>
-            <div className="receipt-heading">
-              <BodhMark
-                pose={canShowReceiptClaims ? "celebrate" : "listen"}
-                size="medium"
-                motion={canShowReceiptClaims ? "celebrate" : "listen"}
+            {canShowReceiptClaims ? (
+              <ReceiptImageCard
+                language={language}
+                variant={receiptShareVariant}
+                headingRef={stageHeadingRef}
               />
-              <div>
-                <span className="eyebrow">{t(DEMO_JOURNEY_COPY.receipt.eyebrow)}</span>
-                <h1 ref={stageHeadingRef} tabIndex={-1}>
-                  {!canShowReceiptClaims
-                    ? t(DEMO_JOURNEY_COPY.receipt.unavailableTitle)
-                    : receiptSupport === "independent"
-                      ? t(DEMO_JOURNEY_COPY.receipt.independentTitle)
-                      : receiptSupport === "supported"
-                        ? t(DEMO_JOURNEY_COPY.receipt.supportedTitle)
-                        : t(DEMO_JOURNEY_COPY.receipt.curatedTitle)}
-                </h1>
-              </div>
-            </div>
-            <p className="receipt-trust-note">
-              {t(canShowReceiptClaims ? DEMO_JOURNEY_COPY.receipt.trust : DEMO_JOURNEY_COPY.receipt.unavailableTrust)}
-            </p>
+            ) : (
+              <>
+                <div className="receipt-heading">
+                  <BodhMark pose="listen" size="medium" motion="listen" />
+                  <div>
+                    <span className="eyebrow">{t(DEMO_JOURNEY_COPY.receipt.eyebrow)}</span>
+                    <h1 ref={stageHeadingRef} tabIndex={-1}>{t(DEMO_JOURNEY_COPY.receipt.unavailableTitle)}</h1>
+                  </div>
+                </div>
+                <p className="receipt-trust-note">{t(DEMO_JOURNEY_COPY.receipt.unavailableTrust)}</p>
+              </>
+            )}
             {canShowReceiptClaims && (
               <>
                 <div className="receipt-artifacts">
@@ -780,16 +768,25 @@ export function DemoJourney() {
               <button
                 className="button receipt-share-action"
                 type="button"
-                disabled={!canShowReceiptClaims}
+                disabled={!canShowReceiptClaims || shareState === "preparing"}
                 aria-label={t(DEMO_JOURNEY_COPY.receipt.shareAria)}
                 onClick={shareReceipt}
               >
                 {t(DEMO_JOURNEY_COPY.receipt.share)}
               </button>
               <button
+                className="button receipt-download-action"
+                type="button"
+                disabled={!canShowReceiptClaims || shareState === "preparing"}
+                aria-label={t(DEMO_JOURNEY_COPY.receipt.downloadAria)}
+                onClick={downloadReceipt}
+              >
+                {t(DEMO_JOURNEY_COPY.receipt.download)}
+              </button>
+              <button
                 className="button receipt-print-action"
                 type="button"
-                disabled={!canShowReceiptClaims}
+                disabled={!canShowReceiptClaims || shareState === "preparing"}
                 aria-label={t(DEMO_JOURNEY_COPY.receipt.printAria)}
                 onClick={() => window.print()}
               >
@@ -798,8 +795,14 @@ export function DemoJourney() {
             </div>
             {shareState !== "idle" && (
               <p className="receipt-share-status" role={shareState === "failed" ? "alert" : "status"} aria-live="polite">
-                {t(shareState === "shared"
-                  ? DEMO_JOURNEY_COPY.receipt.shared
+                {t(shareState === "preparing"
+                  ? DEMO_JOURNEY_COPY.receipt.preparing
+                  : shareState === "shared-image"
+                    ? DEMO_JOURNEY_COPY.receipt.sharedImage
+                    : shareState === "shared-text"
+                      ? DEMO_JOURNEY_COPY.receipt.shared
+                      : shareState === "downloaded"
+                        ? DEMO_JOURNEY_COPY.receipt.downloaded
                   : shareState === "copied"
                     ? DEMO_JOURNEY_COPY.receipt.copied
                     : DEMO_JOURNEY_COPY.receipt.shareFailed)}

@@ -31,7 +31,7 @@ The live diagnostic path uses the Responses API with strict structured output an
 
 On browsers that expose speech recognition, the reasoning field also offers Hindi (`hi-IN`) and Indian English (`en-IN`) voice input. Recognition stays a learner-editable text draft and enters the exact same bounded diagnostic pipeline; unsupported browsers simply keep the typed field.
 
-The deterministic fraction explainer also offers learner-triggered Bodh narration. Each reviewed Hindi/Hinglish sentence is allowlisted, paired with exactly one artifact pointer, and sent to the Speech API only after the learner asks to prepare it. Runtime synthesis is opt-in, canonical edge-cached, and single-flight protected. Without that runtime setting, the same script and arrow sequence use the device speech voice; the complete transcript remains available either way.
+The deterministic fraction explainer also offers learner-triggered Bodh narration. Each reviewed Hindi/Hinglish sentence is allowlisted and paired with exactly one artifact pointer. The fixed beats for the current lesson stage are prepared in the background so the first deliberate **Listen now** tap can play immediately; audio never autoplays. Runtime synthesis is opt-in, canonical edge-cached, and single-flight protected. Without that runtime setting, the same script and arrow sequence use the device speech voice; the complete transcript remains available either way. Narration requests contain only committed beat IDs—never learner text, photos, or diagnostic output.
 
 ## Validate the foundation
 
@@ -67,8 +67,8 @@ Included now: product scaffold, responsive matte visual system, canonical taxono
 
 Included in the Phase 2 code path: typed or browser-transcribed Hindi/Hinglish/English reasoning, optional homework-photo context, constrained model diagnosis, one pre-teaching probe, privacy-minimised inspectable traces, bounded request streaming, migration-backed diagnosis rate limits, and safe fallback.
 
-Still deliberately deferred: arbitrary generated teaching speech, learner accounts, long-term mastery claims, a broad curriculum surface, and learner-outcome claims. The private deployment has exercised the live diagnostic policy; the curated interaction and reviewed static narration remain fully usable without an API key.
+Still deliberately deferred: arbitrary generated teaching speech, learner accounts, long-term mastery claims, a broad curriculum surface, and learner-outcome claims. The private deployment has exercised the live diagnostic policy; the curated interaction, complete transcript, and device narration remain fully usable without an API key.
 
 ## Privacy posture
 
-The curated fixture contains no child data and sends nothing to an external service. In the live path, raw learner text, photo data, evidence quotes, and model responses are never written to the durable trace. The trace stores only a one-way input fingerprint, selected canonical topic IDs, model/prompt versions, and fallback status.
+The curated fixture contains no child data. When the operator explicitly enables runtime TTS, opening a lesson stage may prepare its fixed, allowlisted narration beats through the Speech API; no learner content is included. In the live diagnostic path, raw learner text, photo data, evidence quotes, and model responses are never written to the durable trace. The trace stores only a one-way input fingerprint, selected canonical topic IDs, model/prompt versions, and fallback status.

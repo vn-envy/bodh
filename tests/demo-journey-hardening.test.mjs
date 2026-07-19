@@ -21,6 +21,18 @@ const labRepresentationSource = await readFile(
   new URL("../app/components/FractionLabRepresentation.tsx", import.meta.url),
   "utf8",
 );
+const visualChecksSource = await readFile(
+  new URL("../app/components/JourneyVisualChecks.tsx", import.meta.url),
+  "utf8",
+);
+const progressPathSource = await readFile(
+  new URL("../app/components/ProgressPath.tsx", import.meta.url),
+  "utf8",
+);
+const explainerSource = await readFile(
+  new URL("../app/components/FractionConceptExplainer.tsx", import.meta.url),
+  "utf8",
+);
 
 function assertLocalizedTree(value, path = "copy") {
   assert.ok(value && typeof value === "object", `${path} must be an object`);
@@ -76,7 +88,7 @@ test("journey UI keeps diagnostics actionable and keyboard-safe", () => {
   assert.match(journeySource, /onClick=\{\(\) => setEntryStageId\("chosen-whole"\)\}/);
   assert.match(journeySource, /key=\{entryStageId\}/);
   assert.equal((journeySource.match(/<form className="answer-form" onSubmit=/g) ?? []).length, 2);
-  assert.equal((journeySource.match(/className="button button-primary journey-primary" type="submit"/g) ?? []).length, 1);
+  assert.equal((journeySource.match(/type="submit"/g) ?? []).length, 2);
   assert.match(journeySource, /type="submit"\n\s+disabled=\{transferState === "correct" && !meaningChoice\}/);
 });
 
@@ -94,4 +106,50 @@ test("route, lab, and receipt enforce their evidence invariants", () => {
   assert.match(receiptCardSource, /navigatorBridge\.share\(fileShare\)/);
   assert.match(receiptCardSource, /navigatorBridge\.clipboard\?\.writeText/);
   assert.match(journeySource, /window\.print\(\)/);
+});
+
+test("curated checks use learner-built pictures and Bodh travels across five distinct stops", () => {
+  assert.match(journeySource, /<QuarterProbeArtifact language=\{language\} answer=\{probeAnswer\}/);
+  assert.equal((journeySource.match(/<FractionGroupBuilder/g) ?? []).length, 2);
+  assert.doesNotMatch(journeySource, /name="transfer-answer"|name="return-answer"/);
+  assert.doesNotMatch(visualChecksSource, /<input\b/);
+  assert.match(visualChecksSource, /!answer \? \(/, "the probe must keep a separate pre-choice state");
+  assert.match(visualChecksSource, /aria-pressed=\{selected\}/);
+  assert.match(visualChecksSource, /aria-pressed=\{isCounted\}/);
+  assert.match(visualChecksSource, /counted\.length === 0 \|\| countComplete/);
+  assert.match(visualChecksSource, /`\$\{counted\.length\}\/\$\{unitDenominator\}`/);
+  assert.match(journeySource, /isFractionGroupBuildComplete\(/);
+  assert.doesNotMatch(journeySource, /probeAnswer === "4" \? "celebrate"/);
+
+  assert.match(progressPathSource, /"Question", "Understand", "Build", "New question", "Yours again"/);
+  assert.match(progressPathSource, /<BodhMark/);
+  assert.match(journeySource, /if \(step === "return"\) return 5;/);
+  assert.match(journeySource, /return 6;/);
+});
+
+test("narration prepares on entry and one ready tap starts without granting passive evidence", () => {
+  assert.match(explainerSource, /useState<VoiceState>\("loading"\)/);
+  assert.match(explainerSource, /void prepareNarration\(\);/);
+  assert.match(explainerSource, /disabled=\{voiceState === "loading"\}/);
+  assert.match(explainerSource, /voiceState === "ready" \? "atomic-play-ready"/);
+  assert.doesNotMatch(explainerSource, /press again when ready|तैयार होने पर फिर दबाओ/i);
+
+  const playbackBlock = explainerSource.slice(
+    explainerSource.indexOf("const playNarration"),
+    explainerSource.indexOf("const prepareNarration"),
+  );
+  assert.doesNotMatch(playbackBlock, /markStageEvidence|setProved\(true\)/);
+  assert.match(explainerSource, /proved \|\| voiceVisualActive/);
+  assert.match(explainerSource, /setVoiceVisualActive\(true\)/);
+  const preparationBlock = explainerSource.slice(
+    explainerSource.indexOf("const prepareNarration"),
+    explainerSource.indexOf("const handleVoiceButton"),
+  );
+  assert.doesNotMatch(preparationBlock, /markStageEvidence|setProved\(true\)/);
+  const evidenceBlock = explainerSource.slice(
+    explainerSource.indexOf("const takePrimaryAction"),
+    explainerSource.indexOf("useEffect(() => {\n    const playbackKey"),
+  );
+  assert.match(evidenceBlock, /markStageEvidence\(stage\.id\)/);
+  assert.match(evidenceBlock, /setProved\(true\)/);
 });

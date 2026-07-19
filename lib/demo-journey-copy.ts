@@ -96,7 +96,7 @@ export const DEMO_JOURNEY_COPY = {
   },
   confirm: {
     eyebrow: hiEn("तुम्हारा सवाल", "Your question"),
-    counter: hiEn("1 / 4", "1 / 4"),
+    counter: hiEn("1 / 5", "1 / 5"),
     title: hiEn("पहले जाँच लें कि हमने सही सुना।", "First, let us check that we heard you correctly."),
     lead: hiEn(
       "तुम्हारा original सवाल और तुम्हारे शब्द, बिल्कुल वैसे ही रखे गए हैं।",
@@ -112,7 +112,7 @@ export const DEMO_JOURNEY_COPY = {
   },
   path: {
     eyebrow: hiEn("छुपी हुई idea", "The idea underneath"),
-    counter: hiEn("2 / 4", "2 / 4"),
+    counter: hiEn("2 / 5", "2 / 5"),
     title: hiEn("एक ही whole को बदलते हुए देखें।", "Watch the same whole change."),
     lead: hiEn(
       "हर screen पर सिर्फ एक idea: पहले picture पर action, फिर उसी picture से evidence।",
@@ -122,27 +122,28 @@ export const DEMO_JOURNEY_COPY = {
   },
   probe: {
     eyebrow: hiEn("एक छोटी जाँच", "A quick check"),
-    counter: hiEn("2 / 4", "2 / 4"),
+    counter: hiEn("2 / 5", "2 / 5"),
     title: hiEn("एक whole में कितने 1/4 आते हैं?", "How many 1/4 pieces make one whole?"),
     lead: hiEn(
-      "यह test नहीं है। हर जवाब Bodh को यह चुनने में मदद करता है कि साथ कहाँ से शुरू करें।",
-      "This is not a test. Every answer helps Bodh choose where to begin with you.",
+      "अपनी पहली सोच चुनो। Bodh उसे picture में रखकर देखेगा—यह grade नहीं है।",
+      "Choose your first thought. Bodh will place it in the picture—this is not a grade.",
     ),
     stripLabel: hiEn("एक पूरा whole", "One whole"),
     optionsAria: hiEn("एक whole में कितने एक बटे चार", "Choose how many one-fourths make a whole"),
+    pieces: hiEn("टुकड़े", "pieces"),
     feedbackFour: hiEn(
-      "चार बराबर 1/4 मिलकर एक whole बनाते हैं। यह जवाब पहले की ideas को mastered नहीं मानता—वे review के लिए उपलब्ध रहेंगी।",
-      "Four equal 1/4 pieces make one whole. This answer does not mark earlier ideas mastered—they remain available to review.",
+      "देखो—चार बराबर 1/4 ने tray को ठीक-ठीक भर दिया।",
+      "Look—four equal 1/4 pieces fill the tray exactly.",
     ),
     feedbackOther: hiEn(
-      "धन्यवाद—इस जवाब से Bodh को पता चला कि पहले whole की picture साथ बनाना उपयोगी होगा। तुम आगे बढ़ सकते हो।",
-      "Thank you—this answer tells Bodh it will help to build the picture of the whole together first. You can keep going.",
+      "अच्छी कोशिश। Picture में gap या extra pieces दिख रहे हैं—Bodh वहीं से साथ बनाएगा।",
+      "Good try. The picture shows a gap or extra pieces—Bodh will build from there with you.",
     ),
     continue: hiEn("Bodh के साथ idea बनाएँ", "Build the idea with Bodh"),
   },
   lab: {
     eyebrow: hiEn("खुद करके देखो", "Build it yourself"),
-    counter: hiEn("3 / 4", "3 / 4"),
+    counter: hiEn("3 / 5", "3 / 5"),
     title: hiEn("3/4 के अंदर कितने 1/8 पूरे-पूरा बैठते हैं?", "How many complete 1/8 pieces fit inside 3/4?"),
     lead: hiEn(
       "पहले एक tile चुनो, फिर peach वाली जगहों पर tap करके उसे रखो। रखे हुए tile को हटाने के लिए फिर tap करो।",
@@ -171,11 +172,11 @@ export const DEMO_JOURNEY_COPY = {
   },
   transfer: {
     eyebrow: hiEn("अब एक नया सवाल", "Now a new question"),
-    counter: hiEn("4 / 4", "4 / 4"),
+    counter: hiEn("4 / 5", "4 / 5"),
     title: hiEn("क्या वही idea नई कहानी में भी काम करती है?", "Does the same idea work in a new story?"),
     lead: hiEn(
-      "पहले अपने दम पर कोशिश करो। जरूरत हुई तो वही tool वापस आएगा।",
-      "Try on your own first. If you need it, the same tool will return.",
+      "पहले ribbon में 2/3 बनाओ। फिर हर 1/6 bookmark-piece tap करके अपनी गिनती बनाओ।",
+      "First build 2/3 of the ribbon. Then tap each 1/6 bookmark piece to build your count.",
     ),
     problem: hiEn(
       "रिया के पास 2/3 metre ribbon है। हर bookmark के लिए 1/6 metre ribbon चाहिए। कितने bookmarks बनेंगे?",
@@ -185,12 +186,12 @@ export const DEMO_JOURNEY_COPY = {
     answerLabel: hiEn("तुम्हारा जवाब", "Your answer"),
     answerPlaceholder: hiEn("यहाँ लिखो", "Type here"),
     hintFeedback: hiEn(
-      "अब hint picture में भरे हुए हिस्से देखो। उनमें 1/6 आकार के groups खुद गिनो।",
-      "Look at the filled parts in the hint picture. Count the groups of size 1/6 yourself.",
+      "पहले तीन बराबर हिस्सों में से दो चुनो। फिर coloured 1/6 pieces को एक-एक करके tap करो।",
+      "First choose two of the three equal parts. Then tap the coloured 1/6 pieces one by one.",
     ),
     correctFeedback: hiEn(
-      "Number सही है। अब बताओ कि इस कहानी में 4 का मतलब क्या है।",
-      "The number is correct. Now tell Bodh what 4 means in this story.",
+      "तुम्हारी picture ने चार groups बनाए। अब बताओ—इस कहानी में 4 क्या गिन रहा है?",
+      "Your picture made four groups. Now tell Bodh—what is the 4 counting in this story?",
     ),
     meaningEyebrow: hiEn("सिर्फ answer नहीं—meaning भी", "Not only the answer—the meaning"),
     meaningTitle: hiEn("यहाँ 4 किस चीज़ की गिनती है?", "What is the 4 counting here?"),
@@ -203,27 +204,28 @@ export const DEMO_JOURNEY_COPY = {
       "Number मिल गया, लेकिन relationship अभी rule से जुड़ी है। Bodh उसी छोटी idea को फिर दिखाएगा।",
       "You found the number, but its meaning is still tied to a rule. Bodh will revisit that one small idea.",
     ),
-    check: hiEn("अपना जवाब जाँचें", "Check my answer"),
+    check: hiEn("अपनी picture जाँचें", "Check my picture"),
     return: hiEn("अब अपना पहला सवाल करें", "Return to my first question"),
     repair: hiEn("इस idea को फिर समझें", "Repair this idea"),
     chooseMeaning: hiEn("पहले meaning चुनें", "Choose the meaning first"),
   },
   return: {
     eyebrow: hiEn("वही सवाल, अब तुम्हारी समझ के साथ", "The same question, now with your understanding"),
-    counter: hiEn("4 / 4", "4 / 4"),
-    title: hiEn("अब वही सवाल—लेकिन idea तुम्हारे पास है।", "Now the same question—but you have the idea."),
+    counter: hiEn("5 / 5", "5 / 5"),
+    title: hiEn("अब उसी picture से अपना पहला सवाल बनाओ।", "Now build your first question with the same picture."),
     equationAria: hiEn("तीन चौथाई को एक आठवें से भाग", "Three quarters divided by one eighth"),
+    youAsked: hiEn("यही वह बात थी जहाँ तुम अटके थे", "This is where you were stuck"),
     answerLabel: hiEn("तुम्हारा जवाब", "Your answer"),
     answerPlaceholder: hiEn("यहाँ लिखो", "Type here"),
     hint: hiEn(
-      "एक hint: सोचो कि 3/4 के अंदर कितने 1/8 पूरे-पूरा बैठते हैं।",
-      "A hint: think about how many complete 1/8 pieces fit inside 3/4.",
+      "पहले चार quarters में से तीन चुनो। फिर हर coloured 1/8 को tap करके अपनी गिनती बनाओ।",
+      "First choose three of the four quarters. Then tap every coloured 1/8 to build your count.",
     ),
     correct: hiEn(
-      "हाँ। तुमने rule नहीं, relationship इस्तेमाल किया।",
-      "Yes. You used the relationship, not only a rule.",
+      "हाँ—तुमने छह 1/8 groups खुद बनाए। इस बार answer picture से आया, rule याद करने से नहीं।",
+      "Yes—you built six 1/8 groups yourself. This time the answer came from the picture, not from memorising a rule.",
     ),
-    check: hiEn("अपना जवाब जाँचें", "Check my answer"),
+    check: hiEn("अपनी picture जाँचें", "Check my picture"),
     receipt: hiEn("आज की समझ देखें", "See today's understanding"),
   },
   receipt: {

@@ -60,6 +60,59 @@ export function isLabComplete(placedSlots: number[]) {
 }
 
 /**
+ * Validates the two-layer picture used by the transfer and return exercises:
+ * first choose the fraction's larger parts, then count only the smaller units
+ * that belong to those chosen parts.
+ */
+export function isFractionGroupBuildComplete(
+  selectedParts: readonly number[],
+  countedUnits: readonly number[],
+  numerator: number,
+  denominator: number,
+  unitDenominator: number,
+) {
+  if (
+    !Number.isInteger(numerator) ||
+    !Number.isInteger(denominator) ||
+    !Number.isInteger(unitDenominator) ||
+    numerator <= 0 ||
+    denominator <= 0 ||
+    unitDenominator <= 0 ||
+    numerator > denominator ||
+    unitDenominator % denominator !== 0
+  ) return false;
+
+  const subdivision = unitDenominator / denominator;
+  const uniqueParts = new Set(selectedParts);
+  const uniqueUnits = new Set(countedUnits);
+  if (uniqueParts.size !== selectedParts.length || uniqueUnits.size !== countedUnits.length) return false;
+  if (uniqueParts.size !== numerator) return false;
+  if ([...uniqueParts].some((part) => !Number.isInteger(part) || part < 0 || part >= denominator)) return false;
+
+  const validUnitIds = new Set([...uniqueParts].flatMap((part) =>
+    Array.from({ length: subdivision }, (_, unitIndex) => part * subdivision + unitIndex)));
+  return uniqueUnits.size === numerator * subdivision && [...uniqueUnits].every((unit) => validUnitIds.has(unit));
+}
+
+/** Build a measured length from the left edge so a ribbon never becomes disconnected scraps. */
+export function toggleContiguousPart(
+  selectedParts: readonly number[],
+  part: number,
+  totalParts: number,
+) {
+  if (!Number.isInteger(part) || !Number.isInteger(totalParts) || part < 0 || part >= totalParts) {
+    return [...selectedParts];
+  }
+  const selected = new Set(selectedParts);
+  let prefixLength = 0;
+  while (prefixLength < totalParts && selected.has(prefixLength)) prefixLength += 1;
+  const prefix = Array.from({ length: prefixLength }, (_, index) => index);
+  if (part < prefixLength) return prefix.slice(0, part);
+  if (part === prefixLength) return [...prefix, part];
+  return prefix;
+}
+
+/**
  * A single curated response can only choose a safe place to begin. It never
  * marks an earlier concept complete or mastered.
  */

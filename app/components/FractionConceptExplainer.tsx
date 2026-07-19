@@ -27,8 +27,8 @@ type VoiceState = "idle" | "loading" | "ready" | "playing" | "paused" | "ended" 
 type VoiceSource = "openai" | "device" | null;
 type PlaybackResult = "ended" | "failed" | "cancelled";
 type ActivePlayer =
-  | { kind: "audio"; media: HTMLAudioElement; run: number; resolve: (result: PlaybackResult) => void }
-  | { kind: "speech"; utterance: SpeechSynthesisUtterance; run: number; resolve: (result: PlaybackResult) => void };
+  | { kind: "audio"; media: HTMLAudioElement; run: number; resolve: (result: PlaybackResult) => void; cancelStartup: () => void }
+  | { kind: "speech"; utterance: SpeechSynthesisUtterance; run: number; resolve: (result: PlaybackResult) => void; cancelStartup: () => void };
 type PreparedVoice = {
   stageId: FractionConceptStageId;
   language: NarrationLanguage;
@@ -330,7 +330,7 @@ function FractionArtifact({
 
 function voiceButtonLabel(state: VoiceState, language: NarrationLanguage) {
   if (language === "en") {
-    if (state === "loading") return "Stop preparing";
+    if (state === "loading") return "Preparing Bodh…";
     if (state === "ready") return "Listen now";
     if (state === "playing") return "Pause";
     if (state === "paused") return "Continue";
@@ -338,7 +338,7 @@ function voiceButtonLabel(state: VoiceState, language: NarrationLanguage) {
     if (state === "unavailable") return "Try again";
     return "Listen to Bodh";
   }
-  if (state === "loading") return "तैयारी रोकें";
+  if (state === "loading") return "Bodh तैयार हो रहा है…";
   if (state === "ready") return "अब सुनो";
   if (state === "playing") return "रोकें";
   if (state === "paused") return "आगे सुनो";
@@ -348,6 +348,7 @@ function voiceButtonLabel(state: VoiceState, language: NarrationLanguage) {
 }
 
 function detachPlayerHandlers(player: ActivePlayer) {
+  player.cancelStartup();
   if (player.kind === "audio") {
     player.media.onplaying = null;
     player.media.onended = null;
@@ -395,13 +396,17 @@ export function FractionConceptExplainer({
   const [evidencedStageIds, setEvidencedStageIds] = useState<ReadonlySet<FractionConceptStageId>>(
     () => new Set(),
   );
-  const [voiceState, setVoiceState] = useState<VoiceState>("idle");
+  const [voiceState, setVoiceState] = useState<VoiceState>("loading");
   const [voiceSource, setVoiceSource] = useState<VoiceSource>(null);
   const [activeBeatIndex, setActiveBeatIndex] = useState(-1);
   const [hasStartedVoice, setHasStartedVoice] = useState(false);
+  const [voiceVisualActive, setVoiceVisualActive] = useState(false);
   const stage = FRACTION_CONCEPT_STAGES[stageIndex];
   const isLastStage = stageIndex === FRACTION_CONCEPT_STAGES.length - 1;
-  const visualState = useMemo(() => completedVisualState(stageIndex, proved), [stageIndex, proved]);
+  const visualState = useMemo(
+    () => completedVisualState(stageIndex, proved || voiceVisualActive),
+    [proved, stageIndex, voiceVisualActive],
+  );
   const narration = useMemo(
     () => stage.narration.map((beat) => resolveNarrationBeat(beat, language)),
     [language, stage],
@@ -411,12 +416,12 @@ export function FractionConceptExplainer({
   const visibleKey = activeBeat?.key ?? stage.screenKey[language];
   const voiceAnnouncement = voiceState === "loading"
     ? language === "hi"
-      ? "Bodh की आवाज़ तैयार हो रही है। तैयार होने पर फिर दबाएँ।"
-      : "Bodh's voice is being prepared. Press again when it is ready."
+      ? "Bodh की आवाज़ अपने आप तैयार हो रही है। तैयार होते ही अब सुनो बटन चमकेगा।"
+      : "Bodh's voice is being prepared automatically. The Listen now button will light up when ready."
     : voiceState === "ready"
       ? language === "hi"
-        ? "Bodh की आवाज़ तैयार है। अब सुनो बटन फिर दबाएँ।"
-        : "Bodh's voice is ready. Press Listen now."
+        ? "Bodh की आवाज़ तैयार है। एक बार अब सुनो दबाएँ।"
+        : "Bodh's voice is ready. Press Listen now once."
       : voiceState === "unavailable"
         ? language === "hi"
           ? "आवाज़ उपलब्ध नहीं है। Bodh की पूरी बात नीचे पढ़ी जा सकती है।"
@@ -430,6 +435,7 @@ export function FractionConceptExplainer({
   const objectUrlsRef = useRef(new Set<string>());
   const remoteVoiceAvailableRef = useRef(new Map<string, boolean>());
   const preparedVoiceRef = useRef<PreparedVoice | null>(null);
+  const preparationAbortRef = useRef<AbortController | null>(null);
   const stageIdRef = useRef(`${language}/${stage.id}`);
   const mountedRef = useRef(true);
   const reportedEvidenceRef = useRef(new Set<FractionConceptStageId>());
@@ -450,6 +456,15 @@ export function FractionConceptExplainer({
     if (playerRef.current !== player || player.run !== runRef.current) return;
     playerRef.current = null;
     detachPlayerHandlers(player);
+    if (result === "failed") {
+      if (player.kind === "audio") {
+        player.media.pause();
+        player.media.removeAttribute("src");
+        player.media.load();
+      } else if (typeof window !== "undefined") {
+        window.speechSynthesis?.cancel();
+      }
+    }
     player.resolve(result);
   }, []);
 
@@ -470,24 +485,38 @@ export function FractionConceptExplainer({
 
   const stopNarration = useCallback(() => {
     runRef.current += 1;
+    preparationAbortRef.current?.abort();
+    preparationAbortRef.current = null;
     cancelPlayer();
     setVoiceState("idle");
     setVoiceSource(null);
     setActiveBeatIndex(-1);
+    setVoiceVisualActive(false);
   }, [cancelPlayer]);
 
-  const loadClip = useCallback((stageId: string, beatId: string, clipLanguage: NarrationLanguage) => {
+  const loadClip = useCallback((
+    stageId: string,
+    beatId: string,
+    clipLanguage: NarrationLanguage,
+    preparationSignal?: AbortSignal,
+  ) => {
     const availabilityKey = `${clipLanguage}/${stageId}`;
     const cacheKey = `${FRACTION_NARRATION_VERSION}/${availabilityKey}/${beatId}`;
     const cached = clipCacheRef.current.get(cacheKey);
     if (cached) return cached;
     if (remoteVoiceAvailableRef.current.get(availabilityKey) === false) return Promise.resolve(null);
 
+    const requestController = new AbortController();
+    const abortFromPreparation = () => requestController.abort();
+    if (preparationSignal?.aborted) requestController.abort();
+    else preparationSignal?.addEventListener("abort", abortFromPreparation, { once: true });
+    const timeout = window.setTimeout(() => requestController.abort(), 25_000);
+
     const request = fetch(
       `/api/narration/${FRACTION_NARRATION_VERSION}/${clipLanguage}/${stageId}/${beatId}.mp3`,
       {
         headers: { accept: "audio/mpeg" },
-        signal: AbortSignal.timeout(15_000),
+        signal: requestController.signal,
       },
     )
       .then(async (response) => {
@@ -508,6 +537,10 @@ export function FractionConceptExplainer({
       .catch(() => {
         clipCacheRef.current.delete(cacheKey);
         return null;
+      })
+      .finally(() => {
+        window.clearTimeout(timeout);
+        preparationSignal?.removeEventListener("abort", abortFromPreparation);
       });
 
     clipCacheRef.current.set(cacheKey, request);
@@ -524,13 +557,24 @@ export function FractionConceptExplainer({
     audioElementRef.current = media;
     media.src = url;
     media.preload = "auto";
-    const player: ActivePlayer = { kind: "audio", media, run, resolve };
+    let startupTimer = 0;
+    const player: ActivePlayer = {
+      kind: "audio",
+      media,
+      run,
+      resolve,
+      cancelStartup: () => window.clearTimeout(startupTimer),
+    };
+    startupTimer = window.setTimeout(() => settlePlayer(player, "failed"), 8_000);
     playerRef.current = player;
     media.onplaying = () => {
       if (playerRef.current !== player || run !== runRef.current) return;
+      player.cancelStartup();
       setActiveBeatIndex(beatIndex);
       setVoiceSource("openai");
       setVoiceState("playing");
+      setHasStartedVoice(true);
+      setVoiceVisualActive(true);
     };
     media.onended = () => settlePlayer(player, "ended");
     media.onerror = () => settlePlayer(player, "failed");
@@ -558,13 +602,24 @@ export function FractionConceptExplainer({
     utterance.pitch = 0.96;
     const voices = window.speechSynthesis.getVoices();
     utterance.voice = voices.find((voice) => voice.lang.toLowerCase().startsWith(speechLanguage)) ?? null;
-    const player: ActivePlayer = { kind: "speech", utterance, run, resolve };
+    let startupTimer = 0;
+    const player: ActivePlayer = {
+      kind: "speech",
+      utterance,
+      run,
+      resolve,
+      cancelStartup: () => window.clearTimeout(startupTimer),
+    };
+    startupTimer = window.setTimeout(() => settlePlayer(player, "failed"), 8_000);
     playerRef.current = player;
     utterance.onstart = () => {
       if (playerRef.current !== player || run !== runRef.current) return;
+      player.cancelStartup();
       setActiveBeatIndex(beatIndex);
       setVoiceSource("device");
       setVoiceState("playing");
+      setHasStartedVoice(true);
+      setVoiceVisualActive(true);
     };
     utterance.onend = () => settlePlayer(player, "ended");
     utterance.onerror = () => settlePlayer(player, "failed");
@@ -575,12 +630,12 @@ export function FractionConceptExplainer({
     if (prepared.stageId !== stage.id || prepared.language !== language) return;
     const run = runRef.current + 1;
     runRef.current = run;
+    preparationAbortRef.current?.abort();
+    preparationAbortRef.current = null;
     cancelPlayer();
-    setProved(true);
     setActiveBeatIndex(-1);
     setVoiceSource(prepared.source);
     setVoiceState("loading");
-    setHasStartedVoice(true);
 
     for (let index = 0; index < narration.length; index += 1) {
       if (run !== runRef.current) return;
@@ -604,12 +659,14 @@ export function FractionConceptExplainer({
     }
 
     if (run === runRef.current) {
-      markStageEvidence(stage.id);
       setVoiceState("ended");
     }
-  }, [cancelPlayer, language, markStageEvidence, narration, playAudio, playDeviceSpeech, stage.id]);
+  }, [cancelPlayer, language, narration, playAudio, playDeviceSpeech, stage.id]);
 
   const prepareNarration = useCallback(async () => {
+    preparationAbortRef.current?.abort();
+    const controller = new AbortController();
+    preparationAbortRef.current = controller;
     const run = runRef.current + 1;
     runRef.current = run;
     cancelPlayer();
@@ -617,8 +674,13 @@ export function FractionConceptExplainer({
     setVoiceSource(null);
     setVoiceState("loading");
 
-    const urls = await Promise.all(narration.map((beat) => loadClip(stage.id, beat.id, language)));
-    if (run !== runRef.current) return;
+    const urls = await Promise.all(narration.map((beat) => loadClip(
+      stage.id,
+      beat.id,
+      language,
+      controller.signal,
+    )));
+    if (controller.signal.aborted || run !== runRef.current) return;
 
     if (urls.every((url): url is string => Boolean(url))) {
       preparedVoiceRef.current = { stageId: stage.id, language, source: "openai", urls };
@@ -627,15 +689,13 @@ export function FractionConceptExplainer({
       preparedVoiceRef.current = { stageId: stage.id, language, source: "device" };
       setVoiceSource("device");
     }
+    if (preparationAbortRef.current === controller) preparationAbortRef.current = null;
     setVoiceState("ready");
   }, [cancelPlayer, language, loadClip, narration, stage.id]);
 
   const handleVoiceButton = () => {
     const player = playerRef.current;
-    if (voiceState === "loading") {
-      stopNarration();
-      return;
-    }
+    if (voiceState === "loading") return;
     if (voiceState === "playing" && player) {
       if (player.kind === "audio") player.media.pause();
       else window.speechSynthesis.pause();
@@ -660,11 +720,6 @@ export function FractionConceptExplainer({
       void playNarration(prepared);
       return;
     }
-    const availability = remoteVoiceAvailableRef.current.get(`${language}/${stage.id}`);
-    if (availability !== false) {
-      void prepareNarration();
-      return;
-    }
 
     const deviceVoice: PreparedVoice = { stageId: stage.id, language, source: "device" };
     preparedVoiceRef.current = deviceVoice;
@@ -680,7 +735,9 @@ export function FractionConceptExplainer({
       void playNarration(prepared);
       return;
     }
-    void prepareNarration();
+    const deviceVoice: PreparedVoice = { stageId: stage.id, language, source: "device" };
+    preparedVoiceRef.current = deviceVoice;
+    void playNarration(deviceVoice);
   };
 
   const goBack = () => {
@@ -715,44 +772,38 @@ export function FractionConceptExplainer({
     const playbackKey = `${language}/${stage.id}`;
     stageIdRef.current = playbackKey;
     runRef.current += 1;
+    preparationAbortRef.current?.abort();
+    preparationAbortRef.current = null;
     cancelPlayer();
     preparedVoiceRef.current = null;
-    const resetFrame = window.requestAnimationFrame(() => {
+    const prepareFrame = window.requestAnimationFrame(() => {
       if (stageIdRef.current !== playbackKey) return;
-      setVoiceState("idle");
-      setVoiceSource(null);
-      setActiveBeatIndex(-1);
       setHasStartedVoice(false);
+      setVoiceVisualActive(false);
+      void prepareNarration();
     });
-    const controller = new AbortController();
-    const firstBeat = narration[0];
-    const path = `/api/narration/${FRACTION_NARRATION_VERSION}/${language}/${stage.id}/${firstBeat.id}.mp3`;
-    void fetch(path, { method: "HEAD", signal: controller.signal })
-      .then(async (response) => {
-        if (stageIdRef.current !== playbackKey) return;
-        if (response.status === 200 && response.headers.get("x-bodh-voice-source") === "static") {
-          remoteVoiceAvailableRef.current.set(playbackKey, true);
-          const urls = await Promise.all(narration.map((beat) => loadClip(stage.id, beat.id, language)));
-          if (stageIdRef.current === playbackKey && urls.every((url): url is string => Boolean(url))) {
-            preparedVoiceRef.current = { stageId: stage.id, language, source: "openai", urls };
-          }
-          return;
-        }
-        remoteVoiceAvailableRef.current.set(playbackKey, response.status === 200 || response.status === 204);
-      })
-      .catch(() => {
-        if (!controller.signal.aborted && stageIdRef.current === playbackKey) {
-          remoteVoiceAvailableRef.current.set(playbackKey, false);
-        }
-      });
     return () => {
-      window.cancelAnimationFrame(resetFrame);
-      controller.abort();
+      window.cancelAnimationFrame(prepareFrame);
+      preparationAbortRef.current?.abort();
+      preparationAbortRef.current = null;
+      runRef.current += 1;
+      cancelPlayer();
     };
-  }, [cancelPlayer, language, loadClip, narration, stage.id]);
+  }, [cancelPlayer, language, prepareNarration, stage.id]);
 
   useEffect(() => {
-    stageHeadingRef.current?.focus({ preventScroll: true });
+    const focusFrame = window.requestAnimationFrame(() => {
+      const heading = stageHeadingRef.current;
+      heading?.focus({ preventScroll: true });
+      const headingBounds = heading?.getBoundingClientRect();
+      if (heading && headingBounds && (headingBounds.top < 96 || headingBounds.bottom > window.innerHeight - 48)) {
+        heading.scrollIntoView({
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+          block: "start",
+        });
+      }
+    });
+    return () => window.cancelAnimationFrame(focusFrame);
   }, [stage.id]);
 
   useEffect(() => {
@@ -784,10 +835,12 @@ export function FractionConceptExplainer({
         <div className="atomic-voice-control">
           <div className="atomic-voice-buttons">
             <button
-              className="atomic-play"
+              className={`atomic-play ${voiceState === "ready" ? "atomic-play-ready" : ""}`}
               type="button"
               aria-pressed={voiceState === "playing" || voiceState === "paused"}
+              aria-busy={voiceState === "loading"}
               aria-describedby="bodh-voice-disclosure"
+              disabled={voiceState === "loading"}
               onClick={handleVoiceButton}
             >
               <span aria-hidden="true">{voiceState === "playing" ? "Ⅱ" : "▶"}</span>
@@ -851,11 +904,11 @@ export function FractionConceptExplainer({
             <span className={voiceState === "playing" ? "atomic-wave-active" : ""} aria-hidden="true">•••</span>
             <small>
               {voiceState === "loading"
-                ? language === "hi" ? "Bodh की आवाज़ तैयार हो रही है… तैयार होने पर फिर दबाओ" : "Bodh's voice is being prepared… press again when ready"
+                ? language === "hi" ? "Bodh की आवाज़ अपने आप तैयार हो रही है…" : "Bodh's voice is getting ready automatically…"
                 : voiceState === "ready"
                   ? voiceSource === "openai"
-                    ? language === "hi" ? "शांत AI आवाज़ तैयार है—अब सुनो दबाओ" : "The calm AI voice is ready—press Listen now"
-                    : language === "hi" ? "इस डिवाइस की आवाज़ तैयार है—अब सुनो दबाओ" : "This device's voice is ready—press Listen now"
+                    ? language === "hi" ? "शांत AI आवाज़ तैयार है—एक बार अब सुनो दबाओ" : "The calm AI voice is ready—press Listen now once"
+                    : language === "hi" ? "इस डिवाइस की आवाज़ तैयार है—एक बार अब सुनो दबाओ" : "This device's voice is ready—press Listen now once"
                 : voiceState === "playing"
                   ? language === "hi" ? `Bodh समझा रहा है · ${activeBeatIndex + 1}/${narration.length}` : `Bodh is explaining · ${activeBeatIndex + 1}/${narration.length}`
                   : voiceState === "paused"
@@ -900,6 +953,8 @@ export function FractionConceptExplainer({
           <span className="atomic-playing-status">
             {voiceState === "paused"
               ? language === "hi" ? "Bodh यहीं रुका है" : "Bodh is paused here"
+              : voiceState === "loading" && !hasStartedVoice
+                ? language === "hi" ? "Bodh की आवाज़ तैयार हो रही है" : "Bodh's voice is getting ready"
               : language === "hi" ? "आवाज़ और इशारा साथ चल रहे हैं" : "Voice and pointer are moving together"}
           </span>
         )}

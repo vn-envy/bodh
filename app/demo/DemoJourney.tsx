@@ -20,8 +20,10 @@ import {
   HERO_FIXTURE,
   curatedProbeEntryAtomId,
   isCorrectWholeNumberAnswer,
+  isFractionGroupBuildComplete,
   isLabComplete,
   nextCuratedJourneyStep,
+  toggleContiguousPart,
   toggleLabTile,
   type CuratedJourneyStep,
 } from "../../lib/phase1-fixture";
@@ -38,6 +40,7 @@ import {
   FractionConceptExplainer,
   type FractionConceptStageId,
 } from "../components/FractionConceptExplainer";
+import { FractionGroupBuilder, QuarterProbeArtifact } from "../components/JourneyVisualChecks";
 import { LearningStrip } from "../components/LearningStrip";
 import { NarrationLanguageToggle, useNarrationLanguage } from "../components/NarrationLanguageToggle";
 import { ProgressPath } from "../components/ProgressPath";
@@ -65,7 +68,9 @@ function progressFor(step: JourneyStep) {
   if (step === "confirm") return 1;
   if (step === "path" || step === "probe" || step === "route") return 2;
   if (step === "lab") return 3;
-  return 4;
+  if (step === "transfer") return 4;
+  if (step === "return") return 5;
+  return 6;
 }
 
 export function DemoJourney() {
@@ -82,14 +87,17 @@ export function DemoJourney() {
   const [probeAnswer, setProbeAnswer] = useState<string | null>(null);
   const [tileSelected, setTileSelected] = useState(false);
   const [placedSlots, setPlacedSlots] = useState<number[]>([]);
-  const [transferAnswer, setTransferAnswer] = useState("");
-  const [returnAnswer, setReturnAnswer] = useState("");
+  const [selectedRibbonParts, setSelectedRibbonParts] = useState<number[]>([]);
+  const [transferGroups, setTransferGroups] = useState<number[]>([]);
+  const [selectedReturnParts, setSelectedReturnParts] = useState<number[]>([0, 1, 2]);
+  const [returnGroups, setReturnGroups] = useState<number[]>([]);
   const [transferState, setTransferState] = useState<CheckState>("idle");
   const [returnState, setReturnState] = useState<CheckState>("idle");
   const [meaningChoice, setMeaningChoice] = useState<MeaningChoiceId | null>(null);
   const [shareState, setShareState] = useState<ShareState>("idle");
   const stageHeadingRef = useRef<HTMLHeadingElement>(null);
   const meaningHeadingRef = useRef<HTMLHeadingElement>(null);
+  const lastFocusedStepRef = useRef<JourneyStep>("loading");
 
   const t = (text: { hi: string; en: string }) => text[language];
   const labComplete = useMemo(() => isLabComplete(placedSlots), [placedSlots]);
@@ -140,10 +148,23 @@ export function DemoJourney() {
 
   useEffect(() => {
     if (step === "loading") return;
-    const target = step === "transfer" && transferState === "correct"
-      ? meaningHeadingRef.current
-      : stageHeadingRef.current;
-    target?.focus({ preventScroll: true });
+    const stepChanged = lastFocusedStepRef.current !== step;
+    lastFocusedStepRef.current = step;
+    if (!stepChanged && !(step === "transfer" && transferState === "correct")) return;
+    const focusFrame = window.requestAnimationFrame(() => {
+      const target = step === "transfer" && transferState === "correct"
+        ? meaningHeadingRef.current
+        : stageHeadingRef.current;
+      target?.focus({ preventScroll: true });
+      const targetBounds = target?.getBoundingClientRect();
+      if (target && targetBounds && (targetBounds.top < 96 || targetBounds.bottom > window.innerHeight - 48)) {
+        target.scrollIntoView({
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+          block: "start",
+        });
+      }
+    });
+    return () => window.cancelAnimationFrame(focusFrame);
   }, [step, transferState]);
 
   const chooseProbe = (value: string) => setProbeAnswer(value);
@@ -154,7 +175,16 @@ export function DemoJourney() {
   };
 
   const checkTransfer = () => {
-    const correct = isCorrectWholeNumberAnswer(transferAnswer, HERO_FIXTURE.transferAnswer);
+    const correct = isFractionGroupBuildComplete(
+      selectedRibbonParts,
+      transferGroups,
+      2,
+      3,
+      6,
+    ) && isCorrectWholeNumberAnswer(
+      String(new Set(transferGroups).size),
+      HERO_FIXTURE.transferAnswer,
+    );
     setTransferState(correct ? "correct" : "try-again");
     if (adaptiveSession) {
       dispatchEvidence({ type: "transfer-attempted", correct });
@@ -163,9 +193,55 @@ export function DemoJourney() {
   };
 
   const checkReturn = () => {
-    const correct = isCorrectWholeNumberAnswer(returnAnswer, HERO_FIXTURE.originalAnswer);
+    const correct = isFractionGroupBuildComplete(
+      selectedReturnParts,
+      returnGroups,
+      3,
+      4,
+      8,
+    ) && isCorrectWholeNumberAnswer(
+      String(new Set(returnGroups).size),
+      HERO_FIXTURE.originalAnswer,
+    );
     setReturnState(correct ? "correct" : "try-again");
     if (adaptiveSession) dispatchEvidence({ type: "return-attempted", correct });
+  };
+
+  const toggleRibbonPart = (part: number) => {
+    setSelectedRibbonParts((current) => toggleContiguousPart(current, part, 3));
+    setTransferGroups([]);
+    setTransferState("idle");
+    setMeaningChoice(null);
+  };
+
+  const toggleTransferGroup = (group: number) => {
+    setTransferGroups((current) => toggleLabTile(current, group, 6));
+    setTransferState("idle");
+    setMeaningChoice(null);
+  };
+
+  const resetTransferBuilder = () => {
+    setSelectedRibbonParts([]);
+    setTransferGroups([]);
+    setTransferState("idle");
+    setMeaningChoice(null);
+  };
+
+  const toggleReturnPart = (part: number) => {
+    setSelectedReturnParts((current) => toggleLabTile(current, part, 4));
+    setReturnGroups([]);
+    setReturnState("idle");
+  };
+
+  const toggleReturnGroup = (group: number) => {
+    setReturnGroups((current) => toggleLabTile(current, group, 8));
+    setReturnState("idle");
+  };
+
+  const resetReturnBuilder = () => {
+    setSelectedReturnParts([0, 1, 2]);
+    setReturnGroups([]);
+    setReturnState("idle");
   };
 
   const chooseMeaning = (choiceId: MeaningChoiceId) => {
@@ -278,7 +354,7 @@ export function DemoJourney() {
 
       {step !== "loading" && <ProgressPath active={progressFor(step)} language={language} />}
 
-      <section className="journey-stage" aria-live="polite">
+      <section className="journey-stage">
         {step === "loading" && (
           <article className="journey-card journey-card-confirm" aria-busy="true" lang={language}>
             <div className="stage-with-bodh">
@@ -329,6 +405,11 @@ export function DemoJourney() {
                   >
                     <span aria-hidden="true">{atom.number}</span>
                     <div>
+                      {relation === "start" && (
+                        <span className="adaptive-route-bodh" aria-hidden="true">
+                          <BodhMark pose="guide" size="mark" motion="guide" />
+                        </span>
+                      )}
                       <small className="adaptive-route-status">{t(status)}</small>
                       <strong>{t(atom.label)}</strong>
                     </div>
@@ -432,20 +513,12 @@ export function DemoJourney() {
                 <p className="stage-lead">{t(DEMO_JOURNEY_COPY.probe.lead)}</p>
               </div>
               <BodhMark
-                pose={probeAnswer === "4" ? "celebrate" : "listen"}
+                pose="listen"
                 size="medium"
-                motion={probeAnswer === "4" ? "celebrate" : "listen"}
+                motion="listen"
               />
             </div>
-            <LearningStrip
-              total={4}
-              filled={4}
-              unit="1/4"
-              label={t(DEMO_JOURNEY_COPY.probe.stripLabel)}
-              tone="blue"
-              compact
-              language={language}
-            />
+            <QuarterProbeArtifact language={language} answer={probeAnswer} />
             <div className="probe-options" role="group" aria-label={t(DEMO_JOURNEY_COPY.probe.optionsAria)}>
               {probeOptions.map((option) => (
                 <button
@@ -455,12 +528,13 @@ export function DemoJourney() {
                   aria-pressed={probeAnswer === option.value}
                   onClick={() => chooseProbe(option.value)}
                 >
-                  {option.label}
+                  <strong>{option.label}</strong>
+                  <small>{t(DEMO_JOURNEY_COPY.probe.pieces)}</small>
                 </button>
               ))}
             </div>
             {probeAnswer && (
-              <div className={`probe-response ${probeAnswer === "4" ? "probe-response-right" : ""}`}>
+              <div className={`probe-response ${probeAnswer === "4" ? "probe-response-right" : ""}`} role="status">
                 {probeAnswer === "4"
                   ? t(DEMO_JOURNEY_COPY.probe.feedbackFour)
                   : t(DEMO_JOURNEY_COPY.probe.feedbackOther)}
@@ -549,39 +623,25 @@ export function DemoJourney() {
               <p>{t(DEMO_JOURNEY_COPY.transfer.problem)}</p>
               <strong>2/3 ÷ 1/6 = ?</strong>
             </div>
-            {transferState === "try-again" && (
-              <LearningStrip
-                total={6}
-                filled={4}
-                unit="1/6"
-                label={t(DEMO_JOURNEY_COPY.transfer.hintLabel)}
-                tone="olive"
-                compact
-                showUnits={false}
-                language={language}
-              />
-            )}
             <form className="answer-form" onSubmit={submitTransfer}>
-              <label className="answer-field">
-                <span>{t(DEMO_JOURNEY_COPY.transfer.answerLabel)}</span>
-                <input
-                  inputMode="numeric"
-                  name="transfer-answer"
-                  value={transferAnswer}
-                  onChange={(event) => {
-                    setTransferAnswer(event.target.value);
-                    setTransferState("idle");
-                    setMeaningChoice(null);
-                  }}
-                  aria-describedby={transferState === "idle" ? undefined : "transfer-feedback"}
-                  placeholder={t(DEMO_JOURNEY_COPY.transfer.answerPlaceholder)}
-                />
-              </label>
+              <FractionGroupBuilder
+                language={language}
+                variant="ribbon"
+                numerator={2}
+                denominator={3}
+                unitDenominator={6}
+                selectedParts={selectedRibbonParts}
+                countedUnits={transferGroups}
+                state={transferState}
+                onTogglePart={toggleRibbonPart}
+                onToggleUnit={toggleTransferGroup}
+                onReset={resetTransferBuilder}
+              />
               {transferState === "try-again" && (
-                <p className="answer-feedback" id="transfer-feedback">{t(DEMO_JOURNEY_COPY.transfer.hintFeedback)}</p>
+                <p className="answer-feedback" id="transfer-feedback" role="status">{t(DEMO_JOURNEY_COPY.transfer.hintFeedback)}</p>
               )}
               {transferState === "correct" && (
-                <p className="answer-feedback answer-feedback-correct" id="transfer-feedback">
+                <p className="answer-feedback answer-feedback-correct" id="transfer-feedback" role="status">
                   {t(DEMO_JOURNEY_COPY.transfer.correctFeedback)}
                 </p>
               )}
@@ -618,6 +678,7 @@ export function DemoJourney() {
                 className="button button-primary journey-primary"
                 type="submit"
                 disabled={transferState === "correct" && !meaningChoice}
+                aria-describedby={transferState === "idle" ? undefined : "transfer-feedback"}
               >
                 {transferState !== "correct"
                   ? t(DEMO_JOURNEY_COPY.transfer.check)
@@ -649,28 +710,36 @@ export function DemoJourney() {
             <div className="confirmed-equation journey-equation" aria-label={t(DEMO_JOURNEY_COPY.return.equationAria)}>
               <span>3/4</span><span>÷</span><span>1/8</span><span>= ?</span>
             </div>
+            <div className="reasoning-box return-reasoning-box">
+              <span className="reasoning-label">{t(DEMO_JOURNEY_COPY.return.youAsked)}</span>
+              <p lang="hi">“{HERO_FIXTURE.learnerReasoning}”</p>
+            </div>
             <form className="answer-form" onSubmit={submitReturn}>
-              <label className="answer-field">
-                <span>{t(DEMO_JOURNEY_COPY.return.answerLabel)}</span>
-                <input
-                  inputMode="numeric"
-                  name="return-answer"
-                  value={returnAnswer}
-                  onChange={(event) => {
-                    setReturnAnswer(event.target.value);
-                    setReturnState("idle");
-                  }}
-                  aria-describedby={returnState === "idle" ? undefined : "return-feedback"}
-                  placeholder={t(DEMO_JOURNEY_COPY.return.answerPlaceholder)}
-                />
-              </label>
+              <FractionGroupBuilder
+                language={language}
+                variant="return"
+                numerator={3}
+                denominator={4}
+                unitDenominator={8}
+                selectedParts={selectedReturnParts}
+                countedUnits={returnGroups}
+                state={returnState}
+                amountLocked
+                onTogglePart={toggleReturnPart}
+                onToggleUnit={toggleReturnGroup}
+                onReset={resetReturnBuilder}
+              />
               {returnState === "try-again" && (
-                <p className="answer-feedback" id="return-feedback">{t(DEMO_JOURNEY_COPY.return.hint)}</p>
+                <p className="answer-feedback" id="return-feedback" role="status">{t(DEMO_JOURNEY_COPY.return.hint)}</p>
               )}
               {returnState === "correct" && (
-                <p className="answer-feedback answer-feedback-correct" id="return-feedback">{t(DEMO_JOURNEY_COPY.return.correct)}</p>
+                <p className="answer-feedback answer-feedback-correct" id="return-feedback" role="status">{t(DEMO_JOURNEY_COPY.return.correct)}</p>
               )}
-              <button className="button button-primary journey-primary" type="submit">
+              <button
+                className="button button-primary journey-primary"
+                type="submit"
+                aria-describedby={returnState === "idle" ? undefined : "return-feedback"}
+              >
                 {returnState === "correct" ? t(DEMO_JOURNEY_COPY.return.receipt) : t(DEMO_JOURNEY_COPY.return.check)} <span aria-hidden="true">→</span>
               </button>
             </form>

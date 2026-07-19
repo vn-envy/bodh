@@ -5,9 +5,11 @@ import {
   HERO_FIXTURE,
   curatedProbeEntryAtomId,
   isCorrectWholeNumberAnswer,
+  isFractionGroupBuildComplete,
   isLabComplete,
   nextCuratedJourneyStep,
   normaliseWholeNumberAnswer,
+  toggleContiguousPart,
   toggleLabTile,
 } from "../lib/phase1-fixture.ts";
 
@@ -47,4 +49,26 @@ test("lab tile transitions add and remove valid slots without mutating input", (
   assert.deepEqual(toggleLabTile(original, 6), [0, 2]);
   assert.deepEqual(toggleLabTile(original, -1), [0, 2]);
   assert.deepEqual(original, [0, 2]);
+});
+
+test("visual transfer and return builds count only units inside learner-chosen parts", () => {
+  assert.equal(isFractionGroupBuildComplete([0, 1], [0, 1, 2, 3], 2, 3, 6), true);
+  assert.equal(isFractionGroupBuildComplete([0, 2], [0, 1, 4, 5], 2, 3, 6), true);
+  assert.equal(isFractionGroupBuildComplete([0, 1], [0, 1, 2], 2, 3, 6), false);
+  assert.equal(isFractionGroupBuildComplete([0, 1], [0, 1, 2, 4], 2, 3, 6), false);
+  assert.equal(isFractionGroupBuildComplete([0, 0], [0, 1, 0, 1], 2, 3, 6), false);
+
+  assert.equal(isFractionGroupBuildComplete([0, 1, 2], [0, 1, 2, 3, 4, 5], 3, 4, 8), true);
+  assert.equal(isFractionGroupBuildComplete([0, 1, 3], [0, 1, 2, 3, 6, 7], 3, 4, 8), true);
+  assert.equal(isFractionGroupBuildComplete([0, 1, 2], [0, 1, 2, 3, 4, 6], 3, 4, 8), false);
+  assert.equal(isFractionGroupBuildComplete([0], [], 1, 1, 0), false);
+});
+
+test("measured ribbon parts grow and shrink as one contiguous length", () => {
+  assert.deepEqual(toggleContiguousPart([], 0, 3), [0]);
+  assert.deepEqual(toggleContiguousPart([0], 1, 3), [0, 1]);
+  assert.deepEqual(toggleContiguousPart([0], 2, 3), [0]);
+  assert.deepEqual(toggleContiguousPart([0, 1], 1, 3), [0]);
+  assert.deepEqual(toggleContiguousPart([0, 1], 0, 3), []);
+  assert.deepEqual(toggleContiguousPart([0], 3, 3), [0]);
 });

@@ -705,7 +705,7 @@ a {
 .progress-path {
   width: min(680px, 90%);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   margin: 22px auto 52px;
   padding: 0;
   list-style: none;

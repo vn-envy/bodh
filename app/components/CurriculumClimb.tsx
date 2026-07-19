@@ -314,15 +314,16 @@ const STAGE_TO_CLIMB_INDEX = [0, 0, 1, 1, 2, 3, 4] as const;
 
 export function LessonClimb({ stageIndex, language }: { stageIndex: number; language: NarrationLanguage }) {
   const currentIndex = STAGE_TO_CLIMB_INDEX[Math.max(0, Math.min(stageIndex, STAGE_TO_CLIMB_INDEX.length - 1))];
+  const currentTopic = TOPIC_COPY[LESSON_CLIMB_TOPIC_IDS[currentIndex]].short[language];
   return (
-    <section className="lesson-climb" aria-labelledby="lesson-climb-title">
-      <div className="lesson-climb-heading">
-        <div>
-          <span>{language === "hi" ? "आज का curriculum context" : "Today's curriculum context"}</span>
-          <strong id="lesson-climb-title">{language === "hi" ? "यह lesson यहाँ की ideas इस्तेमाल कर रहा है" : "This lesson draws on ideas around here"}</strong>
-        </div>
-        <small>{language === "hi" ? "Marble map · mastery score नहीं" : "Marble map · not a mastery score"}</small>
-      </div>
+    <details className="lesson-climb" aria-labelledby="lesson-climb-title">
+      <summary className="lesson-climb-heading">
+        <span className="lesson-climb-heading-copy">
+          <span>{language === "hi" ? "Marble concept map · आज Bodh यहाँ है" : "Marble concept map · Bodh is here today"}</span>
+          <strong id="lesson-climb-title">{currentTopic}</strong>
+        </span>
+        <small>{language === "hi" ? "Map खोलें · mastery score नहीं" : "Open map · not a mastery score"}</small>
+      </summary>
       <ol className="lesson-climb-path">
         {LESSON_CLIMB_TOPIC_IDS.map((topicId, index) => {
           const state = index < currentIndex ? "visited" : index === currentIndex ? "current" : "ahead";
@@ -335,6 +336,6 @@ export function LessonClimb({ stageIndex, language }: { stageIndex: number; lang
           );
         })}
       </ol>
-    </section>
+    </details>
   );
 }

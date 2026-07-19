@@ -115,7 +115,9 @@ test("ships the atomic explainer without a pre-lab answer leak", async () => {
     component.indexOf("const prepareNarration"),
     component.indexOf("const handleVoiceButton"),
   );
-  assert.match(playbackBlock, /markStageEvidence\(stage\.id\);\s+setVoiceState\("ended"\)/);
+  assert.match(playbackBlock, /setVoiceState\("ended"\)/);
+  assert.doesNotMatch(playbackBlock, /markStageEvidence|setProved\(true\)/);
+  assert.match(component, /proved \|\| voiceVisualActive/);
   assert.doesNotMatch(preparationBlock, /markStageEvidence|setProved\(true\)/);
   assert.match(component, /disabled=\{stageIndex === entryStageIndex && !proved\}/);
 });

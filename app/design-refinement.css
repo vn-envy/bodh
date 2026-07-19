@@ -1720,6 +1720,686 @@
   font-weight: 650;
 }
 
+/* Voice prepares on entry; the first available action is a single, gentle tap. */
+.atomic-play-ready {
+  border-color: rgba(189, 62, 102, 0.42);
+  background: var(--pink-soft);
+  box-shadow: 0 8px 22px rgba(189, 62, 102, 0.14), 0 0 0 4px rgba(247, 214, 224, 0.48);
+  color: var(--pink-text);
+  animation: listen-ready-pulse 1.15s ease-in-out 2;
+}
+
+.atomic-play-ready > span {
+  background: var(--pink);
+}
+
+@keyframes listen-ready-pulse {
+  0%, 100% { box-shadow: 0 8px 22px rgba(189, 62, 102, 0.14), 0 0 0 4px rgba(247, 214, 224, 0.48); transform: scale(1); }
+  50% { box-shadow: 0 10px 26px rgba(189, 62, 102, 0.2), 0 0 0 8px rgba(247, 214, 224, 0.24); transform: scale(1.018); }
+}
+
+/* The curated journey keeps one visible Bodh moving from the doubt to the return. */
+.progress-path {
+  position: relative;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 66px;
+  margin-bottom: 42px;
+}
+
+.progress-stage {
+  z-index: 1;
+  min-width: 0;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.progress-stage:not(:last-child)::after {
+  z-index: 0;
+  left: 57%;
+  width: 86%;
+  border-radius: 999px;
+}
+
+.progress-stage-complete:not(:last-child)::after {
+  background: linear-gradient(90deg, var(--olive), rgba(109, 125, 64, 0.72));
+}
+
+.progress-dot,
+.progress-stage > span:last-child {
+  position: relative;
+  z-index: 1;
+}
+
+.progress-bodh {
+  width: 50px;
+  height: 50px;
+  position: absolute;
+  z-index: 4;
+  top: -53px;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  transform: translateX(-50%);
+}
+
+.progress-bodh::after {
+  content: "";
+  width: 2px;
+  height: 12px;
+  position: absolute;
+  top: 45px;
+  left: 50%;
+  border-radius: 999px;
+  background: var(--pink);
+  opacity: 0.56;
+}
+
+.progress-bodh .bodh-mark {
+  width: 48px;
+  height: 48px;
+  filter: drop-shadow(0 7px 9px rgba(64, 88, 107, 0.16));
+}
+
+.progress-stage-finished .progress-bodh::after {
+  background: var(--olive);
+}
+
+.progress-stage-finished .progress-dot {
+  box-shadow: 0 0 0 5px var(--olive-soft);
+}
+
+.adaptive-route-start > div {
+  position: relative;
+  padding-right: 34px;
+}
+
+.adaptive-route-bodh {
+  width: 42px;
+  height: 42px;
+  position: absolute;
+  top: -37px;
+  right: -16px;
+  display: grid;
+  place-items: center;
+}
+
+.adaptive-route-bodh .bodh-mark {
+  width: 42px;
+  height: 42px;
+}
+
+/* A diagnostic quarter model that never shows the answer before the child chooses. */
+.quarter-probe-artifact {
+  margin-top: 28px;
+  padding: clamp(18px, 3vw, 26px);
+  border: 1px solid rgba(94, 117, 136, 0.18);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 9% 10%, rgba(225, 138, 85, 0.14), transparent 9rem),
+    var(--canvas);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 14px 34px rgba(80, 66, 54, 0.07);
+  transition: border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.quarter-probe-exact {
+  border-color: rgba(109, 125, 64, 0.42);
+  box-shadow: inset 0 0 0 3px rgba(227, 231, 205, 0.72), 0 14px 34px rgba(80, 66, 54, 0.07);
+}
+
+.quarter-probe-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 9px;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.quarter-probe-question-row {
+  display: grid;
+  grid-template-columns: 78px 58px minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(10px, 2vw, 18px);
+}
+
+.quarter-probe-piece {
+  min-height: 76px;
+  display: grid;
+  place-items: center;
+  border: 2px solid rgba(168, 79, 36, 0.22);
+  border-radius: 16px;
+  background: linear-gradient(145deg, var(--peach), #eea47a);
+  box-shadow: 0 10px 22px rgba(225, 138, 85, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.42);
+  color: #fffdf8;
+  font: 800 1.05rem/1 "Baloo 2", "Mukta", ui-rounded, system-ui, sans-serif;
+}
+
+.quarter-probe-times {
+  color: var(--blue-grey-deep);
+  font: 800 1.2rem/1 "Baloo 2", "Mukta", ui-rounded, system-ui, sans-serif;
+  text-align: center;
+}
+
+.quarter-probe-whole-outline {
+  min-width: 0;
+  min-height: 88px;
+  display: grid;
+  place-items: center;
+  border: 3px dashed rgba(94, 117, 136, 0.4);
+  border-radius: 18px;
+  background: rgba(255, 253, 248, 0.78);
+  color: var(--blue-grey-deep);
+}
+
+.quarter-probe-whole-outline small {
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.quarter-probe-result {
+  display: grid;
+  gap: 12px;
+}
+
+.quarter-probe-tray {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding: 7px;
+  border: 2px solid rgba(64, 88, 107, 0.45);
+  border-radius: 18px;
+  background: rgba(94, 117, 136, 0.08);
+}
+
+.quarter-probe-tray > span {
+  min-width: 0;
+  min-height: 82px;
+  display: grid;
+  place-items: center;
+  border: 2px dashed rgba(94, 117, 136, 0.22);
+  border-radius: 11px;
+  background: rgba(255, 253, 248, 0.72);
+}
+
+.quarter-probe-tray > span i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(94, 117, 136, 0.18);
+}
+
+.quarter-probe-tray > .quarter-probe-slot-filled {
+  border-style: solid;
+  border-color: var(--peach);
+  background: var(--peach);
+  color: #fffdf8;
+  animation: tile-place 320ms cubic-bezier(0.2, 0.9, 0.25, 1.12) both;
+}
+
+.quarter-probe-slot-filled small {
+  font: 800 clamp(0.72rem, 2vw, 0.96rem)/1 "Baloo 2", "Mukta", ui-rounded, system-ui, sans-serif;
+}
+
+.quarter-probe-fit-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--blue-grey-deep);
+  font: 750 clamp(1rem, 3vw, 1.38rem)/1.2 "Baloo 2", "Mukta", ui-rounded, system-ui, sans-serif;
+}
+
+.quarter-probe-fit-line strong {
+  color: var(--pink-text);
+}
+
+.quarter-probe-exact .quarter-probe-fit-line strong {
+  color: var(--olive-text);
+}
+
+.quarter-probe-extra {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding: 9px 12px;
+  border-radius: 13px;
+  background: var(--blue-grey-soft);
+  color: var(--blue-grey-deep);
+}
+
+.quarter-probe-extra small {
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.quarter-probe-extra div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.quarter-probe-extra div span {
+  padding: 5px 7px;
+  border-radius: 7px;
+  background: var(--blue-grey);
+  color: white;
+  font-size: 0.62rem;
+  font-weight: 850;
+}
+
+.quarter-probe-artifact > p {
+  margin: 14px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+.probe-option {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+}
+
+.probe-option strong {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.probe-option small {
+  color: var(--ink-soft);
+  font: 750 0.68rem/1.2 "Mukta", system-ui, sans-serif;
+}
+
+.probe-option-selected small {
+  color: var(--pink-text);
+}
+
+/* Transfer and return are now tactile picture-builders, not number fields. */
+.fraction-group-builder {
+  position: relative;
+  margin-top: 22px;
+  padding: clamp(17px, 3vw, 24px);
+  border: 1px solid rgba(94, 117, 136, 0.18);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 92% 0, rgba(189, 62, 102, 0.09), transparent 10rem),
+    var(--canvas);
+  box-shadow: 0 14px 34px rgba(80, 66, 54, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.88);
+}
+
+.fraction-group-builder-ribbon {
+  background:
+    radial-gradient(circle at 8% 0, rgba(225, 138, 85, 0.15), transparent 11rem),
+    var(--canvas);
+}
+
+.fraction-group-builder-correct {
+  border-color: rgba(109, 125, 64, 0.42);
+  box-shadow: inset 0 0 0 3px rgba(227, 231, 205, 0.7), 0 14px 34px rgba(80, 66, 54, 0.07);
+}
+
+.builder-step-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.builder-step-tabs-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.builder-step-tabs > span {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border-radius: 12px;
+  background: rgba(94, 117, 136, 0.08);
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.builder-step-tabs b {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--blue-grey-soft);
+  color: var(--blue-grey-deep);
+  font-size: 0.68rem;
+}
+
+.builder-step-tabs .builder-step-active {
+  background: var(--pink-soft);
+  color: var(--pink-text);
+  box-shadow: inset 0 0 0 1px rgba(189, 62, 102, 0.24);
+}
+
+.builder-step-tabs .builder-step-active b {
+  background: var(--pink);
+  color: white;
+}
+
+.builder-step-tabs .builder-step-done {
+  background: var(--olive-soft);
+  color: var(--olive-text);
+}
+
+.builder-step-tabs .builder-step-done b {
+  background: var(--olive);
+  color: white;
+}
+
+.builder-scene-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 2px 8px;
+  color: var(--blue-grey-deep);
+}
+
+.builder-scene-label > span {
+  width: 12px;
+  height: 12px;
+  border: 3px solid var(--peach);
+  border-radius: 50%;
+  box-shadow: 0 0 0 5px rgba(225, 138, 85, 0.13);
+}
+
+.fraction-group-builder-return .builder-scene-label > span {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 5px rgba(189, 62, 102, 0.11);
+}
+
+.builder-scene-label strong {
+  font: 800 0.86rem/1.2 "Baloo 2", "Mukta", ui-rounded, system-ui, sans-serif;
+}
+
+.builder-scene-label small {
+  margin-left: auto;
+  color: var(--ink-soft);
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.builder-track {
+  min-width: 0;
+  min-height: 112px;
+  position: relative;
+  display: grid;
+  gap: 6px;
+  padding: 7px;
+  border: 2px solid rgba(64, 88, 107, 0.36);
+  border-radius: 18px;
+  background: rgba(94, 117, 136, 0.08);
+  isolation: isolate;
+}
+
+.fraction-group-builder-ribbon .builder-track::before,
+.fraction-group-builder-ribbon .builder-track::after {
+  content: "";
+  width: 16px;
+  height: 42px;
+  position: absolute;
+  z-index: 0;
+  bottom: -22px;
+  border-radius: 0 0 8px 8px;
+  background: var(--peach);
+  opacity: 0.58;
+}
+
+.fraction-group-builder-ribbon .builder-track::before { left: 14px; transform: rotate(7deg); }
+.fraction-group-builder-ribbon .builder-track::after { right: 14px; transform: rotate(-7deg); }
+
+.builder-track > * {
+  position: relative;
+  z-index: 1;
+}
+
+.builder-whole-part,
+.builder-split-part {
+  min-width: 0;
+  min-height: 96px;
+  overflow: hidden;
+  border: 2px solid rgba(94, 117, 136, 0.16);
+  border-radius: 11px;
+  background: rgba(255, 253, 248, 0.82);
+}
+
+.builder-whole-part {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 5px;
+  padding: 8px 4px;
+  color: var(--blue-grey-deep);
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.builder-whole-part:hover,
+.builder-whole-part:focus-visible {
+  border-color: var(--pink);
+  transform: translateY(-2px);
+}
+
+.builder-whole-part:disabled {
+  border-style: dashed;
+  cursor: default;
+  opacity: 0.48;
+  transform: none;
+}
+
+.builder-whole-part > span {
+  font: 800 clamp(0.82rem, 2.4vw, 1.05rem)/1 "Baloo 2", "Mukta", ui-rounded, system-ui, sans-serif;
+}
+
+.builder-whole-part > small {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--blue-grey-soft);
+  color: var(--blue-grey-deep);
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.builder-whole-part-selected {
+  border-color: var(--peach);
+  background: var(--peach-soft);
+  box-shadow: 0 7px 18px rgba(225, 138, 85, 0.16);
+  color: var(--peach-text);
+}
+
+.builder-whole-part-selected > small {
+  background: var(--peach);
+  color: white;
+}
+
+.fraction-group-builder-return .builder-whole-part-selected {
+  border-color: var(--pink);
+  background: var(--pink-soft);
+  color: var(--pink-text);
+}
+
+.fraction-group-builder-return .builder-whole-part-selected > small {
+  background: var(--pink);
+}
+
+.builder-split-part {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3px;
+  padding: 3px;
+}
+
+.builder-split-part > button {
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 5px;
+  padding: 5px 2px;
+  border: 1px solid rgba(168, 79, 36, 0.22);
+  border-radius: 7px;
+  background: var(--peach-soft);
+  color: var(--peach-text);
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.fraction-group-builder-return .builder-split-part > button {
+  border-color: rgba(189, 62, 102, 0.2);
+  background: var(--pink-soft);
+  color: var(--pink-text);
+}
+
+.builder-split-part > button:hover,
+.builder-split-part > button:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 16px rgba(80, 66, 54, 0.1);
+}
+
+.builder-split-part > button span {
+  font: 800 clamp(0.58rem, 1.8vw, 0.78rem)/1 "Baloo 2", "Mukta", ui-rounded, system-ui, sans-serif;
+}
+
+.builder-split-part > button small {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 253, 248, 0.75);
+  font-size: 0.64rem;
+  font-weight: 900;
+}
+
+.builder-split-part > .builder-unit-counted,
+.fraction-group-builder-return .builder-split-part > .builder-unit-counted {
+  border-color: var(--blue-grey-deep);
+  background: linear-gradient(155deg, #7890a3, var(--blue-grey));
+  box-shadow: 0 7px 16px rgba(64, 88, 107, 0.17);
+  color: white;
+  animation: tile-place 260ms cubic-bezier(0.2, 0.9, 0.25, 1.12) both;
+}
+
+.builder-unit-counted small {
+  background: rgba(255, 253, 248, 0.92) !important;
+  color: var(--blue-grey-deep);
+}
+
+.builder-unused-part {
+  grid-column: span 2;
+  border-radius: 7px;
+  background: repeating-linear-gradient(-45deg, rgba(94, 117, 136, 0.04), rgba(94, 117, 136, 0.04) 8px, rgba(94, 117, 136, 0.09) 8px, rgba(94, 117, 136, 0.09) 16px);
+}
+
+.builder-instruction {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 14px;
+  padding: 11px 13px;
+  border-radius: 13px;
+  background: rgba(227, 231, 205, 0.66);
+  color: var(--olive-text);
+}
+
+.builder-instruction > span {
+  font-weight: 900;
+}
+
+.builder-instruction p {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 750;
+  line-height: 1.52;
+}
+
+.builder-count-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.builder-equation {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  color: var(--blue-grey-deep);
+  font: 750 clamp(1rem, 3vw, 1.28rem)/1.2 "Baloo 2", "Mukta", ui-rounded, system-ui, sans-serif;
+  white-space: nowrap;
+}
+
+.builder-equation strong {
+  min-width: 36px;
+  color: var(--pink);
+  font-size: 1.5em;
+  text-align: center;
+}
+
+.builder-count-beads {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.builder-count-beads span {
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  border: 2px solid rgba(94, 117, 136, 0.19);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 0.62rem;
+  font-weight: 850;
+}
+
+.builder-count-beads .builder-count-bead-filled {
+  border-color: var(--olive);
+  background: var(--olive);
+  color: white;
+}
+
+.builder-reset {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: var(--blue-grey-deep);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.return-reasoning-box {
+  border-left-color: var(--blue-grey) !important;
+  background: var(--blue-grey-soft) !important;
+}
+
 /* The lesson marker moves as atomic ideas advance, without claiming mastery. */
 .lesson-climb {
   margin: 18px 20px 0;
@@ -1729,6 +2409,46 @@
   background: var(--surface);
 }
 
+.lesson-climb > summary {
+  position: relative;
+  padding-right: 30px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.lesson-climb > summary::-webkit-details-marker {
+  display: none;
+}
+
+.lesson-climb > summary::after {
+  content: "+";
+  width: 24px;
+  height: 24px;
+  position: absolute;
+  top: 50%;
+  right: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--blue-grey-soft);
+  color: var(--blue-grey-deep);
+  font-size: 0.9rem;
+  font-weight: 900;
+  transform: translateY(-50%);
+}
+
+.lesson-climb[open] > summary::after {
+  content: "−";
+  background: var(--pink-soft);
+  color: var(--pink-text);
+}
+
+.lesson-climb > summary:focus-visible {
+  border-radius: 10px;
+  outline: 3px solid rgba(189, 62, 102, 0.24);
+  outline-offset: 5px;
+}
+
 .lesson-climb-heading {
   display: flex;
   align-items: flex-end;
@@ -1736,7 +2456,7 @@
   gap: 16px;
 }
 
-.lesson-climb-heading > div {
+.lesson-climb-heading-copy {
   display: grid;
   gap: 2px;
 }
@@ -1837,6 +2557,117 @@
 }
 
 @media (max-width: 720px) {
+  .progress-path {
+    margin-top: 62px;
+    margin-bottom: 32px;
+  }
+
+  .progress-stage {
+    gap: 7px;
+    font-size: 0.62rem;
+  }
+
+  .progress-bodh,
+  .progress-bodh .bodh-mark {
+    width: 44px;
+    height: 44px;
+  }
+
+  .progress-bodh {
+    top: -48px;
+  }
+
+  .progress-bodh::after {
+    top: 40px;
+  }
+
+  .journey-card {
+    padding: 26px 22px;
+  }
+
+  .quarter-probe-question-row {
+    grid-template-columns: 66px 42px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .quarter-probe-piece {
+    min-height: 68px;
+    border-radius: 13px;
+    font-size: 0.9rem;
+  }
+
+  .quarter-probe-whole-outline {
+    min-height: 76px;
+    border-radius: 14px;
+  }
+
+  .quarter-probe-tray {
+    gap: 3px;
+    padding: 4px;
+    border-radius: 14px;
+  }
+
+  .quarter-probe-tray > span {
+    min-height: 68px;
+    border-radius: 8px;
+  }
+
+  .fraction-group-builder {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .builder-step-tabs > span {
+    min-height: 48px;
+    padding: 7px 8px;
+    font-size: 0.68rem;
+    line-height: 1.2;
+  }
+
+  .builder-track {
+    min-height: 98px;
+    gap: 3px;
+    padding: 4px;
+    border-radius: 14px;
+  }
+
+  .builder-whole-part,
+  .builder-split-part {
+    min-height: 108px;
+    border-radius: 8px;
+  }
+
+  .builder-split-part {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: repeat(2, minmax(48px, 1fr));
+  }
+
+  .builder-split-part > button {
+    min-height: 48px;
+  }
+
+  .builder-split-part > .builder-unused-part {
+    grid-column: 1;
+    grid-row: 1 / -1;
+  }
+
+  .builder-count-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .builder-equation {
+    justify-content: center;
+  }
+
+  .builder-count-beads {
+    justify-content: center;
+  }
+
+  .answer-form > .journey-primary {
+    width: 100%;
+  }
+
   .sample-readback,
   .curriculum-climb-heading,
   .lesson-climb-heading {
@@ -1927,6 +2758,95 @@
 }
 
 @media (max-width: 480px) {
+  .progress-path {
+    margin-top: 54px;
+    margin-bottom: 35px;
+    padding-bottom: 18px;
+  }
+
+  .progress-stage {
+    font-size: 0.68rem;
+  }
+
+  .progress-stage > span:last-child {
+    display: none;
+  }
+
+  .progress-stage-active > span:last-child,
+  .progress-stage-finished > span:last-child {
+    width: 108px;
+    position: absolute;
+    top: 25px;
+    left: 50%;
+    display: block;
+    color: var(--pink-text);
+    font-weight: 850;
+    transform: translateX(-50%);
+  }
+
+  .progress-stage-finished > span:last-child {
+    color: var(--olive-text);
+  }
+
+  .progress-dot {
+    width: 15px;
+    height: 15px;
+  }
+
+  .progress-stage:not(:last-child)::after {
+    top: 6px;
+  }
+
+  .quarter-probe-artifact {
+    margin-top: 22px;
+    padding: 15px 12px;
+  }
+
+  .quarter-probe-caption {
+    font-size: 0.64rem;
+  }
+
+  .quarter-probe-question-row {
+    grid-template-columns: 58px 34px minmax(0, 1fr);
+  }
+
+  .quarter-probe-whole-outline small {
+    max-width: 76px;
+    font-size: 0.64rem;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  .quarter-probe-tray > span {
+    min-height: 60px;
+  }
+
+  .builder-step-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .builder-step-tabs > span {
+    min-height: 40px;
+  }
+
+  .builder-scene-label {
+    flex-wrap: wrap;
+  }
+
+  .builder-scene-label small {
+    width: 100%;
+    margin-left: 20px;
+  }
+
+  .builder-split-part > button span {
+    font-size: 0.58rem;
+  }
+
+  .builder-count-beads span {
+    width: 25px;
+    height: 25px;
+  }
+
   .curriculum-climb {
     padding: 22px 16px;
     border-radius: 24px;

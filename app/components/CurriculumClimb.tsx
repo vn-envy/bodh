@@ -331,7 +331,7 @@ export function LessonClimb({ stageIndex, language }: { stageIndex: number; lang
             <li className={`lesson-climb-${state}`} aria-current={state === "current" ? "step" : undefined} key={topicId}>
               <span aria-hidden="true">{state === "visited" ? "✓" : index + 1}</span>
               <strong>{TOPIC_COPY[topicId].short[language]}</strong>
-              {state === "current" && <BodhMark pose="guide" size="mark" motion="guide" />}
+              {state === "current" && <BodhMark className="lesson-climb-bodh" pose="guide" size="mark" motion="guide" />}
             </li>
           );
         })}

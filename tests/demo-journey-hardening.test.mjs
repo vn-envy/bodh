@@ -139,6 +139,11 @@ test("narration prepares on entry and one ready tap starts without granting pass
     explainerSource.indexOf("const prepareNarration"),
   );
   assert.doesNotMatch(playbackBlock, /markStageEvidence|setProved\(true\)/);
+  assert.doesNotMatch(playbackBlock, /source:\s*"device"/, "a playback failure must not replace Bodh's voice");
+  assert.match(explainerSource, /voiceSessionRef/);
+  assert.match(explainerSource, /voiceURI/);
+  assert.match(explainerSource, /utterance\.voice = voice/);
+  assert.doesNotMatch(explainerSource, /remoteVoiceAvailableRef/);
   assert.match(explainerSource, /proved \|\| voiceVisualActive/);
   assert.match(explainerSource, /setVoiceVisualActive\(true\)/);
   const preparationBlock = explainerSource.slice(
@@ -146,6 +151,8 @@ test("narration prepares on entry and one ready tap starts without granting pass
     explainerSource.indexOf("const handleVoiceButton"),
   );
   assert.doesNotMatch(preparationBlock, /markStageEvidence|setProved\(true\)/);
+  assert.match(preparationBlock, /currentSession\?\.source === "openai"/);
+  assert.match(preparationBlock, /setVoiceState\("unavailable"\)/);
   const evidenceBlock = explainerSource.slice(
     explainerSource.indexOf("const takePrimaryAction"),
     explainerSource.indexOf("useEffect(() => {\n    const playbackKey"),

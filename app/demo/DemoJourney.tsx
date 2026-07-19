@@ -404,14 +404,16 @@ export function DemoJourney() {
                     aria-current={relation === "start" ? "step" : undefined}
                   >
                     <span aria-hidden="true">{atom.number}</span>
-                    <div>
+                    <div className="adaptive-route-node-copy">
+                      <span className="adaptive-route-text">
+                        <small className="adaptive-route-status">{t(status)}</small>
+                        <strong>{t(atom.label)}</strong>
+                      </span>
                       {relation === "start" && (
                         <span className="adaptive-route-bodh" aria-hidden="true">
                           <BodhMark pose="guide" size="mark" motion="guide" />
                         </span>
                       )}
-                      <small className="adaptive-route-status">{t(status)}</small>
-                      <strong>{t(atom.label)}</strong>
                     </div>
                   </li>
                 );

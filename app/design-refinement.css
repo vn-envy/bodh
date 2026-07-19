@@ -1571,24 +1571,34 @@
   pointer-events: none;
 }
 .climb-node-here {
+  width: 168px;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  grid-template-rows: repeat(3, auto);
+  column-gap: 8px;
   border-color: var(--pink);
   background: var(--pink-soft);
   box-shadow: 0 11px 26px rgba(189, 62, 102, 0.14);
 }
 
 .climb-bodh {
-  width: 58px;
-  height: 58px;
-  position: absolute;
-  top: -45px;
-  right: -18px;
-  z-index: 5;
+  width: 48px;
+  height: 48px;
+  position: static;
+  grid-column: 2;
+  grid-row: 1 / -1;
+  align-self: center;
+  justify-self: center;
   filter: drop-shadow(0 7px 8px rgba(80, 66, 54, 0.14));
 }
 
 .climb-bodh .bodh-mark {
-  width: 58px;
-  height: 58px;
+  width: 48px;
+  height: 48px;
+}
+
+.climb-node-here > :not(.climb-bodh) {
+  min-width: 0;
+  grid-column: 1;
 }
 
 .climb-detail {
@@ -1742,19 +1752,21 @@
 .progress-path {
   position: relative;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  margin-top: 66px;
+  margin-top: 28px;
   margin-bottom: 42px;
 }
 
 .progress-stage {
   z-index: 1;
   min-width: 0;
+  grid-template-rows: 50px 17px minmax(1.2em, auto);
   line-height: 1.25;
   text-align: center;
 }
 
 .progress-stage:not(:last-child)::after {
   z-index: 0;
+  top: 59px;
   left: 57%;
   width: 86%;
   border-radius: 999px;
@@ -1770,37 +1782,34 @@
   z-index: 1;
 }
 
-.progress-bodh {
+.progress-bodh-slot {
   width: 50px;
   height: 50px;
-  position: absolute;
-  z-index: 4;
-  top: -53px;
-  left: 50%;
+  position: relative;
+  z-index: 2;
   display: grid;
   place-items: center;
-  transform: translateX(-50%);
 }
 
-.progress-bodh::after {
+.progress-stage-with-bodh .progress-bodh-slot::after {
   content: "";
   width: 2px;
-  height: 12px;
+  height: 9px;
   position: absolute;
-  top: 45px;
+  top: 44px;
   left: 50%;
   border-radius: 999px;
   background: var(--pink);
   opacity: 0.56;
 }
 
-.progress-bodh .bodh-mark {
+.progress-bodh-slot .bodh-mark {
   width: 48px;
   height: 48px;
   filter: drop-shadow(0 7px 9px rgba(64, 88, 107, 0.16));
 }
 
-.progress-stage-finished .progress-bodh::after {
+.progress-stage-finished .progress-bodh-slot::after {
   background: var(--olive);
 }
 
@@ -1808,17 +1817,26 @@
   box-shadow: 0 0 0 5px var(--olive-soft);
 }
 
-.adaptive-route-start > div {
-  position: relative;
-  padding-right: 34px;
+.adaptive-route-node-copy {
+  width: 100%;
+}
+
+.adaptive-route-text {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.adaptive-route-start > .adaptive-route-node-copy {
+  grid-template-columns: minmax(0, 1fr) 42px;
+  align-items: center;
+  gap: 8px;
 }
 
 .adaptive-route-bodh {
   width: 42px;
   height: 42px;
-  position: absolute;
-  top: -37px;
-  right: -16px;
+  position: static;
   display: grid;
   place-items: center;
 }
@@ -2537,13 +2555,55 @@
   box-shadow: inset 0 0 0 2px var(--pink);
 }
 
-.lesson-climb-current .bodh-mark {
+.lesson-climb-current .lesson-climb-bodh {
   width: 42px;
   height: 42px;
-  position: absolute;
-  top: -28px;
-  right: -8px;
+  position: static;
+  margin-top: 2px;
   filter: drop-shadow(0 5px 6px rgba(80, 66, 54, 0.12));
+}
+
+/* Mascots in stage headings always own a real grid track; they never float over copy. */
+.stage-with-bodh {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(88px, 16vw, 148px);
+  align-items: start;
+  gap: clamp(12px, 3vw, 28px);
+  isolation: isolate;
+}
+
+.stage-with-bodh > :first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.stage-with-bodh > .bodh-mark {
+  width: calc(100% - 8px);
+  height: auto;
+  aspect-ratio: 1;
+  margin: 0 4px;
+  justify-self: center;
+}
+
+.receipt-heading {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: clamp(88px, 16vw, 148px) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(12px, 3vw, 28px);
+  isolation: isolate;
+}
+
+.receipt-heading > .bodh-mark {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.receipt-heading > :last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 1020px) {
@@ -2557,8 +2617,25 @@
 }
 
 @media (max-width: 720px) {
+  .journey-header {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "back brand"
+      "language language";
+    gap: 5px 12px;
+    padding: 8px 0 10px;
+  }
+
+  .journey-header .back-link { grid-area: back; }
+  .journey-header .brand-compact { grid-area: brand; justify-self: end; }
+
+  .journey-header-tools {
+    width: 100%;
+    grid-area: language;
+  }
+
   .progress-path {
-    margin-top: 62px;
+    margin-top: 22px;
     margin-bottom: 32px;
   }
 
@@ -2567,18 +2644,22 @@
     font-size: 0.62rem;
   }
 
-  .progress-bodh,
-  .progress-bodh .bodh-mark {
+  .progress-bodh-slot,
+  .progress-bodh-slot .bodh-mark {
     width: 44px;
     height: 44px;
   }
 
-  .progress-bodh {
-    top: -48px;
+  .progress-stage {
+    grid-template-rows: 44px 17px minmax(1.2em, auto);
   }
 
-  .progress-bodh::after {
-    top: 40px;
+  .progress-stage:not(:last-child)::after {
+    top: 53px;
+  }
+
+  .progress-stage-with-bodh .progress-bodh-slot::after {
+    top: 39px;
   }
 
   .journey-card {
@@ -2722,10 +2803,8 @@
     transform: translateY(-2px);
   }
 
-  .climb-bodh {
-    top: -20px;
-    right: -4px;
-    transform: scale(0.82);
+  .climb-node-here {
+    grid-template-columns: minmax(0, 1fr) 48px;
   }
 
   .lesson-climb-path {
@@ -2747,9 +2826,15 @@
     left: 25px;
   }
 
-  .lesson-climb-current .bodh-mark {
-    top: 4px;
-    right: 7px;
+  .lesson-climb-path .lesson-climb-current {
+    grid-template-columns: 32px minmax(0, 1fr) 44px;
+  }
+
+  .lesson-climb-current .lesson-climb-bodh {
+    grid-column: 3;
+    grid-row: 1;
+    align-self: center;
+    margin-top: 0;
   }
 
   .climb-dependencies ol {
@@ -2759,9 +2844,9 @@
 
 @media (max-width: 480px) {
   .progress-path {
-    margin-top: 54px;
+    margin-top: 18px;
     margin-bottom: 35px;
-    padding-bottom: 18px;
+    padding-bottom: 23px;
   }
 
   .progress-stage {
@@ -2776,7 +2861,7 @@
   .progress-stage-finished > span:last-child {
     width: 108px;
     position: absolute;
-    top: 25px;
+    top: 70px;
     left: 50%;
     display: block;
     color: var(--pink-text);
@@ -2788,13 +2873,26 @@
     color: var(--olive-text);
   }
 
+  .progress-stage:first-child.progress-stage-active > span:last-child,
+  .progress-stage:first-child.progress-stage-finished > span:last-child {
+    left: 0;
+    transform: none;
+  }
+
+  .progress-stage:last-child.progress-stage-active > span:last-child,
+  .progress-stage:last-child.progress-stage-finished > span:last-child {
+    right: 0;
+    left: auto;
+    transform: none;
+  }
+
   .progress-dot {
     width: 15px;
     height: 15px;
   }
 
   .progress-stage:not(:last-child)::after {
-    top: 6px;
+    top: 51px;
   }
 
   .quarter-probe-artifact {

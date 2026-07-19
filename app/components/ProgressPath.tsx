@@ -36,15 +36,15 @@ export function ProgressPath({
             key={stage}
             aria-current={state === "active" ? "step" : undefined}
           >
-            {carriesBodh && (
-              <span className="progress-bodh" aria-hidden="true">
+            <span className="progress-bodh-slot" aria-hidden="true">
+              {carriesBodh && (
                 <BodhMark
                   pose={journeyComplete ? "celebrate" : poses[index]}
                   size="mark"
                   motion={journeyComplete ? "celebrate" : poses[index] === "listen" ? "listen" : poses[index]}
                 />
-              </span>
-            )}
+              )}
+            </span>
             <span className="progress-dot" aria-hidden="true" />
             <span>{stage}</span>
           </li>

@@ -97,3 +97,12 @@ The P1 demo is intentionally curated. Live model diagnosis, image intake, speech
 - Rebuilt the receipt around a bold Bodh-centered card and four-step progress path. The same fixed, privacy-safe model renders to a deterministic 1200×1500 PNG for file sharing or download, with text and clipboard fallbacks.
 - Added a fraction-bar / number-line toggle to the lab. Both views edit the same six-eighth state and preserve the existing completion predicate.
 - Verified 83/83 automated tests, lint, production build, and whitespace checks.
+
+## 2026-07-19 — Editorial homepage and Pathfinder identity
+
+- Rebuilt the homepage as a calm, brand-led teaching scene: oversized Bodh wordmark, real mascot art, soft matte ornaments, and a code-native fraction table inspired by the approved visual direction.
+- Kept the mathematics exact in the hero artifact: three of four quarters and six of eight eighths represent the same `3/4` amount.
+- Turned Bodh’s identity into a three-role learner story—Listener, Pathfinder, and Gentle Tinkerer—using the existing production pose set rather than baking the reference board into the interface.
+- Added a five-node homepage Pathfinder preview sourced from the committed Marble taxonomy. Every adjacent node is a real canonical dependency and the copy explicitly avoids grade or mastery claims.
+- Hardened the full prerequisite map alongside the visual pass: suggested-start wording replaces unevidenced “you are here” language, disconnected goals no longer receive a fake direct edge, keyboard focus is distinct, mobile DOM order is topological, edge geometry uses a fixed aspect ratio, and all 12 relationships are inspectable as semantic text.
+- Added regression coverage for the homepage route, correct fraction equivalence, responsive graph invariants, focus treatment, source-derived counts, and claim boundaries.

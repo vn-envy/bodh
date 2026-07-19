@@ -46,15 +46,56 @@ test("every sample foothold and goal is a real Marble topic with a canonical pat
   }
 });
 
+test("the homepage Pathfinder preview is one real, ordered Marble route", async () => {
+  const route = [
+    "mt_ndGqFPWyen",
+    "mt_09sySPqM9Z",
+    "mt_TgHxujL81r",
+    "mt_AabJisinfi",
+    "mt_9Y96vxG_LH",
+  ];
+  const topicIds = new Set(taxonomy.topics.map((topic) => topic.id));
+
+  for (const topicId of route) {
+    assert.equal(topicIds.has(topicId), true, `${topicId} must remain a canonical topic`);
+  }
+  for (let index = 0; index < route.length - 1; index += 1) {
+    assert.equal(
+      taxonomy.dependencies.some((edge) => edge.prerequisiteId === route[index] && edge.topicId === route[index + 1]),
+      true,
+      `${route[index]} → ${route[index + 1]} must remain a canonical dependency`,
+    );
+  }
+
+  const source = await readFile(new URL("../app/components/HomepagePathfinder.tsx", import.meta.url), "utf8");
+  let previousIndex = -1;
+  for (const topicId of route) {
+    const nextIndex = source.indexOf(`\"${topicId}\"`);
+    assert.ok(nextIndex > previousIndex, `${topicId} must render in prerequisite order`);
+    previousIndex = nextIndex;
+  }
+  assert.match(source, /example route—not a grade, mastery score/i);
+});
+
 test("the learner pathway renders real graph edges and moves with atomic lesson stages", async () => {
-  const [climbSource, intakeSource, explainerSource] = await Promise.all([
+  const [climbSource, climbStyles, intakeSource, explainerSource] = await Promise.all([
     readFile(new URL("../app/components/CurriculumClimb.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/design-refinement.css", import.meta.url), "utf8"),
     readFile(new URL("../app/diagnose/DiagnosticIntake.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/components/FractionConceptExplainer.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(climbSource, /taxonomy\.dependencies\.map/);
-  assert.match(climbSource, /12 canonical dependencies/);
+  assert.equal(taxonomy.dependencies.length, 12);
+  assert.match(climbSource, /taxonomy\.dependencies\.length/);
+  assert.match(climbSource, /className="climb-dependencies"/);
+  assert.match(climbSource, /ORDERED_TOPICS\.map/);
+  assert.match(climbSource, /return \[start\];/);
+  assert.doesNotMatch(climbSource, /return \[start, goal\];/);
+  assert.doesNotMatch(climbSource, /You are here|तुम यहाँ हो/);
+  assert.match(climbStyles, /aspect-ratio: 1\.6129 \/ 1/);
+  assert.doesNotMatch(climbStyles, /order: var\(--node-order\)/);
+  assert.match(climbStyles, /\.climb-node:focus-visible \{[^}]*outline: 4px solid var\(--pink\)/s);
   assert.match(climbSource, /STAGE_TO_CLIMB_INDEX = \[0, 0, 1, 1, 2, 3, 4\]/);
   assert.match(climbSource, /not a mastery score/);
   assert.match(intakeSource, /SEEDED_DOUBTS\.map/);

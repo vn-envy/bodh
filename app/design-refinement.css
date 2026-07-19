@@ -1436,7 +1436,8 @@
 
 .climb-canvas {
   min-width: 0;
-  height: 590px;
+  height: auto;
+  aspect-ratio: 1.6129 / 1;
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(94, 117, 136, 0.16);
@@ -1522,11 +1523,17 @@
 }
 
 .climb-node:hover,
-.climb-node:focus-visible,
 .climb-node-selected {
   border-color: var(--pink);
-  outline: 0;
   box-shadow: 0 10px 24px rgba(80, 66, 54, 0.14);
+  transform: translate(-50%, -50%) translateY(-2px);
+}
+
+.climb-node:focus-visible {
+  border-color: var(--blue-grey-deep);
+  outline: 4px solid var(--pink);
+  outline-offset: 4px;
+  box-shadow: 0 12px 28px rgba(80, 66, 54, 0.16);
   transform: translate(-50%, -50%) translateY(-2px);
 }
 
@@ -1550,6 +1557,19 @@
 .climb-node-ready { background: #f0f3e3; }
 .climb-node-next { border-color: rgba(225, 138, 85, 0.38); background: var(--peach-soft); }
 .climb-node-goal { border-color: rgba(94, 117, 136, 0.5); background: var(--blue-grey-soft); }
+.climb-node-goal::before {
+  content: "";
+  width: 24px;
+  height: 24px;
+  position: absolute;
+  top: -20px;
+  right: 13px;
+  border: 5px solid #fffaf0;
+  border-radius: 50%;
+  background: #e8aa30;
+  box-shadow: 0 0 0 7px rgba(232, 170, 48, 0.14), 0 0 22px rgba(232, 170, 48, 0.48);
+  pointer-events: none;
+}
 .climb-node-here {
   border-color: var(--pink);
   background: var(--pink-soft);
@@ -1622,6 +1642,76 @@
 .climb-detail > div strong {
   color: var(--olive-text);
   font-size: 0.74rem;
+}
+
+.climb-detail .climb-route-warning {
+  padding: 11px 12px;
+  border: 1px solid rgba(168, 79, 36, 0.18);
+  border-radius: 13px;
+  background: var(--peach-soft);
+  color: #744127;
+  font-size: 0.74rem;
+}
+
+.climb-dependencies {
+  margin-top: 14px;
+  border: 1px solid rgba(94, 117, 136, 0.14);
+  border-radius: 16px;
+  background: var(--canvas);
+}
+
+.climb-dependencies summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 16px;
+  color: var(--blue-grey-deep);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.climb-dependencies summary::marker {
+  color: var(--olive);
+}
+
+.climb-dependencies ol {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0 12px 12px;
+  list-style: none;
+}
+
+.climb-dependencies li {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  padding: 11px;
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.climb-dependencies li > span {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  color: var(--blue-grey-deep);
+  font-size: 0.68rem;
+  line-height: 1.25;
+}
+
+.climb-dependencies li > span b {
+  color: var(--olive);
+}
+
+.climb-dependencies li small {
+  color: var(--ink-soft);
+  font-size: 0.63rem;
+  line-height: 1.35;
 }
 
 .climb-boundary {
@@ -1764,6 +1854,7 @@
 
   .climb-canvas {
     height: auto;
+    aspect-ratio: auto;
     overflow: visible;
     border: 0;
     background: transparent;
@@ -1788,13 +1879,15 @@
     position: relative;
     top: auto;
     left: auto;
-    order: var(--node-order);
     transform: none;
   }
 
   .climb-node:hover,
-  .climb-node:focus-visible,
   .climb-node-selected {
+    transform: translateY(-2px);
+  }
+
+  .climb-node:focus-visible {
     transform: translateY(-2px);
   }
 
@@ -1826,6 +1919,10 @@
   .lesson-climb-current .bodh-mark {
     top: 4px;
     right: 7px;
+  }
+
+  .climb-dependencies ol {
+    grid-template-columns: 1fr;
   }
 }
 

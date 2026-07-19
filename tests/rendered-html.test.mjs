@@ -34,7 +34,12 @@ test("server-renders the Bodh learner shell", async () => {
   assert.match(html, /अपना सवाल लाओ/);
   assert.match(html, /3\/4/);
   assert.match(html, /Curated demo/);
-  assert.match(html, /\/art\/bodh\/bodh-listen-1024\.webp/);
+  assert.match(html, /\/art\/bodh\/bodh-listen-512\.webp/);
+  assert.match(html, /\/art\/bodh\/bodh-guide-512\.webp/);
+  assert.match(html, /\/art\/bodh\/bodh-tinker-1024\.webp/);
+  assert.match(html, /3\/4 = 6\/8/);
+  assert.match(html, /Real Marble route/);
+  assert.match(html, /सबसे पहली डगमगाती पकड़/);
   assert.match(html, /3\/4 को eighths में देखें/);
   assert.match(html, /Bodh voice/);
   assert.match(html, /हिंदी/);

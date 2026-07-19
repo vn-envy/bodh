@@ -72,21 +72,24 @@ const TOPIC_COPY: Record<TopicId, Readonly<{
 const GRAPH_LAYOUT: Record<TopicId, GraphPoint> = {
   "mt_ndGqFPWyen": { x: 12, y: 83, order: 1 },
   "mt_09sySPqM9Z": { x: 29, y: 69, order: 2 },
-  "mt_TgHxujL81r": { x: 45, y: 55, order: 4 },
-  "mt_AabJisinfi": { x: 63, y: 39, order: 7 },
-  "mt_9Y96vxG_LH": { x: 84, y: 15, order: 10 },
-  "mt_4Km38F4L-6": { x: 43, y: 84, order: 3 },
+  "mt_TgHxujL81r": { x: 45, y: 55, order: 3 },
+  "mt_AabJisinfi": { x: 63, y: 39, order: 5 },
+  "mt_9Y96vxG_LH": { x: 84, y: 15, order: 8 },
+  "mt_4Km38F4L-6": { x: 43, y: 84, order: 4 },
   "mt_ifPDOYvUqm": { x: 65, y: 67, order: 6 },
-  "mt_1PAWhRhpdg": { x: 85, y: 49, order: 9 },
-  "mt_iNdrM2-oJf": { x: 12, y: 43, order: 5 },
-  "mt_GDG9_SZmsO": { x: 30, y: 27, order: 8 },
+  "mt_1PAWhRhpdg": { x: 85, y: 49, order: 7 },
+  "mt_iNdrM2-oJf": { x: 12, y: 43, order: 9 },
+  "mt_GDG9_SZmsO": { x: 30, y: 27, order: 10 },
 };
 
 const TOPICS = new Map(taxonomy.topics.map((topic) => [topic.id, topic]));
+const ORDERED_TOPICS = [...taxonomy.topics].sort((left, right) =>
+  GRAPH_LAYOUT[left.id as TopicId].order - GRAPH_LAYOUT[right.id as TopicId].order);
 const FORWARD_EDGES = taxonomy.dependencies.map((edge) => ({
   from: edge.prerequisiteId as TopicId,
   to: edge.topicId as TopicId,
   strength: edge.strength,
+  reason: edge.reason,
 }));
 
 function isTopicId(value: unknown): value is TopicId {
@@ -108,7 +111,7 @@ function pathBetween(start: TopicId, goal: TopicId) {
       queue.push(next);
     }
   }
-  return [start, goal];
+  return [start];
 }
 
 function prerequisiteIds(topicId: TopicId) {
@@ -141,7 +144,7 @@ function edgeStyle(from: GraphPoint, to: GraphPoint): CSSProperties {
 function statusCopy(status: "ready" | "here" | "next" | "goal" | "nearby", language: NarrationLanguage) {
   const copy = {
     ready: hiEn("नींव", "Foundation"),
-    here: hiEn("तुम यहाँ हो", "You are here"),
+    here: hiEn("शुरुआत का सुझाव", "Suggested start"),
     next: hiEn("अगली पकड़", "Next foothold"),
     goal: hiEn("आज की चोटी", "Today's summit"),
     nearby: hiEn("पास की skill", "Nearby skill"),
@@ -161,6 +164,7 @@ export function CurriculumClimb({
   const focus = isTopicId(focusTopicId) ? focusTopicId : "mt_ndGqFPWyen";
   const goal = isTopicId(goalTopicId) ? goalTopicId : "mt_9Y96vxG_LH";
   const route = useMemo(() => pathBetween(focus, goal), [focus, goal]);
+  const hasCanonicalRoute = route.at(-1) === goal;
   const routeSet = useMemo(() => new Set(route), [route]);
   const readySet = useMemo(() => prerequisiteIds(focus), [focus]);
   const [selection, setSelection] = useState<Readonly<{ focus: TopicId; selected: TopicId }>>({
@@ -190,12 +194,12 @@ export function CurriculumClimb({
           <span className="eyebrow">{language === "hi" ? "तुम्हारा Marble concept map" : "Your Marble concept map"}</span>
           <h2 id="curriculum-climb-title">{language === "hi" ? "Bodh के साथ समझ की पहाड़ी चढ़ो।" : "Climb the understanding hill with Bodh."}</h2>
           <p>{language === "hi"
-            ? "हर पड़ाव os-taxonomy का असली concept है। Bodh सबसे नीचे वाली डगमगाती पकड़ से शुरू करता है—सिर्फ़ आख़िरी topic से नहीं।"
-            : "Every foothold is a real os-taxonomy concept. Bodh begins at the lowest shaky foothold—not only at the final topic."}</p>
+            ? "हर पड़ाव os-taxonomy का असली concept है। यह suggested route एक inspectable prerequisite से शुरू होता है; learner evidence इसे refine कर सकता है।"
+            : "Every foothold is a real os-taxonomy concept. This suggested route begins with an inspectable prerequisite; learner evidence can refine it."}</p>
         </div>
         <div className="climb-source-note" lang="en">
-          <strong>10 Marble topics</strong>
-          <span>12 canonical dependencies</span>
+          <strong>{taxonomy.topics.length} Marble topics</strong>
+          <span>{taxonomy.dependencies.length} canonical dependencies</span>
         </div>
       </div>
 
@@ -207,7 +211,7 @@ export function CurriculumClimb({
       </div>
 
       <div className="climb-workspace">
-        <div className="climb-canvas" aria-label={language === "hi" ? "Marble prerequisite graph" : "Marble prerequisite graph"}>
+        <div className="climb-canvas" role="group" aria-label={language === "hi" ? "Marble prerequisite graph" : "Marble prerequisite graph"}>
           <div className="climb-sky" aria-hidden="true"><i /><i /><i /></div>
           <div className="climb-ground" aria-hidden="true" />
           <div className="climb-edges" aria-hidden="true">
@@ -221,7 +225,7 @@ export function CurriculumClimb({
           </div>
 
           <div className="climb-nodes">
-            {taxonomy.topics.map((topic) => {
+            {ORDERED_TOPICS.map((topic) => {
               const topicId = topic.id as TopicId;
               const point = GRAPH_LAYOUT[topicId];
               const status = topicId === focus
@@ -244,7 +248,7 @@ export function CurriculumClimb({
                   style={nodeStyle}
                   type="button"
                   aria-pressed={selectedTopicId === topicId}
-                  aria-label={`${TOPIC_COPY[topicId].short[language]}. ${statusCopy(status, language)}.`}
+                  aria-label={`${TOPIC_COPY[topicId].short[language]}. Marble: ${topic.name}. ${statusCopy(status, language)}.`}
                   onClick={() => setSelection({ focus, selected: topicId })}
                   key={topicId}
                 >
@@ -267,12 +271,33 @@ export function CurriculumClimb({
             <strong>{language === "hi" ? "Bodh यहाँ क्या देखेगा" : "What Bodh looks for here"}</strong>
             <p>{selectedCopy.prompt[language]}</p>
           </div>
+          {!hasCanonicalRoute && <p className="climb-route-warning">{language === "hi"
+            ? "इस slice में suggested start से goal तक canonical dependency path नहीं है, इसलिए Bodh सीधी line का दावा नहीं करता।"
+            : "This slice has no canonical dependency path from the suggested start to the goal, so Bodh does not draw a direct route."}</p>}
         </aside>
       </div>
 
+      <details className="climb-dependencies">
+        <summary>{language === "hi"
+          ? `${taxonomy.dependencies.length} canonical dependencies देखें`
+          : `Inspect ${taxonomy.dependencies.length} canonical dependencies`}</summary>
+        <ol>
+          {FORWARD_EDGES.map((edge) => (
+            <li key={`${edge.from}-${edge.to}`}>
+              <span>
+                <strong>{TOPIC_COPY[edge.from].short[language]}</strong>
+                <b aria-hidden="true">→</b>
+                <strong>{TOPIC_COPY[edge.to].short[language]}</strong>
+              </span>
+              <small lang="en">{edge.strength} dependency · {edge.reason}</small>
+            </li>
+          ))}
+        </ol>
+      </details>
+
       <p className="climb-boundary">{language === "hi"
-        ? "यह marker lesson की current जगह दिखाता है—grade, mastery score, या पूरा curriculum coverage नहीं।"
-        : "The marker shows the lesson's current location—not a grade, mastery score, or claim of complete curriculum coverage."}</p>
+        ? "यह marker suggested starting context दिखाता है—grade, validated diagnosis, mastery score, या पूरा curriculum coverage नहीं।"
+        : "The marker shows a suggested starting context—not a grade, validated diagnosis, mastery score, or claim of complete curriculum coverage."}</p>
     </section>
   );
 }
@@ -293,8 +318,8 @@ export function LessonClimb({ stageIndex, language }: { stageIndex: number; lang
     <section className="lesson-climb" aria-labelledby="lesson-climb-title">
       <div className="lesson-climb-heading">
         <div>
-          <span>{language === "hi" ? "आज की concept climb" : "Today's concept climb"}</span>
-          <strong id="lesson-climb-title">{language === "hi" ? "Bodh अभी यहाँ समझ बना रहा है" : "Bodh is building understanding here"}</strong>
+          <span>{language === "hi" ? "आज का curriculum context" : "Today's curriculum context"}</span>
+          <strong id="lesson-climb-title">{language === "hi" ? "यह lesson यहाँ की ideas इस्तेमाल कर रहा है" : "This lesson draws on ideas around here"}</strong>
         </div>
         <small>{language === "hi" ? "Marble map · mastery score नहीं" : "Marble map · not a mastery score"}</small>
       </div>

@@ -14,6 +14,7 @@ import { SEEDED_DOUBTS, seededDoubtById, type SeededDoubtId } from "../../lib/se
 import {
   SEEDED_JOURNEY_STORAGE_KEY,
   SEEDED_JOURNEY_VERSION,
+  parseSeedJourneyHandoff,
   serializeSeedJourneyHandoff,
 } from "../../lib/seeded-journey";
 import { BodhMark } from "../components/BodhMark";
@@ -415,9 +416,9 @@ export function DiagnosticIntake() {
   };
 
   const prepareLearningHandoff = () => {
-    if (!adaptiveProbe || !selectedProbe || !canUseProbe || result?.mode !== "live") return;
+    if (!adaptiveProbe || !selectedProbe || !canUseProbe || result?.mode !== "live") return false;
     if (result.next.kind === "seeded_artifact") {
-      if (!selectedSeed || result.diagnosis.source !== "openai") return;
+      if (!selectedSeed || result.diagnosis.source !== "openai") return false;
       const seededHandoff = serializeSeedJourneyHandoff({
         version: SEEDED_JOURNEY_VERSION,
         seedId: selectedSeed.id,
@@ -430,22 +431,36 @@ export function DiagnosticIntake() {
         probeId: adaptiveProbe.id,
         optionId: selectedProbe,
       });
-      if (!seededHandoff) return;
+      if (!seededHandoff) return false;
       try {
         window.sessionStorage.setItem(SEEDED_JOURNEY_STORAGE_KEY, seededHandoff);
+        return parseSeedJourneyHandoff(
+          window.sessionStorage.getItem(SEEDED_JOURNEY_STORAGE_KEY),
+        )?.seedId === selectedSeed.id;
       } catch {
-        // The destination will offer a fresh seed selection if storage is unavailable.
+        return false;
       }
-      return;
     }
     const payload = sessionPayloadForSelection(adaptiveProbe.id, selectedProbe);
     const serialized = serializeAdaptiveSessionPayload(payload);
-    if (!serialized) return;
+    if (!serialized) return false;
     try {
       window.sessionStorage.setItem(ADAPTIVE_SESSION_STORAGE_KEY, serialized);
     } catch {
       // The destination safely falls back to the full curated journey.
     }
+    return true;
+  };
+
+  const openSeededJourney = () => {
+    if (result?.mode !== "live" || result.next.kind !== "seeded_artifact") return;
+    if (!prepareLearningHandoff()) {
+      setError(language === "hi"
+        ? "Visual repair तैयार नहीं हो पाई। इसी button को फिर दबाएँ।"
+        : "The visual repair was not ready. Please press this button once more.");
+      return;
+    }
+    window.location.assign(result.next.href);
   };
 
   const toggleNotationConfirmation = () => {
@@ -741,19 +756,29 @@ export function DiagnosticIntake() {
             </section>
 
             {selectedProbe && canUseProbe ? (
-              <Link
-                className="button button-primary next-lab-action"
-                href={result.next.href}
-                lang={probeLanguage}
-                onClick={prepareLearningHandoff}
-              >
-                {result.next.kind === "seeded_artifact"
-                  ? language === "hi" ? "इसी सवाल की visual repair शुरू करें" : "Rebuild this exact question visually"
-                  : result.next.kind === "curated_artifact"
+              result.next.kind === "seeded_artifact" ? (
+                <button
+                  className="button button-primary next-lab-action"
+                  type="button"
+                  lang={probeLanguage}
+                  onClick={openSeededJourney}
+                >
+                  {language === "hi" ? "इसी सवाल की visual repair शुरू करें" : "Rebuild this exact question visually"}
+                  <span aria-hidden="true">→</span>
+                </button>
+              ) : (
+                <Link
+                  className="button button-primary next-lab-action"
+                  href={result.next.href}
+                  lang={probeLanguage}
+                  onClick={prepareLearningHandoff}
+                >
+                  {result.next.kind === "curated_artifact"
                     ? language === "hi" ? "मेरी starting point से शुरू करें" : "Start from my learning point"
                     : language === "hi" ? "curated fraction demo देखें" : "Open the guided fraction journey"}
-                <span aria-hidden="true">→</span>
-              </Link>
+                  <span aria-hidden="true">→</span>
+                </Link>
+              )
             ) : (
               <button
                 className="button button-primary next-lab-action"

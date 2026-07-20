@@ -72,6 +72,8 @@ test("the UI visibly separates live diagnosis, reviewed teaching, and curated fa
   ]);
   assert.match(intake, /reviewedSeedId: selectedSeedId \|\| undefined/);
   assert.match(intake, /result\.diagnosis\.source !== "openai"/);
+  assert.match(intake, /parseSeedJourneyHandoff\([\s\S]*?sessionStorage\.getItem\(SEEDED_JOURNEY_STORAGE_KEY\)/);
+  assert.match(intake, /window\.location\.assign\(result\.next\.href\)/);
   assert.match(intake, /Live OpenAI response/);
   assert.match(journey, /Live OpenAI diagnosis/);
   assert.match(journey, /reviewed visual evidence/);

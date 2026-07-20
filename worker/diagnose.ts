@@ -15,6 +15,7 @@ import {
 import { HINDI_BRIDGE_TERMS, resolveBridgeTerms } from "../lib/hindi-bridge";
 import { toOpenAiStructuredOutputSchema } from "../lib/openai-structured-schema";
 import { selectAdaptiveProbe } from "../lib/adaptive-repair";
+import { verifiedSeededDoubtForInput, type SeededDoubt } from "../lib/seeded-doubts";
 
 export type DiagnosticEnv = {
   DB?: D1Database;
@@ -30,7 +31,7 @@ type DiagnosticTrace = {
   model: string;
   promptVersion: string;
   taxonomyIds: string[];
-  status: "live" | "curated_fallback";
+  status: "live" | "curated_fallback" | "clarify_input";
   artifactKey: string;
   fallbackReason: string | null;
   inputFingerprint: string;
@@ -42,7 +43,7 @@ const MAX_REASONING_LENGTH = 1000;
 const MAX_VISIBLE_WORK_LENGTH = 500;
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 const MAX_REQUEST_BODY_BYTES = 6 * 1024 * 1024;
-const OPENAI_TIMEOUT_MS = 15_000;
+const OPENAI_TIMEOUT_MS = 30_000;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const DEFAULT_RATE_LIMIT_PER_HOUR = 40;
 const MAX_CONFIGURED_RATE_LIMIT_PER_HOUR = 1000;
@@ -111,8 +112,11 @@ function parseInput(value: unknown):
     ? undefined
     : getString(value.visibleWorkText, MAX_VISIBLE_WORK_LENGTH);
   const imageDataUrl = value.imageDataUrl === undefined ? undefined : getString(value.imageDataUrl, MAX_IMAGE_BYTES * 2);
+  const reviewedSeedId = value.reviewedSeedId === undefined
+    ? undefined
+    : getString(value.reviewedSeedId, 20);
 
-  if (problemText === null || learnerReasoning === null || visibleWorkText === null) {
+  if (problemText === null || learnerReasoning === null || visibleWorkText === null || reviewedSeedId === null) {
     return {
       ok: false,
       messageHi: "सवाल या तुम्हारी बात बहुत लंबी है। उसे छोटा करके फिर भेजो।",
@@ -134,7 +138,7 @@ function parseInput(value: unknown):
     };
   }
 
-  return { ok: true, input: { problemText, learnerReasoning, visibleWorkText, imageDataUrl } };
+  return { ok: true, input: { problemText, learnerReasoning, visibleWorkText, imageDataUrl, reviewedSeedId } };
 }
 
 async function fingerprint(input: DiagnosticRequestInput) {
@@ -143,6 +147,7 @@ async function fingerprint(input: DiagnosticRequestInput) {
     learnerReasoning: input.learnerReasoning,
     visibleWorkText: input.visibleWorkText ?? "",
     imageDataUrl: input.imageDataUrl ?? "",
+    reviewedSeedId: input.reviewedSeedId ?? "",
   });
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload));
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -381,6 +386,36 @@ async function fallback(
   });
 }
 
+async function clarifyInput(
+  env: DiagnosticEnv,
+  input: DiagnosticRequestInput,
+  seed: SeededDoubt,
+  fingerprintValue: string,
+) {
+  const trace: DiagnosticTrace = {
+    id: crypto.randomUUID(),
+    createdAt: Date.now(),
+    model: "deterministic-input-guard",
+    promptVersion: PROMPT_VERSION,
+    taxonomyIds: [],
+    status: "clarify_input",
+    artifactKey: seed.id,
+    fallbackReason: "unreadable_seed_input",
+    inputFingerprint: fingerprintValue,
+    outputSchemaVersion: DIAGNOSTIC_SCHEMA_VERSION,
+  };
+  const persisted = await persistTrace(env, trace);
+
+  return json({
+    mode: "clarify_input",
+    reason: "unreadable_seed_input",
+    messageHi: "यह equation पढ़ी नहीं जा रही, इसलिए Bodh concept guess नहीं करेगा। साफ़ photo लें या exact equation type करें।",
+    messageEn: "The equation is not readable, so Bodh will not guess the concept. Retake a clear photo or type the exact equation.",
+    next: { kind: "retry_input", href: "/diagnose" },
+    trace: traceResponse(trace, persisted),
+  });
+}
+
 function textFromResponse(payload: unknown) {
   if (!isRecord(payload)) return null;
   if (typeof payload.output_text === "string") return payload.output_text;
@@ -408,6 +443,7 @@ async function liveDiagnosisResponse(
   model: string,
   inputFingerprint: string,
   output: DiagnosticOutput,
+  source: "openai" | "reviewed_recovery",
 ) {
   const diagnostic = applyDeterministicDiagnosticSignals(output, input);
   const deterministicTokens = extractPreservedMathTokens(input);
@@ -419,7 +455,8 @@ async function liveDiagnosisResponse(
     return fallback(env, input, guardrails.reason, model, inputFingerprint);
   }
 
-  const artifactKey = artifactForEquation(diagnostic.inputFidelity.canonicalEquation);
+  const reviewedSeed = verifiedSeededDoubtForInput(input.reviewedSeedId, input);
+  const artifactKey = reviewedSeed?.id ?? artifactForEquation(diagnostic.inputFidelity.canonicalEquation);
   const adaptiveProbeId = artifactKey
     ? selectAdaptiveProbe(diagnostic.hypotheses.map((hypothesis) => hypothesis.id)).id
     : null;
@@ -440,6 +477,7 @@ async function liveDiagnosisResponse(
   return json({
     mode: "live",
     diagnosis: {
+      source,
       inputFidelity: diagnostic.inputFidelity,
       concepts: topicSummary(diagnostic.candidateTopicIds),
       hypotheses: diagnostic.hypotheses,
@@ -450,9 +488,11 @@ async function liveDiagnosisResponse(
       probe: diagnostic.probe,
       adaptiveProbeId,
     },
-    next: artifactKey
-      ? { kind: "curated_artifact", href: "/demo", artifactKey }
-      : { kind: "curated_demo", href: "/demo" },
+    next: reviewedSeed
+      ? { kind: "seeded_artifact", href: `/learn?seed=${reviewedSeed.id}`, artifactKey: reviewedSeed.id }
+      : artifactKey
+        ? { kind: "curated_artifact", href: "/demo", artifactKey }
+        : { kind: "curated_demo", href: "/demo" },
     trace: traceResponse(trace, persisted),
   });
 }
@@ -504,6 +544,10 @@ export async function handleDiagnosis(request: Request, env: DiagnosticEnv) {
   const input = parsedInput.input;
   const model = env.BODH_MODEL || DEFAULT_MODEL;
   const inputFingerprint = await fingerprint(input);
+  const reviewedSeed = verifiedSeededDoubtForInput(input.reviewedSeedId, input);
+  if (reviewedSeed?.kind === "safe-retry") {
+    return clarifyInput(env, input, reviewedSeed, inputFingerprint);
+  }
   const rateLimit = await consumeDiagnosisRateLimit(request, env);
   if (rateLimit.state === "unavailable") {
     return fallback(env, input, "rate_limit_unavailable", model, inputFingerprint);
@@ -529,8 +573,8 @@ export async function handleDiagnosis(request: Request, env: DiagnosticEnv) {
     return fallback(env, input, "live_not_configured", model, inputFingerprint);
   }
   const deterministicRecovery = deterministicDiagnosticForInput(input);
-  const recoverOrFallback = (reason: string) => deterministicRecovery
-    ? liveDiagnosisResponse(env, input, model, inputFingerprint, deterministicRecovery)
+  const recoverOrFallback = (reason: string) => !reviewedSeed && deterministicRecovery
+    ? liveDiagnosisResponse(env, input, model, inputFingerprint, deterministicRecovery, "reviewed_recovery")
     : fallback(env, input, reason, model, inputFingerprint);
 
   const content: Array<Record<string, string>> = [
@@ -605,7 +649,7 @@ export async function handleDiagnosis(request: Request, env: DiagnosticEnv) {
   if (!isDiagnosticOutputShape(output)) {
     return recoverOrFallback("model_response_invalid");
   }
-  return liveDiagnosisResponse(env, input, model, inputFingerprint, output);
+  return liveDiagnosisResponse(env, input, model, inputFingerprint, output, "openai");
 }
 
 export async function handleTrace(request: Request, env: DiagnosticEnv, id: string) {

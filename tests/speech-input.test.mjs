@@ -69,6 +69,9 @@ describe("reasoning speech input", () => {
     assert.match(intake, /useReasoningSpeechInput\(\{/);
     assert.match(intake, /value=\{learnerReasoning\}/);
     assert.match(intake, /reasoningSpeech\.cancel\(\);\s+setLearnerReasoning/);
-    assert.match(intake, /JSON\.stringify\(\{ problemText, learnerReasoning, visibleWorkText, imageDataUrl \}\)/);
+    assert.match(
+      intake,
+      /body: JSON\.stringify\(\{[\s\S]*?problemText,[\s\S]*?learnerReasoning,[\s\S]*?visibleWorkText,[\s\S]*?imageDataUrl,[\s\S]*?reviewedSeedId: selectedSeedId \|\| undefined,[\s\S]*?\}\)/,
+    );
   });
 });

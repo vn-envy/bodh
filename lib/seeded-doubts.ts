@@ -126,3 +126,26 @@ export const SEEDED_DOUBTS: readonly SeededDoubt[] = [
 export function seededDoubtById(id: unknown) {
   return SEEDED_DOUBTS.find((sample) => sample.id === id) ?? null;
 }
+
+/**
+ * A reviewed seed may influence routing only when the submitted learner-facing
+ * fields still exactly match the public fixture. Editing any field turns the
+ * request back into an ordinary live doubt and prevents a forged seed id from
+ * selecting a lesson artifact.
+ */
+export function verifiedSeededDoubtForInput(
+  id: unknown,
+  input: Readonly<{
+    problemText: string;
+    learnerReasoning: string;
+    visibleWorkText?: string;
+  }>,
+) {
+  const sample = seededDoubtById(id);
+  if (!sample) return null;
+  return sample.problemText === input.problemText
+    && sample.learnerReasoning === input.learnerReasoning
+    && sample.visibleWorkText === (input.visibleWorkText ?? "")
+    ? sample
+    : null;
+}

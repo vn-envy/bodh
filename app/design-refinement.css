@@ -342,7 +342,8 @@
 .journey-card-receipt,
 .diagnose-intake-card,
 .diagnosis-result-card,
-.fallback-card {
+.fallback-card,
+.clarify-card {
   background: var(--surface);
 }
 
@@ -365,6 +366,7 @@
 
 .stage-lead,
 .fallback-card p:not(.trace-details p),
+.clarify-card p:not(.trace-details p),
 .word-problem p {
   color: var(--ink-soft);
   font-size: 1rem;
@@ -1263,7 +1265,7 @@
   }
 }
 
-/* Reviewed doubts: expose the seed corpus without presenting eight unfinished lessons. */
+/* Reviewed doubts: every readable seed now enters the live API and a matching visual repair. */
 .sample-picker {
   display: grid;
   gap: 7px;

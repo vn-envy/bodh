@@ -42,6 +42,7 @@ export type DiagnosticRequestInput = {
   learnerReasoning: string;
   visibleWorkText?: string;
   imageDataUrl?: string;
+  reviewedSeedId?: string;
 };
 
 export type DiagnosticOutput = {

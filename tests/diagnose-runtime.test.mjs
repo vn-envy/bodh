@@ -69,6 +69,8 @@ test("sends an OpenAI-compatible structured-output schema and accepts a guarded 
       body: JSON.stringify({
         problemText: "3/4 ÷ 1/8 = ?",
         learnerReasoning: "मुझे समझ नहीं आता कि इसे उल्टा करके multiply क्यों करते हैं।",
+        visibleWorkText: "3/4 × 8/1",
+        reviewedSeedId: "seed-01",
       }),
     }),
     {
@@ -82,8 +84,14 @@ test("sends an OpenAI-compatible structured-output schema and accepts a guarded 
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.equal(body.mode, "live");
+  assert.equal(body.diagnosis.source, "openai");
   assert.equal(body.diagnosis.adaptiveProbeId, "probe-same-amount");
-  assert.deepEqual(body.diagnosis.inputFidelity.preservedTokens, ["3/4", "÷", "1/8", "=", "?"]);
+  assert.deepEqual(body.next, {
+    kind: "seeded_artifact",
+    href: "/learn?seed=seed-01",
+    artifactKey: "seed-01",
+  });
+  assert.deepEqual(body.diagnosis.inputFidelity.preservedTokens, ["3/4", "÷", "1/8", "=", "?", "×", "8/1"]);
   assert.equal(capturedBody.model, "gpt-5.6");
   assert.equal(capturedBody.text.format.type, "json_schema");
   assert.equal(capturedBody.text.format.strict, true);
@@ -140,6 +148,44 @@ test("falls back when model-authored Hindi words reveal the final answer", async
   const body = await response.json();
   assert.equal(body.mode, "curated_fallback");
   assert.equal(body.reason, "direct_answer_leak");
+});
+
+test("returns an explicit retry instead of guessing for the unreadable reviewed seed", async (t) => {
+  const originalFetch = globalThis.fetch;
+  let openAiCalls = 0;
+  globalThis.fetch = async () => {
+    openAiCalls += 1;
+    throw new Error("The unreadable seed must not call OpenAI");
+  };
+  t.after(() => { globalThis.fetch = originalFetch; });
+
+  const worker = await loadWorker();
+  const response = await worker.fetch(
+    new Request("https://bodh.test/api/diagnose", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        problemText: "[The photographed equation is not readable]",
+        learnerReasoning: "यह वाला समझ नहीं आया।",
+        visibleWorkText: "",
+        reviewedSeedId: "seed-07",
+      }),
+    }),
+    {
+      ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) },
+      OPENAI_API_KEY: "test-key",
+      BODH_MODEL: "gpt-5.6",
+    },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.mode, "clarify_input");
+  assert.deepEqual(body.next, { kind: "retry_input", href: "/diagnose" });
+  assert.match(body.messageEn, /clear|readable|type the exact equation/i);
+  assert.equal(body.trace.model, "deterministic-input-guard");
+  assert.equal(openAiCalls, 0);
 });
 
 test("recovers an incomplete model response with a reviewed high-confidence signal", async (t) => {

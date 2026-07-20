@@ -74,6 +74,17 @@ test("server-renders a stable hydration handoff shell before choosing the journe
   assert.doesNotMatch(html, /Phase 0 foundation ready/);
 });
 
+test("server-renders a stable live-repair handoff without inventing a seed", async () => {
+  const response = await render("/learn?seed=seed-02");
+  assert.equal(response.status, 200);
+
+  const html = await response.text();
+  assert.match(html, /तुम्हारा exact सवाल साथ ला रहे हैं/);
+  assert.match(html, /aria-busy="true"/);
+  assert.match(html, /Your visual repair · Bodh/);
+  assert.doesNotMatch(html, /4 ÷ 1\/5/);
+});
+
 test("ships the atomic explainer without a pre-lab answer leak", async () => {
   const [component, authoredSequence, journey, journeyCopy] = await Promise.all([
     readFile(new URL("../app/components/FractionConceptExplainer.tsx", import.meta.url), "utf8"),

@@ -84,7 +84,9 @@ try {
 
 const taxonomy = readJson("data/taxonomy/fractions-division.slice.json");
 const allowedTopicIds = new Set(taxonomy.topics.map((topic) => topic.id));
-const suites = [readJson("data/fixtures/seed-cases.json"), readJson("data/evals/development-gold.json")];
+const seedCases = readJson("data/fixtures/seed-cases.json");
+const reviewedSeedIds = new Set(seedCases.map((evalCase) => evalCase.caseId));
+const suites = [seedCases, readJson("data/evals/development-gold.json")];
 if (includeHoldout) suites.push(readJson("data/evals/frozen-holdout.json"));
 const availableCases = suites.flat();
 const requestedCaseIds = caseFilterArgument
@@ -263,6 +265,27 @@ async function inspectTrace(trace, expectedStatus) {
 
 async function scoreResponse(evalCase, body, httpStatus) {
   const expected = evalCase.expected;
+  if (body?.mode === "clarify_input") {
+    const traceAudit = await inspectTrace(body.trace, "clarify_input");
+    const checks = {
+      responseOk: httpStatus >= 200 && httpStatus < 300,
+      expectedClarification: expected.disposition === "clarify_input",
+      asksForReadableInput:
+        typeof body.messageEn === "string" && /clear|readable|type the exact equation/i.test(body.messageEn),
+      noLessonHandoff: body.next?.kind === "retry_input" && body.next?.href === "/diagnose",
+      ...traceAudit.checks,
+    };
+    return {
+      report: {
+        caseId: evalCase.caseId,
+        mode: "clarify_input",
+        httpStatus,
+        pass: Object.values(checks).every(Boolean),
+        checks,
+      },
+      reproducibility: traceAudit.reproducibility,
+    };
+  }
   if (body?.mode === "curated_fallback") {
     const traceAudit = await inspectTrace(body.trace, "curated_fallback");
     const fallbackReason = boundedMetadataId(body.reason);
@@ -313,6 +336,13 @@ async function scoreResponse(evalCase, body, httpStatus) {
     misconceptionPlausible: actualMisconceptions.some((id) => expected.acceptableMisconceptionIds.includes(id)),
     probeBeforeTeaching: Boolean(diagnosis.probe?.questionHi) && !directAnswerAppears(diagnosis, expected.expectedAnswer),
     hindiBridgePresent: Array.isArray(diagnosis.languageBridge?.terms) && diagnosis.languageBridge.terms.length >= 1,
+    liveSourceDeclared: diagnosis.source === "openai" || diagnosis.source === "reviewed_recovery",
+    reviewedSeedUsesOpenAi: !reviewedSeedIds.has(evalCase.caseId) || diagnosis.source === "openai",
+    reviewedSeedDestinationPreserved: !reviewedSeedIds.has(evalCase.caseId) || (
+      body.next?.kind === "seeded_artifact" &&
+      body.next?.artifactKey === evalCase.caseId &&
+      body.next?.href === `/learn?seed=${evalCase.caseId}`
+    ),
     ...traceAudit.checks,
   };
 
@@ -341,6 +371,7 @@ async function evaluateCase(evalCase) {
           problemText: evalCase.input.problemText,
           learnerReasoning: evalCase.input.reasoning.raw,
           visibleWorkText: evalCase.input.visibleWork ?? undefined,
+          reviewedSeedId: reviewedSeedIds.has(evalCase.caseId) ? evalCase.caseId : undefined,
         }),
       });
     } catch (error) {

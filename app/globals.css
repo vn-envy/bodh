@@ -2935,7 +2935,8 @@ a {
   margin-top: 28px;
 }
 
-.fallback-card {
+.fallback-card,
+.clarify-card {
   display: grid;
   justify-items: start;
   background:
@@ -2943,11 +2944,13 @@ a {
     var(--cream-light);
 }
 
-.fallback-card > .bodh-mark {
+.fallback-card > .bodh-mark,
+.clarify-card > .bodh-mark {
   margin-bottom: 17px;
 }
 
-.fallback-card p:not(.trace-details p) {
+.fallback-card p:not(.trace-details p),
+.clarify-card p:not(.trace-details p) {
   max-width: 640px;
   margin: 16px 0 0;
   color: var(--ink-soft);

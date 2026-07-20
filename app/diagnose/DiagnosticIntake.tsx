@@ -11,6 +11,11 @@ import {
 } from "../../lib/adaptive-repair";
 import type { LocalizedText, NarrationLanguage } from "../../lib/narration-language";
 import { SEEDED_DOUBTS, seededDoubtById, type SeededDoubtId } from "../../lib/seeded-doubts";
+import {
+  SEEDED_JOURNEY_STORAGE_KEY,
+  SEEDED_JOURNEY_VERSION,
+  serializeSeedJourneyHandoff,
+} from "../../lib/seeded-journey";
 import { BodhMark } from "../components/BodhMark";
 import { CurriculumClimb } from "../components/CurriculumClimb";
 import { NarrationLanguageToggle, useNarrationLanguage } from "../components/NarrationLanguageToggle";
@@ -28,6 +33,7 @@ type Trace = {
 type LiveResult = {
   mode: "live";
   diagnosis: {
+    source: "openai" | "reviewed_recovery";
     inputFidelity: { canonicalEquation: string; preservedTokens: string[]; confidence: number };
     concepts: Array<{ id: string; name: string; domain: string }>;
     hypotheses: Array<{ id: string; labelHi: string; evidence: { source: string; quote: string } }>;
@@ -38,7 +44,7 @@ type LiveResult = {
     probe: { questionHi: string; optionLabelsHi: string[]; distinction: string };
     adaptiveProbeId: AdaptiveProbeId | null;
   };
-  next: { kind: "curated_artifact" | "curated_demo"; href: string; artifactKey?: string };
+  next: { kind: "seeded_artifact" | "curated_artifact" | "curated_demo"; href: string; artifactKey?: string };
   trace: Trace;
 };
 
@@ -50,11 +56,19 @@ type FallbackResult = {
   trace: Trace;
 };
 
-type ApiResult = LiveResult | FallbackResult;
+type ClarifyResult = {
+  mode: "clarify_input";
+  messageHi: string;
+  messageEn: string;
+  next: { kind: "retry_input"; href: "/diagnose" };
+  trace: Trace;
+};
+
+type ApiResult = LiveResult | FallbackResult | ClarifyResult;
 type SubmissionStage = "idle" | "listening" | "mapping";
 
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
-const CLIENT_TIMEOUT_MS = 20_000;
+const CLIENT_TIMEOUT_MS = 45_000;
 
 const text = (hi: string, en: string): LocalizedText => ({ hi, en });
 const ui = (copy: LocalizedText, language: NarrationLanguage) => copy[language];
@@ -78,8 +92,8 @@ const INTAKE_COPY = {
   ),
   sample: text("Reviewed sample doubt", "Reviewed sample doubt"),
   sampleHelp: text(
-    "8 diagnosis examples में से चुनो। एक complete lesson है; बाकी दिखाते हैं कि Bodh अलग confusion को कैसे सुनता है।",
-    "Choose from eight diagnosis examples. One has a complete lesson; the others show how Bodh listens to different kinds of confusion.",
+    "कोई reviewed doubt चुनो। Bodh real API से उसे सुनेगा और उसी सवाल की matching visual repair बनाएगा।",
+    "Choose any reviewed doubt. Bodh will listen through the real API and carry that exact question into a matching visual repair.",
   ),
   samplePlaceholder: text("अपना सवाल लिखूँगा / लिखूँगी", "I’ll use my own question"),
   working: text("तुमने क्या try किया?", "What did you try?"),
@@ -140,7 +154,7 @@ function isTrace(value: unknown): value is Trace {
 }
 
 function decodeApiResult(value: unknown): ApiResult | null {
-  if (!isRecord(value) || !isTrace(value.trace) || !isRecord(value.next) || value.next.href !== "/demo") {
+  if (!isRecord(value) || !isTrace(value.trace) || !isRecord(value.next) || typeof value.next.href !== "string") {
     return null;
   }
 
@@ -148,13 +162,34 @@ function decodeApiResult(value: unknown): ApiResult | null {
     return typeof value.messageHi === "string"
       && typeof value.messageEn === "string"
       && value.next.kind === "curated_demo"
+      && value.next.href === "/demo"
       ? value as unknown as FallbackResult
       : null;
   }
 
-  if (value.mode !== "live" || !isRecord(value.diagnosis) || value.next.kind !== "curated_artifact" && value.next.kind !== "curated_demo") {
+  if (value.mode === "clarify_input") {
+    return typeof value.messageHi === "string"
+      && typeof value.messageEn === "string"
+      && value.next.kind === "retry_input"
+      && value.next.href === "/diagnose"
+      ? value as unknown as ClarifyResult
+      : null;
+  }
+
+  if (
+    value.mode !== "live"
+    || !isRecord(value.diagnosis)
+    || !["seeded_artifact", "curated_artifact", "curated_demo"].includes(String(value.next.kind))
+  ) {
     return null;
   }
+
+  const seededDestination = value.next.kind === "seeded_artifact"
+    && typeof value.next.artifactKey === "string"
+    && seededDoubtById(value.next.artifactKey) !== null
+    && value.next.href === `/learn?seed=${value.next.artifactKey}`;
+  const curatedDestination = value.next.kind !== "seeded_artifact" && value.next.href === "/demo";
+  if (!seededDestination && !curatedDestination) return null;
 
   const diagnosis = value.diagnosis;
   const fidelity = diagnosis.inputFidelity;
@@ -165,7 +200,8 @@ function decodeApiResult(value: unknown): ApiResult | null {
     || typeof adaptiveProbeId === "string" && adaptiveProbeById(adaptiveProbeId) !== null;
 
   if (
-    !isRecord(fidelity)
+    !["openai", "reviewed_recovery"].includes(String(diagnosis.source))
+    || !isRecord(fidelity)
     || typeof fidelity.canonicalEquation !== "string"
     || !isStringArray(fidelity.preservedTokens)
     || typeof fidelity.confidence !== "number"
@@ -313,6 +349,7 @@ export function DiagnosticIntake() {
     setNotationConfirmed(false);
     try {
       window.sessionStorage.removeItem(ADAPTIVE_SESSION_STORAGE_KEY);
+      window.sessionStorage.removeItem(SEEDED_JOURNEY_STORAGE_KEY);
     } catch {
       // A fresh diagnosis still works when session storage is unavailable.
     }
@@ -338,7 +375,13 @@ export function DiagnosticIntake() {
         method: "POST",
         signal: controller.signal,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ problemText, learnerReasoning, visibleWorkText, imageDataUrl }),
+        body: JSON.stringify({
+          problemText,
+          learnerReasoning,
+          visibleWorkText,
+          imageDataUrl,
+          reviewedSeedId: selectedSeedId || undefined,
+        }),
       });
       const rawBody: unknown = await response.json();
       if (!response.ok) {
@@ -372,7 +415,29 @@ export function DiagnosticIntake() {
   };
 
   const prepareLearningHandoff = () => {
-    if (!adaptiveProbe || !selectedProbe || !canUseProbe) return;
+    if (!adaptiveProbe || !selectedProbe || !canUseProbe || result?.mode !== "live") return;
+    if (result.next.kind === "seeded_artifact") {
+      if (!selectedSeed || result.diagnosis.source !== "openai") return;
+      const seededHandoff = serializeSeedJourneyHandoff({
+        version: SEEDED_JOURNEY_VERSION,
+        seedId: selectedSeed.id,
+        source: "openai",
+        canonicalEquation: result.diagnosis.inputFidelity.canonicalEquation,
+        conceptIds: result.diagnosis.concepts.map((concept) => concept.id),
+        hypothesisIds: result.diagnosis.hypotheses.map((hypothesis) => hypothesis.id),
+        model: result.trace.model,
+        promptVersion: result.trace.promptVersion,
+        probeId: adaptiveProbe.id,
+        optionId: selectedProbe,
+      });
+      if (!seededHandoff) return;
+      try {
+        window.sessionStorage.setItem(SEEDED_JOURNEY_STORAGE_KEY, seededHandoff);
+      } catch {
+        // The destination will offer a fresh seed selection if storage is unavailable.
+      }
+      return;
+    }
     const payload = sessionPayloadForSelection(adaptiveProbe.id, selectedProbe);
     const serialized = serializeAdaptiveSessionPayload(payload);
     if (!serialized) return;
@@ -446,11 +511,9 @@ export function DiagnosticIntake() {
             {selectedSeed && (
               <div className={`sample-readback sample-readback-${selectedSeed.kind}`}>
                 <span>{selectedSeed.concept[language]}</span>
-                <strong>{selectedSeed.kind === "full-journey"
-                  ? language === "hi" ? "पूरा visual lesson तैयार है" : "Complete visual lesson available"
-                  : selectedSeed.kind === "safe-retry"
+                <strong>{selectedSeed.kind === "safe-retry"
                     ? language === "hi" ? "Safe retry behavior" : "Safe retry behavior"
-                    : language === "hi" ? "Diagnosis sample · hero lesson से अलग" : "Diagnosis sample · separate from the hero lesson"}</strong>
+                    : language === "hi" ? "Live API · इसी doubt की visual repair" : "Live API · visual repair for this exact doubt"}</strong>
               </div>
             )}
 
@@ -563,7 +626,9 @@ export function DiagnosticIntake() {
           <article className="diagnose-card diagnosis-result-card" lang={language}>
             <div className="stage-with-bodh diagnosis-result-heading">
               <div>
-                <span className="eyebrow">{language === "hi" ? "Bodh ने पहले क्या सुना" : "What Bodh heard first"}</span>
+                <span className="eyebrow">{result.diagnosis.source === "openai"
+                  ? language === "hi" ? "Live OpenAI response · Bodh ने क्या सुना" : "Live OpenAI response · what Bodh heard"
+                  : language === "hi" ? "Reviewed recovery · Bodh ने क्या सुना" : "Reviewed recovery · what Bodh heard"}</span>
                 <h2 ref={resultHeadingRef} tabIndex={-1}>
                   {language === "hi" ? "चलो इस idea को एक छोटी जाँच से समझें।" : "Let’s understand this idea with one short probe."}
                 </h2>
@@ -682,9 +747,11 @@ export function DiagnosticIntake() {
                 lang={probeLanguage}
                 onClick={prepareLearningHandoff}
               >
-                {result.next.kind === "curated_artifact"
-                  ? language === "hi" ? "मेरी starting point से शुरू करें" : "Start from my learning point"
-                  : language === "hi" ? "curated fraction demo देखें" : "Open the guided fraction journey"}
+                {result.next.kind === "seeded_artifact"
+                  ? language === "hi" ? "इसी सवाल की visual repair शुरू करें" : "Rebuild this exact question visually"
+                  : result.next.kind === "curated_artifact"
+                    ? language === "hi" ? "मेरी starting point से शुरू करें" : "Start from my learning point"
+                    : language === "hi" ? "curated fraction demo देखें" : "Open the guided fraction journey"}
                 <span aria-hidden="true">→</span>
               </Link>
             ) : (
@@ -700,6 +767,21 @@ export function DiagnosticIntake() {
                 <span aria-hidden="true">→</span>
               </button>
             )}
+            <TraceDetails trace={result.trace} language={language} />
+          </article>
+        )}
+
+        {result?.mode === "clarify_input" && (
+          <article className="diagnose-card clarify-card" lang={language}>
+            <BodhMark pose="listen" size="medium" motion="listen" />
+            <span className="eyebrow">{language === "hi" ? "Input safety · कोई guess नहीं" : "Input safety · no guessing"}</span>
+            <h2 ref={resultHeadingRef} tabIndex={-1}>
+              {language === "hi" ? "पहले सवाल साफ़ देख लें।" : "Let’s make the question readable first."}
+            </h2>
+            <p>{language === "hi" ? result.messageHi : result.messageEn}</p>
+            <button className="button button-primary next-lab-action" type="button" onClick={editNotation}>
+              {language === "hi" ? "Equation type करूँ" : "Type the equation"} <span aria-hidden="true">→</span>
+            </button>
             <TraceDetails trace={result.trace} language={language} />
           </article>
         )}

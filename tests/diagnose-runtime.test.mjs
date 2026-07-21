@@ -117,6 +117,116 @@ test("sends an OpenAI-compatible structured-output schema and accepts a guarded 
   }
 });
 
+test("uses the bounded science curriculum and preserves a real OpenAI handoff for the evaporation seed", async (t) => {
+  const originalFetch = globalThis.fetch;
+  let capturedBody;
+  const problemText = "धूप में puddle का पानी गायब कहाँ हो गया?";
+  const learnerReasoning = "मुझे लगता है Sun ने पानी पी लिया या पानी खत्म हो गया—वह हवा में कैसे जा सकता है?";
+  const scienceOutput = {
+    schemaVersion: "1.0.0",
+    inputFidelity: {
+      canonicalEquation: problemText,
+      preservedTokens: ["puddle", "पानी", "गायब"],
+      confidence: 1,
+    },
+    candidateTopicIds: ["mt_TlLE4cZgOr", "mt_fhqVdj4BYr", "mt_Qkewo5M3_c"],
+    hypotheses: [{
+      id: "water-disappears-when-dry",
+      labelHi: "पानी को खत्म हुआ माना जा रहा हो सकता है।",
+      evidence: { source: "reasoning", quote: "पानी खत्म" },
+    }],
+    languageBridge: {
+      learnerRegister: "hinglish",
+      termIds: ["evaporation", "water-vapour", "condensation"],
+    },
+    probe: {
+      questionHi: "Puddle छोटा हुआ, तो पानी के साथ क्या सम्भव है?",
+      optionLabelsHi: ["हवा में गया", "खत्म हुआ", "जमीन में गया"],
+      distinction: "पानी के state और location बदलने की जाँच",
+    },
+  };
+  globalThis.fetch = async (url, init) => {
+    assert.equal(url, "https://api.openai.com/v1/responses");
+    capturedBody = JSON.parse(init.body);
+    return new Response(JSON.stringify({ output_text: JSON.stringify(scienceOutput) }), {
+      headers: { "content-type": "application/json" },
+    });
+  };
+  t.after(() => { globalThis.fetch = originalFetch; });
+
+  const worker = await loadWorker();
+  const response = await worker.fetch(
+    new Request("https://bodh.test/api/diagnose", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        problemText,
+        learnerReasoning,
+        visibleWorkText: "Puddle → धूप → गायब",
+        reviewedSeedId: "seed-09",
+      }),
+    }),
+    {
+      ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) },
+      OPENAI_API_KEY: "test-key",
+      BODH_MODEL: "gpt-5.6",
+    },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.mode, "live");
+  assert.equal(body.diagnosis.source, "openai");
+  assert.equal(body.diagnosis.adaptiveProbeId, "probe-water-still-exists");
+  assert.deepEqual(body.diagnosis.inputFidelity.preservedTokens, ["puddle", "पानी", "गायब"]);
+  assert.ok(body.diagnosis.concepts.some((concept) => concept.id === "mt_Qkewo5M3_c"));
+  assert.deepEqual(body.next, {
+    kind: "seeded_artifact",
+    href: "/science/evaporation?live=seed-09",
+    artifactKey: "seed-09",
+  });
+
+  const curriculumContext = JSON.parse(capturedBody.input[0].content[0].text).curriculumContext;
+  assert.ok(curriculumContext.some((topic) => topic.id === "mt_Qkewo5M3_c"));
+  assert.equal(curriculumContext.some((topic) => topic.id === "mt_9Y96vxG_LH"), false);
+  assert.ok(capturedBody.text.format.schema.properties.candidateTopicIds.items.enum.includes("mt_Qkewo5M3_c"));
+});
+
+test("routes a failed evaporation API call to the reviewed science fallback", async (t) => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response("unavailable", { status: 503 });
+  t.after(() => { globalThis.fetch = originalFetch; });
+
+  const worker = await loadWorker();
+  const response = await worker.fetch(
+    new Request("https://bodh.test/api/diagnose", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        problemText: "धूप में puddle का पानी गायब कहाँ हो गया?",
+        learnerReasoning: "मुझे लगता है Sun ने पानी पी लिया या पानी खत्म हो गया—वह हवा में कैसे जा सकता है?",
+        visibleWorkText: "Puddle → धूप → गायब",
+        reviewedSeedId: "seed-09",
+      }),
+    }),
+    {
+      ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) },
+      OPENAI_API_KEY: "test-key",
+      BODH_MODEL: "gpt-5.6",
+    },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+
+  const body = await response.json();
+  assert.equal(body.mode, "curated_fallback");
+  assert.deepEqual(body.next, {
+    kind: "curated_science",
+    href: "/science/evaporation",
+    artifactKey: "science-evaporation",
+  });
+});
+
 test("falls back when model-authored Hindi words reveal the final answer", async (t) => {
   const originalFetch = globalThis.fetch;
   const leakingOutput = structuredClone(validOutput);

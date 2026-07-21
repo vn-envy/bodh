@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { narrationBeatFor } from "../lib/fraction-concept.ts";
+import { narrationBeatForEvaporation } from "../lib/evaporation-concept.ts";
 
 let workerPromise;
 
@@ -112,6 +113,35 @@ test("serves reviewed language-specific static narration before attempting synth
   assert.equal(response.headers.get("content-language"), "en-IN");
   assert.equal(assetPath, "/audio/fractions-v2/en/chosen-whole/name-the-whole.mp3");
   assert.match(response.headers.get("cache-control") ?? "", /immutable/);
+});
+
+test("serves only authored evaporation narration from its own bounded profile", async () => {
+  let assetPath = "";
+  const response = await requestNarration(
+    "/api/narration/evaporation-v1/hi/invisible-vapour/vapour-is-invisible.mp3",
+    {},
+    {
+      ASSETS: {
+        fetch: async (request) => {
+          assetPath = new URL(request.url).pathname;
+          return new Response(new Uint8Array([2, 4, 6]), {
+            headers: { "content-type": "audio/mpeg" },
+          });
+        },
+      },
+    },
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("x-bodh-narration-version"), "evaporation-v1");
+  assert.equal(response.headers.get("content-language"), "hi-IN");
+  assert.equal(assetPath, "/audio/evaporation-v1/hi/invisible-vapour/vapour-is-invisible.mp3");
+  assert.match(narrationBeatForEvaporation("invisible-vapour", "vapour-is-invisible", "en").text, /invisible/i);
+
+  const unknown = await requestNarration(
+    "/api/narration/evaporation-v1/hi/invisible-vapour/unreviewed-explanation.mp3",
+  );
+  assert.equal(unknown.status, 404);
 });
 
 test("sends only the allowlisted beat to OpenAI speech", async (t) => {

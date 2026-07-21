@@ -6,6 +6,10 @@ export const BRIDGE_TERM_IDS = [
   "equal-groups",
   "unknown-factor",
   "reciprocal",
+  "evaporation",
+  "water-vapour",
+  "condensation",
+  "precipitation",
 ] as const;
 
 export type BridgeTermId = (typeof BRIDGE_TERM_IDS)[number];
@@ -58,6 +62,30 @@ export const HINDI_BRIDGE_TERMS: Record<BridgeTermId, {
     hindi: "उलटा भिन्न",
     english: "reciprocal",
     childMeaningHi: "ऊपर और नीचे को बदल देने का नाम; Bodh पहले इसका meaning picture से जोड़ेगा।",
+  },
+  evaporation: {
+    id: "evaporation",
+    hindi: "वाष्पीकरण",
+    english: "evaporation",
+    childMeaningHi: "Liquid water के surface से कुछ पानी invisible gas बनकर हवा में चला जाता है।",
+  },
+  "water-vapour": {
+    id: "water-vapour",
+    hindi: "जलवाष्प",
+    english: "water vapour",
+    childMeaningHi: "हवा में मौजूद water का invisible gas रूप—पानी खत्म नहीं हुआ है।",
+  },
+  condensation: {
+    id: "condensation",
+    hindi: "संघनन",
+    english: "condensation",
+    childMeaningHi: "Water vapour ठंडी होकर फिर tiny liquid droplets बनती है।",
+  },
+  precipitation: {
+    id: "precipitation",
+    hindi: "वर्षण",
+    english: "precipitation",
+    childMeaningHi: "Cloud के droplets बड़े और भारी होकर rain, snow, या hail की तरह नीचे आते हैं।",
   },
 };
 

@@ -4,6 +4,7 @@ import process from "node:process";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { includesFinalAnswerToken } from "../lib/diagnostic-guardrails.ts";
+import { learningHrefForSeed, seededDoubtById } from "../lib/seeded-doubts.ts";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const readJson = (relativePath) => JSON.parse(fs.readFileSync(path.join(root, relativePath), "utf8"));
@@ -52,6 +53,10 @@ const ALLOWED_MISCONCEPTION_IDS = new Set([
   "arithmetic-slip",
   "insufficient-evidence",
   "answer-only-intent",
+  "water-disappears-when-dry",
+  "evaporation-requires-boiling",
+  "vapour-is-visible-steam",
+  "condensation-link-missing",
 ]);
 
 if (!endpoint) {
@@ -83,7 +88,11 @@ try {
 }
 
 const taxonomy = readJson("data/taxonomy/fractions-division.slice.json");
-const allowedTopicIds = new Set(taxonomy.topics.map((topic) => topic.id));
+const evaporationTaxonomy = readJson("data/taxonomy/evaporation-water-cycle.slice.json");
+const allowedTopicIds = new Set([
+  ...taxonomy.topics.map((topic) => topic.id),
+  ...evaporationTaxonomy.topics.map((topic) => topic.id),
+]);
 const seedCases = readJson("data/fixtures/seed-cases.json");
 const reviewedSeedIds = new Set(seedCases.map((evalCase) => evalCase.caseId));
 const suites = [seedCases, readJson("data/evals/development-gold.json")];
@@ -265,6 +274,8 @@ async function inspectTrace(trace, expectedStatus) {
 
 async function scoreResponse(evalCase, body, httpStatus) {
   const expected = evalCase.expected;
+  const reviewedSeed = seededDoubtById(evalCase.caseId);
+  const expectedReviewedHref = reviewedSeed ? learningHrefForSeed(reviewedSeed) : null;
   if (body?.mode === "clarify_input") {
     const traceAudit = await inspectTrace(body.trace, "clarify_input");
     const checks = {
@@ -341,7 +352,7 @@ async function scoreResponse(evalCase, body, httpStatus) {
     reviewedSeedDestinationPreserved: !reviewedSeedIds.has(evalCase.caseId) || (
       body.next?.kind === "seeded_artifact" &&
       body.next?.artifactKey === evalCase.caseId &&
-      body.next?.href === `/learn?seed=${evalCase.caseId}`
+      body.next?.href === expectedReviewedHref
     ),
     ...traceAudit.checks,
   };
@@ -480,7 +491,7 @@ const report = {
   generatedAt: new Date().toISOString(),
   suite: requestedCaseIds.length > 0
     ? `case-filter:${requestedCaseIds.join(",")}`
-    : includeHoldout ? "all-32" : "seed-and-development-24",
+    : includeHoldout ? "all-33" : "seed-and-development-25",
   configuration: { timeoutMs, maxAttempts, concurrency: Math.min(concurrency, cases.length) },
   sourceCommit: sourceCommit(),
   total: reports.length,

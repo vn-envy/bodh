@@ -4,21 +4,26 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import {
   ADAPTIVE_SESSION_STORAGE_KEY,
-  adaptiveProbeById,
   serializeAdaptiveSessionPayload,
   sessionPayloadForSelection,
-  type AdaptiveProbeId,
 } from "../../lib/adaptive-repair";
 import type { LocalizedText, NarrationLanguage } from "../../lib/narration-language";
-import { SEEDED_DOUBTS, seededDoubtById, type SeededDoubtId } from "../../lib/seeded-doubts";
+import {
+  SEEDED_DOUBTS,
+  learningHrefForSeed,
+  seededDoubtById,
+  type SeededDoubtId,
+} from "../../lib/seeded-doubts";
 import {
   SEEDED_JOURNEY_STORAGE_KEY,
   SEEDED_JOURNEY_VERSION,
   parseSeedJourneyHandoff,
   serializeSeedJourneyHandoff,
 } from "../../lib/seeded-journey";
+import { reviewedProbeById } from "../../lib/reviewed-probes";
 import { BodhMark } from "../components/BodhMark";
 import { CurriculumClimb } from "../components/CurriculumClimb";
+import { EvaporationCurriculumClimb } from "../components/EvaporationCurriculumClimb";
 import { NarrationLanguageToggle, useNarrationLanguage } from "../components/NarrationLanguageToggle";
 import { ReasoningVoiceControl } from "./ReasoningVoiceControl";
 import { useReasoningSpeechInput } from "./useReasoningSpeechInput";
@@ -43,7 +48,7 @@ type LiveResult = {
       terms: Array<{ id: string; hindi: string; english: string; childMeaningHi: string }>;
     };
     probe: { questionHi: string; optionLabelsHi: string[]; distinction: string };
-    adaptiveProbeId: AdaptiveProbeId | null;
+    adaptiveProbeId: string | null;
   };
   next: { kind: "seeded_artifact" | "curated_artifact" | "curated_demo"; href: string; artifactKey?: string };
   trace: Trace;
@@ -53,7 +58,7 @@ type FallbackResult = {
   mode: "curated_fallback";
   messageHi: string;
   messageEn: string;
-  next: { kind: "curated_demo"; href: string };
+  next: { kind: "curated_demo" | "curated_science"; href: string; artifactKey?: string };
   trace: Trace;
 };
 
@@ -160,10 +165,12 @@ function decodeApiResult(value: unknown): ApiResult | null {
   }
 
   if (value.mode === "curated_fallback") {
+    const validFallback = value.next.kind === "curated_demo"
+      ? value.next.href === "/demo"
+      : value.next.kind === "curated_science" && value.next.href === "/science/evaporation";
     return typeof value.messageHi === "string"
       && typeof value.messageEn === "string"
-      && value.next.kind === "curated_demo"
-      && value.next.href === "/demo"
+      && validFallback
       ? value as unknown as FallbackResult
       : null;
   }
@@ -188,7 +195,7 @@ function decodeApiResult(value: unknown): ApiResult | null {
   const seededDestination = value.next.kind === "seeded_artifact"
     && typeof value.next.artifactKey === "string"
     && seededDoubtById(value.next.artifactKey) !== null
-    && value.next.href === `/learn?seed=${value.next.artifactKey}`;
+    && value.next.href === learningHrefForSeed(seededDoubtById(value.next.artifactKey)!);
   const curatedDestination = value.next.kind !== "seeded_artifact" && value.next.href === "/demo";
   if (!seededDestination && !curatedDestination) return null;
 
@@ -198,7 +205,7 @@ function decodeApiResult(value: unknown): ApiResult | null {
   const probe = diagnosis.probe;
   const adaptiveProbeId = diagnosis.adaptiveProbeId;
   const validAdaptiveProbe = adaptiveProbeId === null
-    || typeof adaptiveProbeId === "string" && adaptiveProbeById(adaptiveProbeId) !== null;
+    || typeof adaptiveProbeId === "string" && reviewedProbeById(adaptiveProbeId) !== null;
 
   if (
     !["openai", "reviewed_recovery"].includes(String(diagnosis.source))
@@ -258,9 +265,10 @@ export function DiagnosticIntake() {
   const requestAbortRef = useRef<AbortController | null>(null);
   const liveDiagnosis = result?.mode === "live" ? result.diagnosis : null;
   const selectedSeed = seededDoubtById(selectedSeedId);
+  const scienceSelected = selectedSeed?.subject === "science";
   const mapFocusTopicId = selectedSeed?.focusTopicId ?? "mt_ndGqFPWyen";
   const mapGoalTopicId = selectedSeed?.goalTopicId ?? liveDiagnosis?.concepts[0]?.id ?? "mt_9Y96vxG_LH";
-  const adaptiveProbe = liveDiagnosis ? adaptiveProbeById(liveDiagnosis.adaptiveProbeId) : null;
+  const adaptiveProbe = liveDiagnosis ? reviewedProbeById(liveDiagnosis.adaptiveProbeId) : null;
   const probeLanguage: NarrationLanguage = adaptiveProbe ? language : "hi";
   const needsNotationConfirmation = Boolean(
     imageFile && liveDiagnosis && liveDiagnosis.inputFidelity.confidence < 0.85,
@@ -517,14 +525,14 @@ export function DiagnosticIntake() {
                 <option value="">{ui(INTAKE_COPY.samplePlaceholder, language)}</option>
                 {SEEDED_DOUBTS.map((sample, index) => (
                   <option value={sample.id} key={sample.id}>
-                    {index + 1}. {sample.title[language]}
+                    {index + 1}. {sample.subject === "science" ? "Science · " : ""}{sample.title[language]}
                   </option>
                 ))}
               </select>
             </label>
 
             {selectedSeed && (
-              <div className={`sample-readback sample-readback-${selectedSeed.kind}`}>
+              <div className={`sample-readback sample-readback-${selectedSeed.kind} ${scienceSelected ? "sample-readback-science" : ""}`}>
                 <span>{selectedSeed.concept[language]}</span>
                 <strong>{selectedSeed.kind === "safe-retry"
                     ? language === "hi" ? "Safe retry behavior" : "Safe retry behavior"
@@ -533,8 +541,12 @@ export function DiagnosticIntake() {
             )}
 
             <label className="input-label" htmlFor="problem-text">
-              <span>{ui(INTAKE_COPY.problem, language)}</span>
-              <small>{ui(INTAKE_COPY.problemExample, language)}</small>
+              <span>{scienceSelected
+                ? language === "hi" ? "Science का सवाल" : "Science question"
+                : ui(INTAKE_COPY.problem, language)}</span>
+              <small>{scienceSelected
+                ? language === "hi" ? "जैसे: puddle का पानी कहाँ गया?" : "For example: where did the puddle water go?"
+                : ui(INTAKE_COPY.problemExample, language)}</small>
               <input
                 ref={problemInputRef}
                 id="problem-text"
@@ -584,8 +596,12 @@ export function DiagnosticIntake() {
             </div>
 
             <label className="input-label" htmlFor="visible-work-text">
-              <span>{ui(INTAKE_COPY.working, language)}</span>
-              <small>{ui(INTAKE_COPY.workingHelp, language)}</small>
+              <span>{scienceSelected
+                ? language === "hi" ? "तुमने क्या notice किया?" : "What did you notice?"
+                : ui(INTAKE_COPY.working, language)}</span>
+              <small>{scienceSelected
+                ? language === "hi" ? "optional · observation Bodh को cause और guess अलग करने देती है" : "Optional · an observation helps Bodh separate a cause from a guess"
+                : ui(INTAKE_COPY.workingHelp, language)}</small>
               <textarea
                 id="visible-work-text"
                 name="visibleWorkText"
@@ -597,7 +613,9 @@ export function DiagnosticIntake() {
                   setSelectedSeedId("");
                   invalidateDiagnosis();
                 }}
-                placeholder={ui(INTAKE_COPY.workingPlaceholder, language)}
+                placeholder={scienceSelected
+                  ? language === "hi" ? "जैसे: धूप आने के बाद puddle छोटा हुआ" : "For example: the puddle became smaller after the Sun came out"
+                  : ui(INTAKE_COPY.workingPlaceholder, language)}
                 rows={2}
               />
             </label>
@@ -695,32 +713,6 @@ export function DiagnosticIntake() {
               </ul>
             </div>
 
-            <div className="diagnosis-section hypothesis-section">
-              <span className="reasoning-label">{language === "hi" ? "Bodh की tentative सोच" : "Bodh’s tentative hypothesis"}</span>
-              {result.diagnosis.hypotheses.map((hypothesis) => (
-                <div className="hypothesis" key={hypothesis.id}>
-                  <strong lang="hi">{hypothesis.labelHi}</strong>
-                  <span>{language === "hi" ? "तुम्हारे शब्द" : "Your words"}: “{hypothesis.evidence.quote}”</span>
-                </div>
-              ))}
-            </div>
-
-            <section className="diagnosis-section bridge-section" aria-labelledby="bridge-title">
-              <span className="reasoning-label">{language === "hi" ? "Bodh के शब्द" : "Language bridge"}</span>
-              <h3 id="bridge-title">
-                {language === "hi" ? "Hindi में समझें, किताब वाले शब्द भी साथ रखें।" : "Keep the familiar Hindi meaning beside the textbook term."}
-              </h3>
-              <div className="bridge-terms">
-                {result.diagnosis.languageBridge.terms.map((term) => (
-                  <article key={term.id}>
-                    <strong lang="hi">{term.hindi}</strong>
-                    <span lang="en">{term.english}</span>
-                    <p lang="hi">{term.childMeaningHi}</p>
-                  </article>
-                ))}
-              </div>
-            </section>
-
             <section className="live-probe" aria-labelledby="live-probe-title">
               <span className="reasoning-label" lang={probeLanguage}>{probeLanguage === "hi" ? "पहले एक छोटी जाँच" : "One short probe first"}</span>
               <h3 id="live-probe-title" lang={probeLanguage}>{visibleProbe?.question}</h3>
@@ -754,6 +746,36 @@ export function DiagnosticIntake() {
                 </p>
               )}
             </section>
+
+            {selectedProbe && (
+              <>
+                <div className="diagnosis-section hypothesis-section">
+                  <span className="reasoning-label">{language === "hi" ? "अब Bodh की tentative सोच" : "Now, Bodh’s tentative hypothesis"}</span>
+                  {result.diagnosis.hypotheses.map((hypothesis) => (
+                    <div className="hypothesis" key={hypothesis.id}>
+                      <strong lang="hi">{hypothesis.labelHi}</strong>
+                      <span>{language === "hi" ? "तुम्हारे शब्द" : "Your words"}: “{hypothesis.evidence.quote}”</span>
+                    </div>
+                  ))}
+                </div>
+
+                <section className="diagnosis-section bridge-section" aria-labelledby="bridge-title">
+                  <span className="reasoning-label">{language === "hi" ? "Bodh के शब्द" : "Language bridge"}</span>
+                  <h3 id="bridge-title">
+                    {language === "hi" ? "Hindi में समझें, किताब वाले शब्द भी साथ रखें।" : "Keep the familiar Hindi meaning beside the textbook term."}
+                  </h3>
+                  <div className="bridge-terms">
+                    {result.diagnosis.languageBridge.terms.map((term) => (
+                      <article key={term.id}>
+                        <strong lang="hi">{term.hindi}</strong>
+                        <span lang="en">{term.english}</span>
+                        <p lang="hi">{term.childMeaningHi}</p>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              </>
+            )}
 
             {selectedProbe && canUseProbe ? (
               result.next.kind === "seeded_artifact" ? (
@@ -824,18 +846,24 @@ export function DiagnosticIntake() {
                 : result.messageEn}
             </p>
             <Link className="button button-primary next-lab-action" href={result.next.href}>
-              {language === "hi" ? "curated fraction demo खोलें" : "Open the curated fraction journey"} <span aria-hidden="true">→</span>
+              {result.next.kind === "curated_science"
+                ? language === "hi" ? "Reviewed puddle journey खोलें" : "Open the reviewed puddle journey"
+                : language === "hi" ? "curated fraction demo खोलें" : "Open the curated fraction journey"} <span aria-hidden="true">→</span>
             </Link>
             <TraceDetails trace={result.trace} language={language} />
           </article>
         )}
       </section>
 
-      <CurriculumClimb
-        language={language}
-        focusTopicId={mapFocusTopicId}
-        goalTopicId={mapGoalTopicId}
-      />
+      {scienceSelected ? (
+        <EvaporationCurriculumClimb language={language} stageIndex={0} />
+      ) : (
+        <CurriculumClimb
+          language={language}
+          focusTopicId={mapFocusTopicId}
+          goalTopicId={mapGoalTopicId}
+        />
+      )}
     </main>
   );
 }

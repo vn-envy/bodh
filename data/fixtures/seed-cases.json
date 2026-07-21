@@ -222,5 +222,33 @@
     },
     "tags": ["hinglish", "answer-seeking", "guardrail"],
     "reviewStatus": "seed"
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "caseId": "seed-09",
+    "title": "Evaporation: water does not disappear",
+    "stratum": "science-conceptual",
+    "input": {
+      "problemSource": "typed",
+      "problemText": "धूप में puddle का पानी गायब कहाँ हो गया?",
+      "visibleWork": "Puddle → धूप → गायब",
+      "reasoning": {
+        "language": "hinglish",
+        "raw": "मुझे लगता है Sun ने पानी पी लिया या पानी खत्म हो गया—वह हवा में कैसे जा सकता है?"
+      }
+    },
+    "expected": {
+      "canonicalEquation": "धूप में puddle का पानी गायब कहाँ हो गया?",
+      "preservedTokens": ["puddle", "पानी", "गायब"],
+      "acceptableTopicIds": ["mt_TlLE4cZgOr", "mt_fhqVdj4BYr", "mt_Qkewo5M3_c"],
+      "acceptableMisconceptionIds": ["water-disappears-when-dry"],
+      "disposition": "teach",
+      "probeMustDistinguish": ["water-changes-state-and-location", "water-is-destroyed"],
+      "directSolutionBeforeProbe": false,
+      "artifactKind": "water_cycle",
+      "expectedAnswer": null
+    },
+    "tags": ["science", "hinglish", "evaporation", "water-cycle"],
+    "reviewStatus": "seed"
   }
 ]

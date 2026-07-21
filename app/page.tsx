@@ -122,6 +122,103 @@ export default function Home() {
         </Link>
       </section>
 
+      <section className={styles.scienceBridge} aria-labelledby="science-bridge-title">
+        <div className={styles.scienceCopy}>
+          <span className={styles.scienceKicker}>
+            <i aria-hidden="true" />
+            {english ? "Science works here, too" : "Bodh science भी समझता है"}
+          </span>
+          <h2 id="science-bridge-title">
+            {english ? "A puddle shrinks. Did the water vanish?" : "धूप में puddle छोटा हुआ। पानी गया कहाँ?"}
+          </h2>
+          <p>
+            {english
+              ? "Bodh listens to the child’s idea, then helps them track one drop—from puddle, to air, to cloud."
+              : "Bodh पहले बच्चे की idea सुनता है, फिर एक बूंद को puddle से हवा और cloud तक track करने में मदद करता है।"}
+          </p>
+
+          <div className={styles.scienceFact} role="note">
+            <span className={styles.scienceFactMark} aria-hidden="true"><i /></span>
+            <p>
+              <strong>{english ? "Invisible does not mean gone." : "न दिखना, खत्म होना नहीं है।"}</strong>
+              {english
+                ? " Real water vapour is invisible. The dots in this picture are Bodh’s tracker view—not what our eyes actually see."
+                : " असली जलवाष्प दिखाई नहीं देती। इस picture के dots Bodh का tracker view हैं—वे आँखों को सच में नहीं दिखते।"}
+            </p>
+          </div>
+
+          <div className={styles.scienceActions}>
+            <Link className="button button-primary" href="/diagnose#seeded-doubt">
+              {english ? "Try a real science doubt" : "असली science doubt आज़माएँ"}
+              <span aria-hidden="true">→</span>
+            </Link>
+            <Link className={styles.scienceJourneyLink} href="/science/evaporation">
+              {english ? "Walk through evaporation" : "Evaporation journey देखें"}
+              <span aria-hidden="true">↗</span>
+            </Link>
+          </div>
+          <small className={styles.scienceHint}>
+            {english ? "In examples, choose “Puddle water”." : "Examples में “Puddle water” चुनें।"}
+          </small>
+        </div>
+
+        <div
+          className={styles.scienceVisual}
+          role="img"
+          aria-label={english
+            ? "A warm puddle becomes invisible water vapour, shown only through Bodh’s tracker dots, then gathers in a cool cloud."
+            : "गरम puddle का पानी अदृश्य जलवाष्प बनता है, Bodh के tracker dots से दिखाया गया है, फिर ठंडे cloud में इकट्ठा होता है।"}
+        >
+          <div className={styles.sciencePrompt} aria-hidden="true">
+            <span>{english ? "TRACK ONE DROP" : "एक बूंद TRACK करें"}</span>
+            <strong>{english ? "Where did it go?" : "यह गई कहाँ?"}</strong>
+          </div>
+
+          <div className={styles.scienceFlow} aria-hidden="true">
+            <span className={`${styles.scienceConnector} ${styles.scienceConnectorOne}`} />
+            <span className={`${styles.scienceConnector} ${styles.scienceConnectorTwo}`} />
+
+            <div className={styles.scienceStep}>
+              <div className={styles.puddleScene}>
+                <span className={styles.scienceSun} />
+                <span className={styles.sciencePuddle}><i /></span>
+              </div>
+              <span className={styles.scienceStepCount}>1</span>
+              <b>{english ? "Warm puddle" : "गरम puddle"}</b>
+            </div>
+
+            <div className={`${styles.scienceStep} ${styles.trackerStep}`}>
+              <div className={styles.trackerScene}>
+                <span className={styles.trackerHalo} />
+                <span className={`${styles.vapourDot} ${styles.vapourDotOne}`} />
+                <span className={`${styles.vapourDot} ${styles.vapourDotTwo}`} />
+                <span className={`${styles.vapourDot} ${styles.vapourDotThree}`} />
+                <BodhMark className={styles.scienceBodh} pose="guide" size="medium" motion="guide" />
+              </div>
+              <span className={styles.scienceStepCount}>2</span>
+              <b>{english ? "Bodh’s tracker" : "Bodh tracker"}</b>
+              <small>{english ? "vapour is invisible" : "vapour अदृश्य है"}</small>
+            </div>
+
+            <div className={styles.scienceStep}>
+              <div className={styles.cloudScene}>
+                <span className={styles.scienceCloud} />
+                <span className={`${styles.cloudDrop} ${styles.cloudDropOne}`} />
+                <span className={`${styles.cloudDrop} ${styles.cloudDropTwo}`} />
+                <span className={`${styles.cloudDrop} ${styles.cloudDropThree}`} />
+              </div>
+              <span className={styles.scienceStepCount}>3</span>
+              <b>{english ? "Cool cloud" : "ठंडा cloud"}</b>
+            </div>
+          </div>
+
+          <div className={styles.trackerLegend} aria-hidden="true">
+            <span><i />{english ? "Bodh’s tracker view" : "Bodh का tracker view"}</span>
+            <b>{english ? "not visible to our eyes" : "आँखों को नहीं दिखता"}</b>
+          </div>
+        </div>
+      </section>
+
       <section className={styles.method} aria-labelledby="method-title">
         <div className={styles.methodIntro}>
           <div>

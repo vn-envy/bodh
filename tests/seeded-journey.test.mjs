@@ -28,9 +28,10 @@ function validHandoff(seedId = "seed-02") {
   };
 }
 
-test("all eight reviewed doubts have a matching bilingual visual repair", () => {
-  assert.deepEqual(Object.keys(SEED_LESSONS), SEEDED_DOUBT_IDS);
-  for (const seed of SEEDED_DOUBTS) {
+test("all eight maths doubts have a matching bilingual visual repair", () => {
+  const mathsSeedIds = SEEDED_DOUBT_IDS.filter((seedId) => seedId !== "seed-09");
+  assert.deepEqual(Object.keys(SEED_LESSONS), mathsSeedIds);
+  for (const seed of SEEDED_DOUBTS.filter((candidate) => candidate.subject === "mathematics")) {
     const lesson = SEED_LESSONS[seed.id];
     assert.equal(lesson.seedId, seed.id);
     assert.equal(lesson.atomicIdeas.length, 3);

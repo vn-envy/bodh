@@ -38,7 +38,15 @@
           "mt_09sySPqM9Z",
           "mt_ndGqFPWyen",
           "mt_GDG9_SZmsO",
-          "mt_iNdrM2-oJf"
+          "mt_iNdrM2-oJf",
+          "mt_TlLE4cZgOr",
+          "mt_PrWc-HZzDl",
+          "mt_IhWzO4sQPg",
+          "mt_nRF_VRntrW",
+          "mt_Pl-nsjYGZ3",
+          "mt_ahSqW_kK1b",
+          "mt_fhqVdj4BYr",
+          "mt_Qkewo5M3_c"
         ]
       }
     },
@@ -61,7 +69,11 @@
               "unknown-factor-not-connected",
               "arithmetic-slip",
               "insufficient-evidence",
-              "answer-only-intent"
+              "answer-only-intent",
+              "water-disappears-when-dry",
+              "evaporation-requires-boiling",
+              "vapour-is-visible-steam",
+              "condensation-link-missing"
             ]
           },
           "labelHi": { "type": "string", "minLength": 3, "maxLength": 180 },
@@ -88,7 +100,7 @@
           "minItems": 1,
           "maxItems": 3,
           "uniqueItems": true,
-          "items": { "enum": ["unit-fraction", "denominator", "numerator", "equivalent-fraction", "equal-groups", "unknown-factor", "reciprocal"] }
+          "items": { "enum": ["unit-fraction", "denominator", "numerator", "equivalent-fraction", "equal-groups", "unknown-factor", "reciprocal", "evaporation", "water-vapour", "condensation", "precipitation"] }
         }
       }
     },

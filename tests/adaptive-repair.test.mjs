@@ -30,7 +30,7 @@ function startAndCompleteRoute(state, entryAtomId) {
   );
 }
 
-test("keeps three bilingual allowlisted probes and all seven authored repair stages", () => {
+test("keeps three bilingual allowlisted maths probes and all seven authored repair stages", () => {
   assert.deepEqual(REPAIR_ENTRY_ATOM_IDS, [
     "chosen-whole",
     "equal-parts",

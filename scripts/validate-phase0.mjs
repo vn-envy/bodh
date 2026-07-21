@@ -12,6 +12,7 @@ const evalSchema = readJson("schemas/golden-eval-case.schema.json");
 const artifact = readJson("data/fixtures/hero-artifact.json");
 const cases = readJson("data/fixtures/seed-cases.json");
 const taxonomy = readJson("data/taxonomy/fractions-division.slice.json");
+const evaporationTaxonomy = readJson("data/taxonomy/evaporation-water-cycle.slice.json");
 
 const errors = [];
 const ajv = new Ajv2020({ allErrors: true, strict: true });
@@ -22,8 +23,8 @@ if (!validateArtifact(artifact)) {
   errors.push(`hero artifact: ${ajv.errorsText(validateArtifact.errors, { separator: "\n  " })}`);
 }
 
-if (!Array.isArray(cases) || cases.length !== 8) {
-  errors.push(`seed suite must contain exactly 8 cases; found ${Array.isArray(cases) ? cases.length : "non-array"}`);
+if (!Array.isArray(cases) || cases.length !== 9) {
+  errors.push(`seed suite must contain exactly 9 cases; found ${Array.isArray(cases) ? cases.length : "non-array"}`);
 } else {
   for (const evalCase of cases) {
     if (!validateCase(evalCase)) {
@@ -32,15 +33,22 @@ if (!Array.isArray(cases) || cases.length !== 8) {
   }
 }
 
-const topicIds = taxonomy.topics.map((topic) => topic.id);
+const taxonomies = [taxonomy, evaporationTaxonomy];
+const topicIds = taxonomies.flatMap((slice) => slice.topics.map((topic) => topic.id));
 const topicIdSet = new Set(topicIds);
 if (topicIdSet.size !== topicIds.length) errors.push("taxonomy topic IDs must be unique");
-if (!topicIdSet.has(taxonomy.selection.targetTopicId)) errors.push("taxonomy target topic is missing from the slice");
-
-for (const edge of taxonomy.dependencies) {
-  if (!topicIdSet.has(edge.topicId)) errors.push(`dependency topic is outside slice: ${edge.topicId}`);
-  if (!topicIdSet.has(edge.prerequisiteId)) errors.push(`dependency prerequisite is outside slice: ${edge.prerequisiteId}`);
-  if (edge.topicId === edge.prerequisiteId) errors.push(`self dependency is not allowed: ${edge.topicId}`);
+for (const slice of taxonomies) {
+  const sliceTopicIds = new Set(slice.topics.map((topic) => topic.id));
+  const dependencyKeys = new Set();
+  if (!sliceTopicIds.has(slice.selection.targetTopicId)) errors.push("taxonomy target topic is missing from its slice");
+  for (const edge of slice.dependencies) {
+    const dependencyKey = `${edge.prerequisiteId}:${edge.topicId}`;
+    if (dependencyKeys.has(dependencyKey)) errors.push(`duplicate dependency is not allowed: ${dependencyKey}`);
+    dependencyKeys.add(dependencyKey);
+    if (!sliceTopicIds.has(edge.topicId)) errors.push(`dependency topic is outside slice: ${edge.topicId}`);
+    if (!sliceTopicIds.has(edge.prerequisiteId)) errors.push(`dependency prerequisite is outside slice: ${edge.prerequisiteId}`);
+    if (edge.topicId === edge.prerequisiteId) errors.push(`self dependency is not allowed: ${edge.topicId}`);
+  }
 }
 
 for (const conceptId of artifact.conceptIds) {
@@ -70,8 +78,10 @@ if (
   errors.push("hero artifact success count must equal the integer quotient");
 }
 
-if (taxonomy.source.commit !== "96a7933754af672e1bfdbf7ecb05c325860c6e0d") {
-  errors.push("taxonomy source commit changed without updating the Phase 0 evidence record");
+for (const slice of taxonomies) {
+  if (slice.source.commit !== "96a7933754af672e1bfdbf7ecb05c325860c6e0d") {
+    errors.push("taxonomy source commit changed without updating the Phase 0 evidence record");
+  }
 }
 
 if (errors.length > 0) {
@@ -81,5 +91,5 @@ if (errors.length > 0) {
 }
 
 console.log(
-  `Phase 0 validation passed: 1 artifact, ${cases.length} seeds, ${taxonomy.topics.length} topics, ${taxonomy.dependencies.length} edges.`,
+  `Phase 0 validation passed: 1 artifact, ${cases.length} seeds, ${topicIds.length} topics, ${taxonomies.reduce((total, slice) => total + slice.dependencies.length, 0)} edges.`,
 );

@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol = requestHeaders.get("x-forwarded-proto") || "https";
   const metadataBase = new URL(`${protocol}://${host}`);
   const title = "Bodh — That which is truly understood";
-  const description = "A Hindi-first visual tutor that finds the concept beneath a maths doubt and helps the learner understand it for good.";
+  const description = "A Hindi-first visual tutor that finds the concept beneath a homework doubt and helps the learner understand it for good.";
 
   return {
     metadataBase,
@@ -26,9 +26,9 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       type: "website",
-      images: [{ url: "/og.png", width: 1200, height: 630, alt: "Bodh the elephant mentor with a fraction visual" }],
+      images: [{ url: "/og-science.png", width: 1200, height: 630, alt: "Bodh the elephant mentor making maths and science ideas visible" }],
     },
-    twitter: { card: "summary_large_image", title, description, images: ["/og.png"] },
+    twitter: { card: "summary_large_image", title, description, images: ["/og-science.png"] },
   };
 }
 

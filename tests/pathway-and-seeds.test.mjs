@@ -3,16 +3,17 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import taxonomy from "../data/taxonomy/fractions-division.slice.json" with { type: "json" };
+import evaporationTaxonomy from "../data/taxonomy/evaporation-water-cycle.slice.json" with { type: "json" };
 import seedCases from "../data/fixtures/seed-cases.json" with { type: "json" };
 import { SEEDED_DOUBT_IDS, SEEDED_DOUBTS } from "../lib/seeded-doubts.ts";
 
-function hasPath(start, goal) {
+function hasPath(slice, start, goal) {
   if (start === goal) return true;
   const pending = [start];
   const visited = new Set(pending);
   while (pending.length > 0) {
     const current = pending.shift();
-    for (const edge of taxonomy.dependencies.filter((candidate) => candidate.prerequisiteId === current)) {
+    for (const edge of slice.dependencies.filter((candidate) => candidate.prerequisiteId === current)) {
       if (edge.topicId === goal) return true;
       if (visited.has(edge.topicId)) continue;
       visited.add(edge.topicId);
@@ -22,7 +23,7 @@ function hasPath(start, goal) {
   return false;
 }
 
-test("all eight reviewed seeds have a learner-safe selectable projection", () => {
+test("all nine reviewed seeds have a learner-safe selectable projection", () => {
   assert.deepEqual(SEEDED_DOUBTS.map((sample) => sample.id), SEEDED_DOUBT_IDS);
   assert.equal(SEEDED_DOUBTS.length, seedCases.length);
 
@@ -38,11 +39,12 @@ test("all eight reviewed seeds have a learner-safe selectable projection", () =>
 });
 
 test("every sample foothold and goal is a real Marble topic with a canonical path", () => {
-  const topicIds = new Set(taxonomy.topics.map((topic) => topic.id));
   for (const sample of SEEDED_DOUBTS) {
+    const slice = sample.subject === "science" ? evaporationTaxonomy : taxonomy;
+    const topicIds = new Set(slice.topics.map((topic) => topic.id));
     assert.equal(topicIds.has(sample.focusTopicId), true, `${sample.id} focus must be canonical`);
     assert.equal(topicIds.has(sample.goalTopicId), true, `${sample.id} goal must be canonical`);
-    assert.equal(hasPath(sample.focusTopicId, sample.goalTopicId), true, `${sample.id} needs a canonical climb`);
+    assert.equal(hasPath(slice, sample.focusTopicId, sample.goalTopicId), true, `${sample.id} needs a canonical climb`);
   }
 });
 

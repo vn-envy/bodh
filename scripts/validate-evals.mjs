@@ -8,15 +8,19 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const readJson = (relativePath) => JSON.parse(fs.readFileSync(path.join(root, relativePath), "utf8"));
 const schema = readJson("schemas/golden-eval-case.schema.json");
 const taxonomy = readJson("data/taxonomy/fractions-division.slice.json");
+const evaporationTaxonomy = readJson("data/taxonomy/evaporation-water-cycle.slice.json");
 const suites = [
-  { name: "seed", cases: readJson("data/fixtures/seed-cases.json"), expectedCount: 8, reviewStatus: "seed" },
+  { name: "seed", cases: readJson("data/fixtures/seed-cases.json"), expectedCount: 9, reviewStatus: "seed" },
   { name: "development", cases: readJson("data/evals/development-gold.json"), expectedCount: 16, reviewStatus: "reviewed" },
   { name: "holdout", cases: readJson("data/evals/frozen-holdout.json"), expectedCount: 8, reviewStatus: "frozen" },
 ];
 const errors = [];
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 const validate = ajv.compile(schema);
-const topicIds = new Set(taxonomy.topics.map((topic) => topic.id));
+const topicIds = new Set([
+  ...taxonomy.topics.map((topic) => topic.id),
+  ...evaporationTaxonomy.topics.map((topic) => topic.id),
+]);
 const allCaseIds = new Set();
 
 for (const suite of suites) {
@@ -41,4 +45,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log(`Golden evaluation validation passed: ${allCaseIds.size} cases (8 seed, 16 development, 8 frozen holdout).`);
+console.log(`Golden evaluation validation passed: ${allCaseIds.size} cases (9 seed, 16 development, 8 frozen holdout).`);

@@ -21,6 +21,25 @@ export const SUPPORTED_TOPIC_IDS = new Set([
   "mt_ndGqFPWyen",
   "mt_GDG9_SZmsO",
   "mt_iNdrM2-oJf",
+  "mt_TlLE4cZgOr",
+  "mt_PrWc-HZzDl",
+  "mt_IhWzO4sQPg",
+  "mt_nRF_VRntrW",
+  "mt_Pl-nsjYGZ3",
+  "mt_ahSqW_kK1b",
+  "mt_fhqVdj4BYr",
+  "mt_Qkewo5M3_c",
+]);
+
+export const SCIENCE_TOPIC_IDS = new Set([
+  "mt_TlLE4cZgOr",
+  "mt_PrWc-HZzDl",
+  "mt_IhWzO4sQPg",
+  "mt_nRF_VRntrW",
+  "mt_Pl-nsjYGZ3",
+  "mt_ahSqW_kK1b",
+  "mt_fhqVdj4BYr",
+  "mt_Qkewo5M3_c",
 ]);
 
 const HYPOTHESIS_IDS = new Set([
@@ -33,6 +52,24 @@ const HYPOTHESIS_IDS = new Set([
   "arithmetic-slip",
   "insufficient-evidence",
   "answer-only-intent",
+  "water-disappears-when-dry",
+  "evaporation-requires-boiling",
+  "vapour-is-visible-steam",
+  "condensation-link-missing",
+]);
+
+const SCIENCE_HYPOTHESIS_IDS = new Set([
+  "water-disappears-when-dry",
+  "evaporation-requires-boiling",
+  "vapour-is-visible-steam",
+  "condensation-link-missing",
+]);
+
+const SCIENCE_BRIDGE_TERM_IDS = new Set<BridgeTermId>([
+  "evaporation",
+  "water-vapour",
+  "condensation",
+  "precipitation",
 ]);
 
 const EVIDENCE_SOURCES = new Set(["problem", "reasoning", "visible_work"]);
@@ -120,6 +157,10 @@ const DENOMINATOR_OPERATION_PATTERNS = [
   /\bdenominator(?:\s+ko)?\s+(?:multiply|times|guna)\b/i,
   /(?:हर|डिनॉमिनेटर)[^।.!?\n]{0,24}(?:गुणा|multiply)/iu,
 ];
+const WATER_DISAPPEARS_PATTERNS = [
+  /(?:पानी|water)[^।.!?\n]{0,32}(?:खत्म|गायब|disappear(?:ed)?|gone)/iu,
+  /(?:Sun|सूरज)[^।.!?\n]{0,28}(?:पी लिया|पी गया|drank|drink)/iu,
+];
 
 function exactSignalEvidence(value: string, patterns: readonly RegExp[]) {
   for (const pattern of patterns) {
@@ -135,12 +176,16 @@ function reviewedSignal(
     topicIds: string[];
     hypothesis: DiagnosticOutput["hypotheses"][number];
     probe: DiagnosticOutput["probe"];
+    termIds?: BridgeTermId[];
   },
 ) {
   return {
     ...output,
     candidateTopicIds: signal.topicIds,
     hypotheses: [signal.hypothesis],
+    languageBridge: signal.termIds
+      ? { ...output.languageBridge, termIds: signal.termIds }
+      : output.languageBridge,
     probe: signal.probe,
   };
 }
@@ -163,6 +208,30 @@ export function applyDeterministicDiagnosticSignals(
   output: DiagnosticOutput,
   input: DiagnosticRequestInput,
 ): DiagnosticOutput {
+  const waterDisappearsEvidence = exactSignalEvidence(input.learnerReasoning, WATER_DISAPPEARS_PATTERNS)
+    ?? exactSignalEvidence(input.problemText, WATER_DISAPPEARS_PATTERNS);
+  if (waterDisappearsEvidence) {
+    const evidenceSource = input.learnerReasoning.includes(waterDisappearsEvidence) ? "reasoning" : "problem";
+    return reviewedSignal(output, {
+      topicIds: ["mt_TlLE4cZgOr", "mt_fhqVdj4BYr", "mt_Qkewo5M3_c"],
+      hypothesis: {
+        id: "water-disappears-when-dry",
+        labelHi: "पानी को गायब या खत्म हुआ माना जा रहा हो सकता है; state और location बदलने का link अभी साफ़ नहीं है।",
+        evidence: { source: evidenceSource, quote: waterDisappearsEvidence },
+      },
+      termIds: ["evaporation", "water-vapour", "condensation"],
+      probe: {
+        questionHi: "Puddle छोटा हुआ, तो पानी के साथ क्या सम्भव है?",
+        optionLabelsHi: [
+          "पानी invisible vapour बनकर हवा में है",
+          "Sun ने पानी खत्म कर दिया",
+          "सारा पानी liquid बनकर जमीन के नीचे है",
+        ],
+        distinction: "matter गायब होने और पानी के state/location बदलने में फर्क",
+      },
+    });
+  }
+
   const answerSeekingEvidence = exactSignalEvidence(input.learnerReasoning, ANSWER_SEEKING_PATTERNS);
   if (answerSeekingEvidence) {
     return {
@@ -691,20 +760,37 @@ export function validateDiagnosticGuardrails(
     return { ok: false, reason: "token_not_preserved" };
   }
 
-  if (!parseFractionDivision(output.inputFidelity.canonicalEquation)) {
-    return { ok: false, reason: "unsupported_math" };
+  const isMathDiagnostic = Boolean(parseFractionDivision(output.inputFidelity.canonicalEquation));
+  const isScienceDiagnostic = output.candidateTopicIds.length > 0
+    && output.candidateTopicIds.every((topicId) => SCIENCE_TOPIC_IDS.has(topicId));
+  if (!isMathDiagnostic && !isScienceDiagnostic) {
+    return { ok: false, reason: "unsupported_subject" };
   }
 
-  const answerToken = finalAnswerToken(output.inputFidelity.canonicalEquation);
-  if (!answerToken) return { ok: false, reason: "unsupported_math" };
-  const modelWords = [
-    ...output.hypotheses.map((hypothesis) => hypothesis.labelHi),
-    output.probe.questionHi,
-    output.probe.distinction,
-    ...output.probe.optionLabelsHi,
-  ];
-  if (modelWords.some((word) => includesFinalAnswerToken(word, answerToken))) {
-    return { ok: false, reason: "direct_answer_leak" };
+  const hasScienceHypothesis = output.hypotheses.some((hypothesis) => SCIENCE_HYPOTHESIS_IDS.has(hypothesis.id));
+  const hasScienceBridgeTerm = output.languageBridge.termIds.some((termId) => SCIENCE_BRIDGE_TERM_IDS.has(termId));
+  if (
+    (isScienceDiagnostic && (
+      output.hypotheses.some((hypothesis) => !SCIENCE_HYPOTHESIS_IDS.has(hypothesis.id))
+      || output.languageBridge.termIds.some((termId) => !SCIENCE_BRIDGE_TERM_IDS.has(termId))
+    ))
+    || (isMathDiagnostic && (hasScienceHypothesis || hasScienceBridgeTerm))
+  ) {
+    return { ok: false, reason: "subject_profile_mismatch" };
+  }
+
+  if (isMathDiagnostic) {
+    const answerToken = finalAnswerToken(output.inputFidelity.canonicalEquation);
+    if (!answerToken) return { ok: false, reason: "unsupported_math" };
+    const modelWords = [
+      ...output.hypotheses.map((hypothesis) => hypothesis.labelHi),
+      output.probe.questionHi,
+      output.probe.distinction,
+      ...output.probe.optionLabelsHi,
+    ];
+    if (modelWords.some((word) => includesFinalAnswerToken(word, answerToken))) {
+      return { ok: false, reason: "direct_answer_leak" };
+    }
   }
 
   if (output.candidateTopicIds.some((topicId) => !SUPPORTED_TOPIC_IDS.has(topicId))) {

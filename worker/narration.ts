@@ -3,6 +3,10 @@ import {
   narrationBeatFor,
 } from "../lib/fraction-concept";
 import {
+  EVAPORATION_NARRATION_VERSION,
+  narrationBeatForEvaporation,
+} from "../lib/evaporation-concept";
+import {
   isNarrationLanguage,
   NARRATION_SPEECH_LOCALE,
   type NarrationLanguage,
@@ -17,6 +21,7 @@ export type NarrationEnv = {
 };
 
 type VoiceSource = "static" | "openai";
+type NarrationVersion = typeof FRACTION_NARRATION_VERSION | typeof EVAPORATION_NARRATION_VERSION;
 type EdgeCache = {
   match(request: Request): Promise<Response | undefined>;
   put(request: Request, response: Response): Promise<void>;
@@ -28,8 +33,8 @@ const MAX_AUDIO_BYTES = 4 * 1024 * 1024;
 const synthesisInFlight = new Map<string, Promise<Response>>();
 const TTS_PROFILE_VERSION = "calm-tutor-v2";
 const VOICE_INSTRUCTIONS: Record<NarrationLanguage, string> = {
-  hi: "Speak entirely in the supplied natural Indian Hindi, like a calm, warm primary-school maths tutor. Speak clearly at a moderate-slow pace, with thoughtful pauses around each mathematical idea. Sound reassuring and curious, never theatrical, patronising, challenging, or sing-song. Pronounce the supplied fraction words exactly as written. Do not translate, add, remove, count, solve, or answer anything.",
-  en: "Speak entirely in clear Indian English, like a calm, warm primary-school maths tutor. Speak at a moderate-slow pace, with thoughtful pauses around each mathematical idea. Sound reassuring and curious, never theatrical, patronising, challenging, or sing-song. Pronounce fractions naturally and exactly preserve the supplied meaning. Do not translate, add, remove, count, solve, or answer anything.",
+  hi: "Speak entirely in the supplied natural Indian Hindi, like a calm, warm primary-school tutor. Speak clearly at a moderate-slow pace, with thoughtful pauses around each idea. Sound reassuring and curious, never theatrical, patronising, challenging, or sing-song. Pronounce the supplied maths and science words exactly as written. Do not translate, add, remove, count, solve, or answer anything.",
+  en: "Speak entirely in clear Indian English, like a calm, warm primary-school tutor. Speak at a moderate-slow pace, with thoughtful pauses around each idea. Sound reassuring and curious, never theatrical, patronising, challenging, or sing-song. Pronounce the supplied maths and science terms naturally and exactly preserve the supplied meaning. Do not translate, add, remove, count, solve, or answer anything.",
 };
 
 function json(body: unknown, status: number, headers?: HeadersInit) {
@@ -55,13 +60,18 @@ function unavailable(head = false) {
     : json({ error: "narration_unavailable", fallback: "device_voice" }, 503, headers);
 }
 
-function audioResponse(source: Response, voiceSource: VoiceSource, language: NarrationLanguage) {
+function audioResponse(
+  source: Response,
+  voiceSource: VoiceSource,
+  language: NarrationLanguage,
+  narrationVersion: NarrationVersion,
+) {
   return new Response(source.body, {
     status: 200,
     headers: {
       "content-type": "audio/mpeg",
       "cache-control": "public, max-age=31536000, immutable",
-      "x-bodh-narration-version": FRACTION_NARRATION_VERSION,
+      "x-bodh-narration-version": narrationVersion,
       "x-bodh-voice": "ai-generated",
       "x-bodh-voice-source": voiceSource,
       "content-language": NARRATION_SPEECH_LOCALE[language],
@@ -90,6 +100,7 @@ function stableHash(value: string) {
 
 function cacheRequestFor(
   request: Request,
+  narrationVersion: NarrationVersion,
   language: NarrationLanguage,
   stageId: string,
   beatId: string,
@@ -98,9 +109,9 @@ function cacheRequestFor(
 ) {
   const model = env.BODH_TTS_MODEL || DEFAULT_TTS_MODEL;
   const voice = env.BODH_TTS_VOICE || DEFAULT_TTS_VOICE;
-  const key = stableHash(`${FRACTION_NARRATION_VERSION}\n${TTS_PROFILE_VERSION}\n${language}\n${model}\n${voice}\n${VOICE_INSTRUCTIONS[language]}\n${text}`);
+  const key = stableHash(`${narrationVersion}\n${TTS_PROFILE_VERSION}\n${language}\n${model}\n${voice}\n${VOICE_INSTRUCTIONS[language]}\n${text}`);
   const cacheUrl = new URL(request.url);
-  cacheUrl.pathname = `/_bodh-audio-cache/${FRACTION_NARRATION_VERSION}/${language}/${encodeURIComponent(model)}/${encodeURIComponent(voice)}/${stageId}/${beatId}-${key}.mp3`;
+  cacheUrl.pathname = `/_bodh-audio-cache/${narrationVersion}/${language}/${encodeURIComponent(model)}/${encodeURIComponent(voice)}/${stageId}/${beatId}-${key}.mp3`;
   cacheUrl.search = "";
   return new Request(cacheUrl, { method: "GET" });
 }
@@ -123,6 +134,7 @@ export function speechRequestFor(
 async function synthesizeBeat(
   text: string,
   language: NarrationLanguage,
+  narrationVersion: NarrationVersion,
   env: NarrationEnv,
   cache: EdgeCache | null,
   cacheRequest: Request,
@@ -158,6 +170,7 @@ async function synthesizeBeat(
     new Response(bytes, { headers: { "content-type": "audio/mpeg" } }),
     "openai",
     language,
+    narrationVersion,
   );
   if (cache) {
     try {
@@ -172,6 +185,7 @@ async function synthesizeBeat(
 export async function handleNarration(
   request: Request,
   env: NarrationEnv,
+  versionValue: string,
   languageValue: string,
   stageId: string,
   beatId: string,
@@ -185,14 +199,22 @@ export async function handleNarration(
 
   if (!isNarrationLanguage(languageValue)) return json({ error: "narration_not_found" }, 404);
   const language = languageValue;
-  const beat = narrationBeatFor(stageId, beatId, language);
+  const narrationVersion: NarrationVersion | null = versionValue === FRACTION_NARRATION_VERSION
+    ? FRACTION_NARRATION_VERSION
+    : versionValue === EVAPORATION_NARRATION_VERSION
+      ? EVAPORATION_NARRATION_VERSION
+      : null;
+  if (!narrationVersion) return json({ error: "narration_not_found" }, 404);
+  const beat = narrationVersion === FRACTION_NARRATION_VERSION
+    ? narrationBeatFor(stageId, beatId, language)
+    : narrationBeatForEvaporation(stageId, beatId, language);
   if (!beat) return json({ error: "narration_not_found" }, 404);
 
-  const assetPath = `/audio/${FRACTION_NARRATION_VERSION}/${language}/${stageId}/${beatId}.mp3`;
+  const assetPath = `/audio/${narrationVersion}/${language}/${stageId}/${beatId}.mp3`;
   try {
     const asset = await env.ASSETS.fetch(new Request(new URL(assetPath, request.url)));
     if (asset.ok && /^audio\//i.test(asset.headers.get("content-type") || "")) {
-      const response = audioResponse(asset, "static", language);
+      const response = audioResponse(asset, "static", language, narrationVersion);
       return request.method === "HEAD"
         ? new Response(null, { status: response.status, headers: response.headers })
         : response;
@@ -204,7 +226,7 @@ export async function handleNarration(
   if (!runtimeEnabled(env) || !env.OPENAI_API_KEY) return unavailable(request.method === "HEAD");
 
   const cache = defaultEdgeCache();
-  const cacheRequest = cacheRequestFor(request, language, stageId, beatId, beat.text, env);
+  const cacheRequest = cacheRequestFor(request, narrationVersion, language, stageId, beatId, beat.text, env);
   if (cache) {
     try {
       const cached = await cache.match(cacheRequest);
@@ -223,7 +245,7 @@ export async function handleNarration(
       status: 204,
       headers: {
         "cache-control": "no-store",
-        "x-bodh-narration-version": FRACTION_NARRATION_VERSION,
+        "x-bodh-narration-version": narrationVersion,
         "x-bodh-voice-source": "openai",
         "content-language": NARRATION_SPEECH_LOCALE[language],
       },
@@ -233,7 +255,7 @@ export async function handleNarration(
   const inFlightKey = cacheRequest.url;
   let synthesis = synthesisInFlight.get(inFlightKey);
   if (!synthesis) {
-    synthesis = synthesizeBeat(beat.text, language, env, cache, cacheRequest);
+    synthesis = synthesizeBeat(beat.text, language, narrationVersion, env, cache, cacheRequest);
     synthesisInFlight.set(inFlightKey, synthesis);
     void synthesis.finally(() => synthesisInFlight.delete(inFlightKey));
   }

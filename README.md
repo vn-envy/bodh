@@ -40,7 +40,7 @@ npm run validate:phase0
 npm test
 ```
 
-The Phase 0 validator checks the artifact contract, all eight seed eval cases, taxonomy referential integrity, and that every expected concept ID belongs to the committed fraction slice.
+The Phase 0 validator checks the artifact contract, all nine seed eval cases, taxonomy referential integrity, and that every expected concept ID belongs to its committed subject slice.
 
 The release corpus is validated separately:
 
@@ -48,13 +48,13 @@ The release corpus is validated separately:
 npm run validate:evals
 ```
 
-It contains 32 synthetic cases: eight seeds, 16 reviewed development-gold cases, and eight frozen holdouts. The release run passed 32/32 cases with the frozen holdout passing 8/8; see `docs/EVALUATION_RELEASE.md` for the exact model, prompt, source commit, and claim boundary.
+The recorded release evidence contains 32 synthetic cases: eight original maths seeds, 16 reviewed development-gold cases, and eight frozen holdouts. That release run passed 32/32 cases with the frozen holdout passing 8/8; see `docs/EVALUATION_RELEASE.md` for the exact model, prompt, source commit, and claim boundary. The current working corpus adds one reviewed evaporation seed (33 cases total); it is not retroactively included in the published 32/32 claim until a new complete release run is recorded.
 
 ## Repository map
 
 - `app/` — learner-facing shell and curated demo fixture
 - `data/taxonomy/` — bounded Marble taxonomy extract used by the hero journey
-- `data/fixtures/` — deterministic artifact and eight seed eval cases
+- `data/fixtures/` — deterministic artifact and nine seed eval cases
 - `schemas/` — model-output and golden-eval JSON Schemas
 - `docs/` — decisions, traceability, build log, and prior-work boundary
 - `data/evals/` — reviewed development-gold and frozen holdout cases
@@ -63,7 +63,7 @@ It contains 32 synthetic cases: eight seeds, 16 reviewed development-gold cases,
 
 ## Current build boundary
 
-Included now: product scaffold, responsive matte visual system, canonical taxonomy slice, schemas, release eval corpus, traceability, and the complete deterministic hero journey: confirmation, conservative probe routing, seven-atom narrated explainer, synchronized fraction-bar/number-line lab, transfer, return, and a printable or PNG-shareable evidence receipt. The editorial homepage introduces Bodh as Listener, Pathfinder, and Gentle Tinkerer, with a mathematically exact `3/4 = 6/8` teaching scene and a five-node canonical Marble route. The diagnostic intake exposes all eight reviewed seed doubts as safe selectable examples, while a 10-topic, 12-dependency Marble concept map shows a suggested prerequisite climb without making a validated-diagnosis or mastery claim. An English-first 90-second judge tour and the measured 32-case release evidence are available in-product.
+Included now: product scaffold, responsive matte visual system, canonical taxonomy slices, schemas, release eval corpus, traceability, and the complete deterministic fraction hero journey: confirmation, conservative probe routing, seven-atom narrated explainer, synchronized fraction-bar/number-line lab, transfer, return, and a printable or PNG-shareable evidence receipt. The editorial homepage introduces Bodh as Listener, Pathfinder, and Gentle Tinkerer, with a mathematically exact `3/4 = 6/8` teaching scene and canonical Marble routes. The diagnostic intake exposes nine reviewed seed doubts—eight maths and one evaporation example—as safe selectable examples. Each subject-specific graph shows one relevant prerequisite climb without making a validated-diagnosis or mastery claim. An English-first 90-second judge tour and the measured 32-case release evidence are available in-product.
 
 Included in the Phase 2 code path: typed or browser-transcribed Hindi/Hinglish/English reasoning, optional homework-photo context, constrained model diagnosis, one pre-teaching probe, privacy-minimised inspectable traces, bounded request streaming, migration-backed diagnosis rate limits, and safe fallback.
 

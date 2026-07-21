@@ -1,0 +1,219 @@
+{
+  "sliceVersion": "1.0.0",
+  "source": {
+    "name": "Marble Skill Taxonomy",
+    "version": "v1",
+    "repository": "https://github.com/withmarbleapp/os-taxonomy",
+    "commit": "96a7933754af672e1bfdbf7ecb05c325860c6e0d",
+    "databaseLicense": "ODbL-1.0",
+    "contentLicense": "CC-BY-SA-4.0"
+  },
+  "selection": {
+    "createdFor": "Bodh cross-subject proof: puddle evaporation and the water cycle",
+    "policy": "Only canonical Marble nodes and canonical dependencies used by the reviewed evaporation journey are included. Omitted upstream edges are not represented as absent knowledge.",
+    "targetTopicId": "mt_Qkewo5M3_c",
+    "suggestedStartTopicId": "mt_TlLE4cZgOr"
+  },
+  "topics": [
+    {
+      "id": "mt_TlLE4cZgOr",
+      "type": "CONCEPTUAL",
+      "subject": "Science",
+      "domain": "Weather & Climate",
+      "name": "Rain & Puddles",
+      "description": "Know that rain falls from clouds in the sky, that puddles disappear because water goes back into the air, and that this is part of how water moves around — up into the sky and back down again",
+      "ageRangeStart": 5,
+      "ageRangeEnd": 7,
+      "centrality": 0.08344733242134063,
+      "evidence": [
+        "State that rain falls from clouds",
+        "Explain that puddles disappear because the water goes into the air",
+        "Describe the basic idea that water goes up and comes back down in a repeating process"
+      ],
+      "assessmentPrompt": "If {{name}} notices a puddle has disappeared on a sunny afternoon, can they explain that the water went up into the air, and that it will come back down again as rain from a cloud?",
+      "standards": []
+    },
+    {
+      "id": "mt_PrWc-HZzDl",
+      "type": "CONCEPTUAL",
+      "subject": "Science",
+      "domain": "Weather & Climate",
+      "name": "Temperature & Thermometers",
+      "description": "Understand temperature as how hot or cold something is, that a thermometer measures temperature, and use words like hot, warm, cool, and cold to describe how the air feels on different days",
+      "ageRangeStart": 5,
+      "ageRangeEnd": 7,
+      "centrality": 0.08207934336525308,
+      "evidence": [
+        "Explain that temperature describes how hot or cold something is",
+        "Identify a thermometer as the tool used to measure temperature",
+        "Use words like hot, warm, cool, and cold appropriately to describe air temperature"
+      ],
+      "assessmentPrompt": "If {{name}} saw a thermometer outside, could they explain that it tells us how hot or cold the air is, and describe today as hot, warm, cool, or cold?",
+      "standards": []
+    },
+    {
+      "id": "mt_IhWzO4sQPg",
+      "type": "CONCEPTUAL",
+      "subject": "Science",
+      "domain": "Weather & Climate",
+      "name": "Cloud Types",
+      "description": "Identify the three main cloud types — cumulus (fluffy, fair weather), stratus (flat layers, overcast or drizzle), and cirrus (thin wisps, high up) — and understand that clouds form when water vapour in the air cools and condenses into tiny droplets",
+      "ageRangeStart": 7,
+      "ageRangeEnd": 9,
+      "centrality": 0.08344733242134063,
+      "evidence": [
+        "Name and describe the three main cloud types: cumulus, stratus, cirrus",
+        "Explain that clouds form when water vapour cools and condenses",
+        "Use cloud type to make a simple prediction about the weather"
+      ],
+      "assessmentPrompt": "If {{name}} looked up at the sky, could they identify whether the clouds are fluffy cumulus, flat stratus, or wispy cirrus, and explain that clouds are made of tiny water droplets?",
+      "standards": []
+    },
+    {
+      "id": "mt_nRF_VRntrW",
+      "type": "CONCEPTUAL",
+      "subject": "Science",
+      "domain": "Earth's Systems",
+      "name": "Where water is found on Earth",
+      "description": "Identify where water is found on Earth and understand that water can exist as solid (ice) or liquid, recognising water in oceans, rivers, glaciers, and underground",
+      "ageRangeStart": 7,
+      "ageRangeEnd": 8,
+      "centrality": 0.09849521203830369,
+      "evidence": [
+        "List where water is found on Earth: oceans, rivers, lakes, glaciers, underground, atmosphere",
+        "Explain that water exists as liquid (rivers, oceans) and solid (ice, glaciers, snow)",
+        "Recognise that most of Earth's water is in the oceans"
+      ],
+      "assessmentPrompt": "Can {{name}} name the different places water is found on Earth — in oceans, rivers, ice caps, and even underground — and explain that ice is just frozen water?",
+      "standards": ["ngss-k5:2-ESS2-3"]
+    },
+    {
+      "id": "mt_Pl-nsjYGZ3",
+      "type": "CONCEPTUAL",
+      "subject": "Science",
+      "domain": "Matter & Materials",
+      "name": "Heating & Cooling Changes",
+      "description": "Observe and describe that some materials change state when heated or cooled, and measure the temperature at which changes occur in degrees Celsius",
+      "ageRangeStart": 7,
+      "ageRangeEnd": 9,
+      "centrality": 0.1094391244870041,
+      "evidence": [
+        "Describe melting (solid to liquid) and freezing (liquid to solid) with everyday examples",
+        "State that water freezes at 0°C and boils at 100°C",
+        "Explain that heating adds energy causing particles to move more, leading to state changes"
+      ],
+      "assessmentPrompt": "Can {{name}} explain what happens to an ice cube when you heat it, and at what temperature water freezes and boils?",
+      "standards": ["ngss-k5:2-PS1-4", "uk-nc-2013:Y4.Sci.SM.2"]
+    },
+    {
+      "id": "mt_ahSqW_kK1b",
+      "type": "LANGUAGE",
+      "subject": "Science",
+      "domain": "Matter & Materials",
+      "name": "Changes & Separation Vocabulary",
+      "description": "Use process vocabulary for changes of state and material separation — dissolve, solution, soluble, insoluble, evaporate, condense, melt, freeze, filter, sieve, mixture, separate — and understand precisely what each term describes, including the important distinction between dissolving and melting",
+      "ageRangeStart": 7,
+      "ageRangeEnd": 9,
+      "centrality": 0.02188782489740082,
+      "evidence": [
+        "Distinguish 'dissolve' from 'melt' correctly in context and explain the difference",
+        "Use 'soluble' and 'insoluble' accurately when describing whether a material dissolves in water",
+        "Explain the difference between evaporation and condensation using the correct terms"
+      ],
+      "assessmentPrompt": "If {{name}} stirs sugar into tea, can they explain whether the sugar dissolved or melted — and tell you those are different things?",
+      "standards": []
+    },
+    {
+      "id": "mt_fhqVdj4BYr",
+      "type": "CONCEPTUAL",
+      "subject": "Science",
+      "domain": "Weather & Climate",
+      "name": "The Water Cycle",
+      "description": "Understand the water cycle: the Sun heats water in oceans and lakes causing it to evaporate into water vapour, the vapour rises and cools to form clouds (condensation), and water falls back to Earth as rain, snow, or hail (precipitation) — then the cycle repeats",
+      "ageRangeStart": 7,
+      "ageRangeEnd": 9,
+      "centrality": 0.09165526675786594,
+      "evidence": [
+        "Name the three main stages: evaporation, condensation, precipitation",
+        "Explain the Sun's role in driving the water cycle",
+        "Describe the water cycle as a continuous loop with no beginning or end"
+      ],
+      "assessmentPrompt": "Can {{name}} trace the journey of a raindrop — from the ocean being heated by the Sun, rising as invisible vapour, forming a cloud, and falling back down as rain — and explain it keeps going round and round?",
+      "standards": []
+    },
+    {
+      "id": "mt_Qkewo5M3_c",
+      "type": "CONCEPTUAL",
+      "subject": "Science",
+      "domain": "Matter & Materials",
+      "name": "Evaporation & the Water Cycle",
+      "description": "Identify the role of evaporation and condensation in the water cycle, and associate the rate of evaporation with temperature",
+      "ageRangeStart": 8,
+      "ageRangeEnd": 9,
+      "centrality": 0.03967168262653899,
+      "evidence": [
+        "Describe evaporation as liquid turning to gas and condensation as gas turning to liquid",
+        "Explain the water cycle: evaporation from seas/lakes → condensation into clouds → precipitation",
+        "Explain why evaporation happens faster at higher temperatures (e.g. puddles dry faster on hot days)"
+      ],
+      "assessmentPrompt": "Can {{name}} explain why puddles disappear on a sunny day and where the water goes, and why the bathroom mirror steams up after a hot shower?",
+      "standards": ["uk-nc-2013:Y4.Sci.SM.3"]
+    }
+  ],
+  "dependencies": [
+    {
+      "topicId": "mt_IhWzO4sQPg",
+      "prerequisiteId": "mt_TlLE4cZgOr",
+      "strength": "hard",
+      "reason": "Cloud types build on knowing rain comes from clouds"
+    },
+    {
+      "topicId": "mt_fhqVdj4BYr",
+      "prerequisiteId": "mt_IhWzO4sQPg",
+      "strength": "hard",
+      "reason": "Water cycle requires understanding cloud formation (condensation)"
+    },
+    {
+      "topicId": "mt_fhqVdj4BYr",
+      "prerequisiteId": "mt_nRF_VRntrW",
+      "strength": "soft",
+      "reason": "Water cycle benefits from knowing where water is found on Earth"
+    },
+    {
+      "topicId": "mt_fhqVdj4BYr",
+      "prerequisiteId": "mt_Pl-nsjYGZ3",
+      "strength": "soft",
+      "reason": "Water cycle benefits from curriculum states of matter (heating/cooling changes state)"
+    },
+    {
+      "topicId": "mt_fhqVdj4BYr",
+      "prerequisiteId": "mt_PrWc-HZzDl",
+      "strength": "soft",
+      "reason": "Water cycle evaporation relates to temperature (heat drives evaporation)"
+    },
+    {
+      "topicId": "mt_fhqVdj4BYr",
+      "prerequisiteId": "mt_TlLE4cZgOr",
+      "strength": "hard",
+      "reason": "Full water cycle builds on basic rain/puddle/evaporation concept"
+    },
+    {
+      "topicId": "mt_Qkewo5M3_c",
+      "prerequisiteId": "mt_fhqVdj4BYr",
+      "strength": "soft",
+      "reason": "Water cycle connects to curriculum evaporation/condensation topic"
+    },
+    {
+      "topicId": "mt_Qkewo5M3_c",
+      "prerequisiteId": "mt_Pl-nsjYGZ3",
+      "strength": "hard",
+      "reason": "Must understand state changes before learning about evaporation/condensation in water cycle"
+    },
+    {
+      "topicId": "mt_Qkewo5M3_c",
+      "prerequisiteId": "mt_ahSqW_kK1b",
+      "strength": "hard",
+      "reason": "Identifying the role of evaporation and condensation requires knowing these process terms precisely"
+    }
+  ]
+}

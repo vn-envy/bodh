@@ -1,7 +1,6 @@
-import { sessionPayloadForSelection } from "./adaptive-repair.ts";
+import { reviewedProbeSelectionIsValid } from "./reviewed-probes.ts";
 import type { LocalizedText } from "./narration-language.ts";
 import {
-  SEEDED_DOUBT_IDS,
   seededDoubtById,
   type SeededDoubtId,
 } from "./seeded-doubts.ts";
@@ -10,6 +9,7 @@ const hiEn = (hi: string, en: string): LocalizedText => ({ hi, en });
 
 export const SEEDED_JOURNEY_STORAGE_KEY = "bodh:seeded-live-journey:v1" as const;
 export const SEEDED_JOURNEY_VERSION = "seeded-live-journey-v1" as const;
+export type MathSeededDoubtId = Exclude<SeededDoubtId, "seed-09">;
 
 type FitVisual = Readonly<{
   kind: "fit";
@@ -37,7 +37,7 @@ type ClarifyVisual = Readonly<{ kind: "clarify" }>;
 export type SeedLessonVisual = FitVisual | ShareVisual | PairVisual | ClarifyVisual;
 
 export type SeedLesson = Readonly<{
-  seedId: SeededDoubtId;
+  seedId: MathSeededDoubtId;
   title: LocalizedText;
   promise: LocalizedText;
   diagnosis: LocalizedText;
@@ -58,7 +58,7 @@ export type SeedLesson = Readonly<{
   }>;
 }>;
 
-export const SEED_LESSONS: Readonly<Record<SeededDoubtId, SeedLesson>> = {
+export const SEED_LESSONS: Readonly<Record<MathSeededDoubtId, SeedLesson>> = {
   "seed-01": {
     seedId: "seed-01",
     title: hiEn("Rule को picture का meaning दो", "Give the rule a picture"),
@@ -261,8 +261,8 @@ export const SEED_LESSONS: Readonly<Record<SeededDoubtId, SeedLesson>> = {
 } as const;
 
 export function seedLessonById(id: unknown) {
-  return typeof id === "string" && SEEDED_DOUBT_IDS.includes(id as SeededDoubtId)
-    ? SEED_LESSONS[id as SeededDoubtId]
+  return typeof id === "string" && Object.hasOwn(SEED_LESSONS, id)
+    ? SEED_LESSONS[id as MathSeededDoubtId]
     : null;
 }
 
@@ -313,7 +313,7 @@ function normaliseSeedJourneyHandoff(value: unknown): SeedJourneyHandoff | null 
   if (!boundedIds(record.conceptIds) || !boundedIds(record.hypothesisIds)) return null;
   if (!isBoundedId(record.model) || !isBoundedId(record.promptVersion)) return null;
   if (!isBoundedId(record.probeId) || !isBoundedId(record.optionId)) return null;
-  if (!sessionPayloadForSelection(record.probeId, record.optionId)) return null;
+  if (!reviewedProbeSelectionIsValid(record.probeId, record.optionId)) return null;
   return {
     version: SEEDED_JOURNEY_VERSION,
     seedId: seed.id,

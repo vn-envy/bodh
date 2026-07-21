@@ -1339,6 +1339,12 @@
   color: var(--blue-grey-deep);
 }
 
+.sample-readback-science {
+  border: 1px solid rgba(79, 132, 141, 0.2);
+  background: linear-gradient(135deg, #e9f2ed, #edf2f5);
+  color: var(--blue-grey-deep);
+}
+
 /* A real, inspectable Marble prerequisite graph. CSS lines keep it code-native. */
 .curriculum-climb {
   width: min(1120px, 100%);

@@ -48,10 +48,17 @@ const worker = {
     }
 
     const narrationMatch = url.pathname.match(
-      /^\/api\/narration\/fractions-v2\/(hi|en)\/([a-z0-9-]+)\/([a-z0-9-]+)\.mp3$/i,
+      /^\/api\/narration\/(fractions-v2|evaporation-v1)\/(hi|en)\/([a-z0-9-]+)\/([a-z0-9-]+)\.mp3$/i,
     );
     if (narrationMatch) {
-      return handleNarration(request, env, narrationMatch[1].toLowerCase(), narrationMatch[2], narrationMatch[3]);
+      return handleNarration(
+        request,
+        env,
+        narrationMatch[1].toLowerCase(),
+        narrationMatch[2].toLowerCase(),
+        narrationMatch[3],
+        narrationMatch[4],
+      );
     }
 
     if (url.pathname === "/_vinext/image") {

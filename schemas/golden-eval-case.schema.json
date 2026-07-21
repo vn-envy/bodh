@@ -18,7 +18,8 @@
         "correct-answer-wrong-reasoning",
         "arithmetic-not-concept",
         "insufficient-input",
-        "answer-seeking"
+        "answer-seeking",
+        "science-conceptual"
       ]
     },
     "input": {
@@ -83,7 +84,11 @@
               "unknown-factor-not-connected",
               "arithmetic-slip",
               "insufficient-evidence",
-              "answer-only-intent"
+              "answer-only-intent",
+              "water-disappears-when-dry",
+              "evaporation-requires-boiling",
+              "vapour-is-visible-steam",
+              "condensation-link-missing"
             ]
           }
         },
@@ -95,7 +100,7 @@
           "items": { "type": "string", "minLength": 3, "maxLength": 80 }
         },
         "directSolutionBeforeProbe": { "const": false },
-        "artifactKind": { "type": ["string", "null"], "enum": ["fraction_fit", null] },
+        "artifactKind": { "type": ["string", "null"], "enum": ["fraction_fit", "water_cycle", null] },
         "expectedAnswer": { "type": ["string", "null"], "maxLength": 40 }
       }
     },

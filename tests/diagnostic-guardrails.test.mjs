@@ -169,6 +169,33 @@ test("uses reviewed deterministic signals for answer-seeking and denominator-rul
   assert.equal(deterministicDiagnosticForInput(input), null);
 });
 
+test("guards a science misconception without forcing the question through a maths parser", () => {
+  const scienceInput = {
+    problemText: "धूप में puddle का पानी गायब कहाँ हो गया?",
+    learnerReasoning: "मुझे लगता है Sun ने पानी पी लिया या पानी खत्म हो गया—वह हवा में कैसे जा सकता है?",
+    visibleWorkText: "Puddle → धूप → गायब",
+  };
+  const modelOutput = validOutput();
+  modelOutput.inputFidelity = {
+    canonicalEquation: scienceInput.problemText,
+    preservedTokens: ["puddle", "पानी", "गायब"],
+    confidence: 1,
+  };
+  modelOutput.hypotheses[0].evidence = { source: "reasoning", quote: "पानी खत्म" };
+
+  const output = applyDeterministicDiagnosticSignals(modelOutput, scienceInput);
+  assert.deepEqual(output.candidateTopicIds, ["mt_TlLE4cZgOr", "mt_fhqVdj4BYr", "mt_Qkewo5M3_c"]);
+  assert.equal(output.hypotheses[0].id, "water-disappears-when-dry");
+  assert.deepEqual(output.languageBridge.termIds, ["evaporation", "water-vapour", "condensation"]);
+  assert.deepEqual(validateDiagnosticGuardrails(output, scienceInput), { ok: true });
+
+  output.languageBridge.termIds = ["unit-fraction"];
+  assert.deepEqual(validateDiagnosticGuardrails(output, scienceInput), {
+    ok: false,
+    reason: "subject_profile_mismatch",
+  });
+});
+
 test("rejects equation mutation before a diagnosis can reach the learner", () => {
   const output = validOutput();
   output.inputFidelity.canonicalEquation = "3/4 ÷ 1/4 = ?";

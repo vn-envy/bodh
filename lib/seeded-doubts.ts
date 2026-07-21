@@ -9,13 +9,16 @@ export const SEEDED_DOUBT_IDS = [
   "seed-06",
   "seed-07",
   "seed-08",
+  "seed-09",
 ] as const;
 
 export type SeededDoubtId = (typeof SEEDED_DOUBT_IDS)[number];
 export type SeededDoubtKind = "full-journey" | "diagnosis-sample" | "safe-retry";
+export type SeededDoubtSubject = "mathematics" | "science";
 
 export type SeededDoubt = Readonly<{
   id: SeededDoubtId;
+  subject: SeededDoubtSubject;
   title: LocalizedText;
   concept: LocalizedText;
   problemText: string;
@@ -35,6 +38,7 @@ const hiEn = (hi: string, en: string): LocalizedText => ({ hi, en });
 export const SEEDED_DOUBTS: readonly SeededDoubt[] = [
   {
     id: "seed-01",
+    subject: "mathematics",
     title: hiEn("Rule याद है, meaning नहीं", "I remember the rule, not the meaning"),
     concept: hiEn("Fraction division का meaning", "Meaning of fraction division"),
     problemText: "3/4 ÷ 1/8 = ?",
@@ -46,6 +50,7 @@ export const SEEDED_DOUBTS: readonly SeededDoubt[] = [
   },
   {
     id: "seed-02",
+    subject: "mathematics",
     title: hiEn("क्या division हमेशा छोटा करता है?", "Does division always make things smaller?"),
     concept: hiEn("Whole में छोटे groups गिनना", "Counting small groups inside a whole"),
     problemText: "4 ÷ 1/5 = ?",
@@ -57,6 +62,7 @@ export const SEEDED_DOUBTS: readonly SeededDoubt[] = [
   },
   {
     id: "seed-03",
+    subject: "mathematics",
     title: hiEn("एक fraction को 4 में बाँटना", "Splitting one fraction into four"),
     concept: hiEn("Unit fraction को बराबर बाँटना", "Sharing a unit fraction equally"),
     problemText: "1/3 ÷ 4 = ?",
@@ -68,6 +74,7 @@ export const SEEDED_DOUBTS: readonly SeededDoubt[] = [
   },
   {
     id: "seed-04",
+    subject: "mathematics",
     title: hiEn("बड़ा denominator, छोटा answer?", "Bigger denominator, smaller answer?"),
     concept: hiEn("Denominator और unit-size", "Denominator and unit size"),
     problemText: "2/3 ÷ 1/6 = ?",
@@ -79,6 +86,7 @@ export const SEEDED_DOUBTS: readonly SeededDoubt[] = [
   },
   {
     id: "seed-05",
+    subject: "mathematics",
     title: hiEn("Answer सही, पर क्यों?", "The answer is right—but why?"),
     concept: hiEn("Procedure को picture से जोड़ना", "Connecting a procedure to a picture"),
     problemText: "3/4 ÷ 1/8 = ?",
@@ -90,6 +98,7 @@ export const SEEDED_DOUBTS: readonly SeededDoubt[] = [
   },
   {
     id: "seed-06",
+    subject: "mathematics",
     title: hiEn("Concept सही, arithmetic slip", "The concept is right; arithmetic slipped"),
     concept: hiEn("Over-teach किए बिना repair", "Repairing without over-teaching"),
     problemText: "3/5 ÷ 1/10 = ?",
@@ -101,6 +110,7 @@ export const SEEDED_DOUBTS: readonly SeededDoubt[] = [
   },
   {
     id: "seed-07",
+    subject: "mathematics",
     title: hiEn("Photo पढ़ी नहीं जा रही", "The homework photo is not readable"),
     concept: hiEn("Guess नहीं—साफ़ input माँगना", "Do not guess—ask for a clearer input"),
     problemText: "[The photographed equation is not readable]",
@@ -112,6 +122,7 @@ export const SEEDED_DOUBTS: readonly SeededDoubt[] = [
   },
   {
     id: "seed-08",
+    subject: "mathematics",
     title: hiEn("बस answer बता दो", "Just tell me the answer"),
     concept: hiEn("Answer से पहले understanding check", "Check understanding before an answer"),
     problemText: "5/6 ÷ 1/3 = ?",
@@ -121,10 +132,34 @@ export const SEEDED_DOUBTS: readonly SeededDoubt[] = [
     goalTopicId: "mt_9Y96vxG_LH",
     kind: "diagnosis-sample",
   },
+  {
+    id: "seed-09",
+    subject: "science",
+    title: hiEn("Puddle का पानी कहाँ गया?", "Where did the puddle water go?"),
+    concept: hiEn("पानी गायब नहीं होता—state और जगह बदलता है", "Water does not vanish—it changes state and location"),
+    problemText: "धूप में puddle का पानी गायब कहाँ हो गया?",
+    learnerReasoning: "मुझे लगता है Sun ने पानी पी लिया या पानी खत्म हो गया—वह हवा में कैसे जा सकता है?",
+    visibleWorkText: "Puddle → धूप → गायब",
+    focusTopicId: "mt_TlLE4cZgOr",
+    goalTopicId: "mt_Qkewo5M3_c",
+    kind: "diagnosis-sample",
+  },
 ] as const;
 
 export function seededDoubtById(id: unknown) {
   return SEEDED_DOUBTS.find((sample) => sample.id === id) ?? null;
+}
+
+export function learningHrefForSeed(seed: SeededDoubt) {
+  return seed.subject === "science"
+    ? `/science/evaporation?live=${seed.id}`
+    : `/learn?seed=${seed.id}`;
+}
+
+export function curatedFallbackForSeed(seed: SeededDoubt | null) {
+  return seed?.subject === "science"
+    ? { kind: "curated_science" as const, href: "/science/evaporation" as const, artifactKey: "science-evaporation" as const }
+    : { kind: "curated_demo" as const, href: "/demo" as const, artifactKey: "curated-demo" as const };
 }
 
 /**

@@ -22,7 +22,7 @@ React, Next-compatible tooling, Vinext, Vite, Cloudflare tooling, Ajv, and other
 - Scope contract, phase gates, traceability, and evaluation plan
 - Taxonomy slice selection for the hero journey
 - Artifact and golden-eval contracts
-- Eight Bodh seed eval cases
+- Nine Bodh seed eval cases: eight mathematics and one science
 - Deterministic demo fixture and learner-facing implementation
 - Later prompts, diagnostic orchestration, interaction engine, tests, demo, and submission materials
 

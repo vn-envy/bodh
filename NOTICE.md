@@ -2,7 +2,7 @@
 
 ## Marble Skill Taxonomy
 
-This project includes a bounded extract of the Marble Skill Taxonomy for the Bodh fraction-division demo.
+This project includes bounded extracts of the Marble Skill Taxonomy for Bodh's fraction-division and evaporation/water-cycle journeys.
 
 > Marble Skill Taxonomy (v1) · © Generative Spark, Inc. (Marble) · https://withmarble.com · licensed under ODbL 1.0 (database) and CC BY-SA 4.0 (content).
 
@@ -11,7 +11,7 @@ This project includes a bounded extract of the Marble Skill Taxonomy for the Bod
 - Database license: Open Database License 1.0 — https://opendatacommons.org/licenses/odbl/1-0/
 - Text-content license: Creative Commons Attribution-ShareAlike 4.0 — https://creativecommons.org/licenses/by-sa/4.0/
 
-The extract in `data/taxonomy/fractions-division.slice.json` preserves Marble’s canonical topic IDs and dependency statements. The extract is offered under the same applicable ODbL 1.0 and CC BY-SA 4.0 terms. Bodh-specific selection metadata and diagnostic labels are marked separately from copied taxonomy fields.
+The extracts in `data/taxonomy/fractions-division.slice.json` and `data/taxonomy/evaporation-water-cycle.slice.json` preserve Marble's canonical topic IDs and dependency statements. The extracts are offered under the same applicable ODbL 1.0 and CC BY-SA 4.0 terms. Bodh-specific selection metadata and diagnostic labels are marked separately from copied taxonomy fields.
 
 Only references to curriculum standard identifiers are retained; the third-party curriculum-standard text is not copied into this repository. See the upstream project’s `PROVENANCE.md` for the provenance and terms of those frameworks.
 

@@ -20,6 +20,10 @@ type LiveScienceEvidence = Readonly<{
   persisted: boolean;
 }>;
 
+// The worker owns a 30-second upstream limit. Keep the browser open just long
+// enough to receive its verified live result or its explicit curated fallback.
+const JUDGE_DIAGNOSIS_TIMEOUT_MS = 32_000;
+
 const SCIENCE_PROBE_OPTIONS: readonly Readonly<{
   id: ScienceProbeChoice;
   icon: string;
@@ -359,7 +363,7 @@ export function JudgeJourney() {
     apiStartedRef.current = true;
     const controller = new AbortController();
     requestRef.current = controller;
-    const timeout = window.setTimeout(() => controller.abort(), 25_000);
+    const timeout = window.setTimeout(() => controller.abort(), JUDGE_DIAGNOSIS_TIMEOUT_MS);
     setDiagnosisStatus("loading");
     try {
       const response = await fetch("/api/diagnose", {

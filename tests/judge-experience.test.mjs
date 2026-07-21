@@ -41,6 +41,8 @@ test("the judge journey starts one exact science call on click and earns live co
   assert.match(tour, /onClick=\{startJourney\}/);
   assert.match(tour, /const startJourney = \(\) => \{\s*void beginScienceDiagnosis\(\);\s*setActiveIndex\(1\);/s);
   assert.match(tour, /fetch\("\/api\/diagnose"/);
+  assert.match(tour, /const JUDGE_DIAGNOSIS_TIMEOUT_MS = 32_000/);
+  assert.match(tour, /setTimeout\(\(\) => controller\.abort\(\), JUDGE_DIAGNOSIS_TIMEOUT_MS\)/);
   assert.match(tour, /problemText: JUDGE_SEEDS\.science\.problem/);
   assert.match(tour, /learnerReasoning: JUDGE_SEEDS\.science\.learnerWords/);
   assert.match(tour, /visibleWorkText: JUDGE_SEEDS\.science\.visibleWork/);

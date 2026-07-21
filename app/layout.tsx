@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
+import { LocalizedSkipLink } from "./components/LocalizedSkipLink";
 import "./globals.css";
 import "./design-refinement.css";
 
@@ -36,7 +37,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="hi">
       <body>
-        <a className="skip-link" href="#main-content">मुख्य content / Main content</a>
+        <LocalizedSkipLink />
         {children}
       </body>
     </html>

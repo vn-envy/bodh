@@ -118,7 +118,7 @@ test("serves reviewed language-specific static narration before attempting synth
 test("serves only authored evaporation narration from its own bounded profile", async () => {
   let assetPath = "";
   const response = await requestNarration(
-    "/api/narration/evaporation-v1/hi/invisible-vapour/vapour-is-invisible.mp3",
+    "/api/narration/evaporation-v2/hi/invisible-vapour/vapour-is-invisible.mp3",
     {},
     {
       ASSETS: {
@@ -133,13 +133,13 @@ test("serves only authored evaporation narration from its own bounded profile", 
   );
 
   assert.equal(response.status, 200);
-  assert.equal(response.headers.get("x-bodh-narration-version"), "evaporation-v1");
+  assert.equal(response.headers.get("x-bodh-narration-version"), "evaporation-v2");
   assert.equal(response.headers.get("content-language"), "hi-IN");
-  assert.equal(assetPath, "/audio/evaporation-v1/hi/invisible-vapour/vapour-is-invisible.mp3");
+  assert.equal(assetPath, "/audio/evaporation-v2/hi/invisible-vapour/vapour-is-invisible.mp3");
   assert.match(narrationBeatForEvaporation("invisible-vapour", "vapour-is-invisible", "en").text, /invisible/i);
 
   const unknown = await requestNarration(
-    "/api/narration/evaporation-v1/hi/invisible-vapour/unreviewed-explanation.mp3",
+    "/api/narration/evaporation-v2/hi/invisible-vapour/unreviewed-explanation.mp3",
   );
   assert.equal(unknown.status, 404);
 });

@@ -26,7 +26,7 @@ test("science and mathematics receipts share one deterministic visual contract",
     assert.match(science.badge, /6\/6/);
     assert.match(science.idea, language === "hi" ? /पानी गायब नहीं होता/ : /Water does not disappear/);
     assert.match(science.evidence, /12\/12/);
-    assert.match(science.trust, /mastery|long-term/i);
+    assert.match(science.trust, /mastery|long-term|महारत/i);
     assert.doesNotMatch(
       JSON.stringify(science),
       /learnerText|traceId|upload|studentName|Date\(|Math\.random/i,

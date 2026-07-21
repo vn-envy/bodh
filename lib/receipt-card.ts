@@ -118,7 +118,7 @@ export function createEvaporationReceiptCardModel(
 ): ReceiptCardModel {
   const isHindi = language === "hi";
   const labels = isHindi
-    ? ["देखा", "Track किया", "नई जगह", "समझाया"]
+    ? ["देखा", "खोजा", "नई जगह", "समझाया"]
     : ["Noticed", "Tracked", "New case", "Explained"];
 
   return {
@@ -127,23 +127,23 @@ export function createEvaporationReceiptCardModel(
     variant: "curated",
     brand: "BODH",
     tagline: isHindi ? "जो सच में समझ आया" : "That which is truly understood",
-    badge: isHindi ? "JOURNEY पूरी · 6/6" : "JOURNEY COMPLETE · 6/6",
+    badge: isHindi ? "यात्रा पूरी · 6/6" : "JOURNEY COMPLETE · 6/6",
     title: isHindi
-      ? "मैंने उसी पानी को नई situation में भी track किया।"
+      ? "मैंने उसी पानी को नई स्थिति में भी खोजा।"
       : "I tracked the same water in a new situation.",
-    ideaLabel: isHindi ? "आज की बड़ी idea" : "TODAY'S BIG IDEA",
+    ideaLabel: isHindi ? "आज का बड़ा विचार" : "TODAY'S BIG IDEA",
     idea: isHindi
-      ? "पानी गायब नहीं होता—उसकी state और location बदल सकती है।"
+      ? "पानी गायब नहीं होता—उसका रूप और जगह बदल सकते हैं।"
       : "Water does not disappear—it can change state and location.",
     evidence: isHindi
-      ? "Puddle से 12/12 water track किया · cold lid पर वही idea इस्तेमाल की"
+      ? "पानी की 12/12 गिनती पूरी की · ठंडे ढक्कन पर वही विचार आज़माया"
       : "Tracked 12/12 water from the puddle · used the same idea with a cold lid",
-    firstLabel: isHindi ? "PUDDLE JOURNEY" : "PUDDLE JOURNEY",
-    firstEquation: isHindi ? "liquid → invisible vapour" : "liquid → invisible vapour",
-    transferLabel: isHindi ? "नई SITUATION" : "NEW SITUATION",
-    transferEquation: isHindi ? "vapour → liquid drops" : "vapour → liquid drops",
+    firstLabel: isHindi ? "पानी की पहली यात्रा" : "PUDDLE JOURNEY",
+    firstEquation: isHindi ? "तरल → अदृश्य जलवाष्प" : "liquid → invisible vapour",
+    transferLabel: isHindi ? "नई स्थिति" : "NEW SITUATION",
+    transferEquation: isHindi ? "जलवाष्प → तरल बूँदें" : "vapour → liquid drops",
     trust: isHindi
-      ? "यह आज के actions का evidence है—grade या long-term mastery का दावा नहीं।"
+      ? "यह आज किए काम का सबूत है—अंक या लंबे समय की महारत का दावा नहीं।"
       : "This records today's actions—not a grade or a claim of long-term mastery.",
     nodes: labels.map((label, index) => ({ label, x: NODE_X[index] })),
   };

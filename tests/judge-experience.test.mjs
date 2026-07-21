@@ -60,6 +60,10 @@ test("both visual repairs are evidence-gated before the final receipt", async ()
 
   assert.match(tour, /const mathComplete = mathCount === 6/);
   assert.match(tour, /const scienceComplete = Boolean\(scienceChoice\)/);
+  assert.doesNotMatch(
+    tour,
+    /const scienceComplete = Boolean\(scienceChoice\)\s*&&\s*diagnosisStatus/,
+  );
   assert.match(tour, /const transferComplete = transferChoice === "same-matter"/);
   assert.match(tour, /disabled=\{!mathComplete\}/);
   assert.match(tour, /disabled=\{!scienceComplete\}/);
@@ -69,6 +73,8 @@ test("both visual repairs are evidence-gated before the final receipt", async ()
   assert.match(tour, /id="judge-complete-title" ref=\{headingRef\} tabIndex=\{-1\}/);
   assert.match(tour, /You reached the end of the guided journey/);
   assert.match(tour, /This records today’s interactions—not a grade or a claim of long-term mastery/);
+  assert.match(tour, /Live OpenAI diagnosis is still finishing/);
+  assert.match(tour, /status === "waiting"/);
 });
 
 test("the 33-case working corpus does not rewrite the recorded 32-case release", async () => {

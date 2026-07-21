@@ -5,9 +5,9 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useReducer,
   useRef,
   useState,
-  useSyncExternalStore,
   type Ref,
 } from "react";
 import {
@@ -15,6 +15,12 @@ import {
   EVAPORATION_NARRATION_VERSION,
   type EvaporationCueTarget,
 } from "../../../lib/evaporation-concept";
+import {
+  evaporationJourneyReducer,
+  evaporationPathPosition,
+  INITIAL_EVAPORATION_JOURNEY,
+  type EvaporationJourneyState,
+} from "../../../lib/evaporation-journey";
 import type { NarrationLanguage } from "../../../lib/narration-language";
 import {
   parseSeedJourneyHandoff,
@@ -23,7 +29,6 @@ import {
 } from "../../../lib/seeded-journey";
 import { createEvaporationReceiptCardModel } from "../../../lib/receipt-card";
 import { BodhMark } from "../../components/BodhMark";
-import { EvaporationCurriculumClimb } from "../../components/EvaporationCurriculumClimb";
 import {
   NarrationLanguageToggle,
   useNarrationLanguage,
@@ -31,7 +36,7 @@ import {
 import { ReceiptImageCard } from "../../components/ReceiptImageCard";
 import styles from "./EvaporationJourney.module.css";
 
-type AudioState = "preparing" | "ready" | "playing" | "unavailable";
+type AudioState = "ready" | "preparing" | "playing" | "unavailable";
 type ProbeChoice = "moved" | "destroyed" | "underground";
 type TransferChoice = "moved-cooled" | "new-water" | "destroyed-unrelated" | "underground";
 type LessonMode = Readonly<{
@@ -40,14 +45,7 @@ type LessonMode = Readonly<{
   handoff: SeedJourneyHandoff | null;
 }>;
 
-type PreparedClip = Readonly<{
-  beatId: string;
-  src: string;
-}>;
-
-const noopSubscribe = () => () => undefined;
-const browserHydrated = () => true;
-const serverHydrated = () => false;
+const CURATED_MODE: LessonMode = { live: false, requestedLive: false, handoff: null };
 
 const PROBE_OPTIONS: ReadonlyArray<Readonly<{
   id: ProbeChoice;
@@ -59,21 +57,21 @@ const PROBE_OPTIONS: ReadonlyArray<Readonly<{
   {
     id: "moved",
     icon: "↗",
-    hi: "पानी invisible vapour बनकर हवा में गया",
+    hi: "पानी जलवाष्प बनकर हवा में चला गया",
     en: "The water moved into the air as invisible vapour",
     correct: true,
   },
   {
     id: "destroyed",
     icon: "☀",
-    hi: "Sun ने पानी खत्म कर दिया",
+    hi: "सूरज ने पानी खत्म कर दिया",
     en: "The Sun destroyed the water",
     correct: false,
   },
   {
     id: "underground",
     icon: "↓",
-    hi: "सारा पानी liquid रहकर जमीन के नीचे गया",
+    hi: "सारा पानी तरल रहकर जमीन के नीचे चला गया",
     en: "All the water stayed liquid and went underground",
     correct: false,
   },
@@ -89,37 +87,47 @@ const TRANSFER_OPTIONS: ReadonlyArray<Readonly<{
   {
     id: "moved-cooled",
     icon: "↗ · ❄ · ●",
-    hi: "Puddle का पानी हवा में गया, फिर cold lid पर cool होकर liquid drops बना",
-    en: "Puddle water moved into the air, then cooled into liquid drops on the cold lid",
+    hi: "वही पानी हवा में गया, ठंडा हुआ और ढक्कन पर बूँदें बना गया",
+    en: "The same water moved into the air, cooled, and formed drops on the lid",
     correct: true,
   },
   {
     id: "new-water",
     icon: "＋ ●",
-    hi: "Cold lid ने नया पानी बना दिया",
+    hi: "ठंडे ढक्कन ने नया पानी बना दिया",
     en: "The cold lid made brand-new water",
     correct: false,
   },
   {
     id: "destroyed-unrelated",
     icon: "☀ × · ?",
-    hi: "Sun ने puddle खत्म किया; lid की drops उससे अलग हैं",
+    hi: "सूरज ने पानी खत्म किया; ढक्कन की बूँदें अलग हैं",
     en: "The Sun destroyed the puddle; the lid drops are unrelated",
     correct: false,
   },
   {
     id: "underground",
     icon: "↓",
-    hi: "सारा puddle-water जमीन के नीचे ही रहा",
+    hi: "सारा पानी जमीन के नीचे ही रहा",
     en: "All the puddle water stayed underground",
     correct: false,
   },
 ];
 
-function lessonMode(): LessonMode {
+const PATH_LABELS = [
+  { hi: "सोचो", en: "Think" },
+  { hi: "पानी", en: "Water" },
+  { hi: "गर्मी", en: "Warmth" },
+  { hi: "जलवाष्प", en: "Vapour" },
+  { hi: "बूँदें", en: "Drops" },
+  { hi: "बारिश", en: "Rain" },
+  { hi: "आज़माओ", en: "Transfer" },
+] as const;
+
+function readLessonMode(): LessonMode {
   const query = new URLSearchParams(window.location.search);
   const requestedLive = query.get("live") === "seed-09";
-  if (!requestedLive) return { live: false, requestedLive: false, handoff: null };
+  if (!requestedLive) return CURATED_MODE;
 
   try {
     const handoff = parseSeedJourneyHandoff(window.sessionStorage.getItem(SEEDED_JOURNEY_STORAGE_KEY));
@@ -127,7 +135,7 @@ function lessonMode(): LessonMode {
       return { live: true, requestedLive: true, handoff };
     }
   } catch {
-    // A missing or unavailable session becomes the reviewed curated journey.
+    // A missing or unavailable session becomes the reviewed journey.
   }
   return { live: false, requestedLive: true, handoff: null };
 }
@@ -146,13 +154,18 @@ function probeChoiceFromHandoff(handoff: SeedJourneyHandoff | null): ProbeChoice
   return carriedChoices[handoff.optionId] ?? null;
 }
 
+export function evaporationQuestionFor(language: NarrationLanguage) {
+  return language === "hi"
+    ? "धूप में पानी का छोटा गड्ढा सूख गया—पानी कहाँ गया?"
+    : "A puddle dried in the sunshine—where did the water go?";
+}
+
 function useEvaporationNarration(stageIndex: number, language: NarrationLanguage) {
   const stage = EVAPORATION_CONCEPT_STAGES[stageIndex];
-  const [state, setState] = useState<AudioState>("preparing");
+  const [state, setState] = useState<AudioState>("ready");
   const [activeBeatIndex, setActiveBeatIndex] = useState(-1);
   const [hasPlayed, setHasPlayed] = useState(false);
-  const [retryKey, setRetryKey] = useState(0);
-  const clipsRef = useRef<PreparedClip[]>([]);
+  const preloadedRef = useRef<Map<string, HTMLAudioElement>>(new Map());
   const playerRef = useRef<HTMLAudioElement | null>(null);
   const playbackTokenRef = useRef(0);
 
@@ -169,78 +182,72 @@ function useEvaporationNarration(stageIndex: number, language: NarrationLanguage
   const stop = useCallback(() => {
     haltPlayer();
     setActiveBeatIndex(-1);
-    setState((current) => current === "playing" ? "ready" : current);
+    setState("ready");
   }, [haltPlayer]);
 
   useEffect(() => {
-    const controller = new AbortController();
-    let cancelled = false;
-    const objectUrls: string[] = [];
-
     haltPlayer();
-    clipsRef.current = [];
+    for (const audio of preloadedRef.current.values()) {
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+    }
+
+    // Warm all three short, authored beats in parallel. The first click can
+    // start beat one immediately, while beats two and three keep loading in the
+    // background instead of creating silent gaps mid-explanation.
+    const prepared = new Map<string, HTMLAudioElement>();
+    for (const beat of stage.narration) {
+      const audio = new Audio(narrationUrl(language, stage.id, beat.id));
+      audio.preload = "auto";
+      audio.load();
+      prepared.set(beat.id, audio);
+    }
+    preloadedRef.current = prepared;
     queueMicrotask(() => {
-      if (cancelled) return;
+      setState("ready");
       setActiveBeatIndex(-1);
       setHasPlayed(false);
-      setState("preparing");
-    });
-
-    Promise.all(stage.narration.map(async (beat) => {
-      const response = await fetch(narrationUrl(language, stage.id, beat.id), {
-        method: "GET",
-        signal: controller.signal,
-      });
-      if (!response.ok) throw new Error("narration_unavailable");
-      const blob = await response.blob();
-      if (!blob.type.startsWith("audio/") || blob.size === 0) throw new Error("invalid_narration");
-      const src = URL.createObjectURL(blob);
-      objectUrls.push(src);
-      return { beatId: beat.id, src };
-    })).then((clips) => {
-      if (cancelled) return;
-      clipsRef.current = clips;
-      setState("ready");
-    }).catch((error: unknown) => {
-      if (cancelled || (error instanceof DOMException && error.name === "AbortError")) return;
-      clipsRef.current = [];
-      setState("unavailable");
     });
 
     return () => {
-      cancelled = true;
-      controller.abort();
       haltPlayer();
-      for (const url of objectUrls) URL.revokeObjectURL(url);
+      if (preloadedRef.current === prepared) preloadedRef.current = new Map();
+      for (const audio of prepared.values()) {
+        audio.pause();
+        audio.removeAttribute("src");
+        audio.load();
+      }
     };
-  }, [haltPlayer, language, retryKey, stage]);
+  }, [haltPlayer, language, stage]);
 
   const play = useCallback(async () => {
-    if (state === "unavailable") {
-      setRetryKey((value) => value + 1);
-      return;
-    }
-    if (state !== "ready" || clipsRef.current.length !== stage.narration.length) return;
-
-    stop();
+    haltPlayer();
     const token = playbackTokenRef.current;
-    setState("playing");
+    setState("preparing");
     setHasPlayed(true);
 
-    for (let index = 0; index < clipsRef.current.length; index += 1) {
+    for (let index = 0; index < stage.narration.length; index += 1) {
       if (token !== playbackTokenRef.current) return;
+      const beat = stage.narration[index];
       setActiveBeatIndex(index);
-      const clip = clipsRef.current[index];
-      const audio = new Audio(clip.src);
+      const audio = preloadedRef.current.get(beat.id)
+        ?? new Audio(narrationUrl(language, stage.id, beat.id));
+      preloadedRef.current.delete(beat.id);
       playerRef.current = audio;
+
       try {
         await new Promise<void>((resolve, reject) => {
+          audio.onplaying = () => {
+            if (token === playbackTokenRef.current) setState("playing");
+          };
           audio.onended = () => resolve();
           audio.onerror = () => reject(new Error("narration_playback_failed"));
           void audio.play().catch(reject);
         });
       } catch {
         if (token === playbackTokenRef.current) {
+          playerRef.current = null;
           setActiveBeatIndex(-1);
           setState("unavailable");
         }
@@ -253,7 +260,7 @@ function useEvaporationNarration(stageIndex: number, language: NarrationLanguage
       setActiveBeatIndex(-1);
       setState("ready");
     }
-  }, [stage.narration.length, state, stop]);
+  }, [haltPlayer, language, stage]);
 
   const activeBeat = activeBeatIndex >= 0 ? stage.narration[activeBeatIndex] : null;
   return {
@@ -285,30 +292,30 @@ function NarrationControl({
   onStop: () => void;
 }) {
   const label = state === "preparing"
-    ? language === "hi" ? "Bodh की calm voice तैयार हो रही है…" : "Preparing Bodh's calm voice…"
+    ? language === "hi" ? "आवाज़ आ रही है · रोकें" : "Voice is on its way · stop"
     : state === "playing"
       ? language === "hi" ? `Bodh समझा रहा है · ${activeBeatIndex + 1}/${beatCount} · रोकें` : `Bodh is explaining · ${activeBeatIndex + 1}/${beatCount} · stop`
       : state === "unavailable"
-        ? language === "hi" ? "Studio voice नहीं मिली · फिर कोशिश करें" : "Studio voice unavailable · try again"
+        ? language === "hi" ? "आवाज़ फिर चलाएँ" : "Try the voice again"
         : hasPlayed
           ? language === "hi" ? "फिर से सुनें" : "Replay explanation"
-          : language === "hi" ? "यह idea सुनें" : "Listen to this idea";
+          : language === "hi" ? "अभी सुनें" : "Listen now";
+  const active = state === "preparing" || state === "playing";
 
   return (
     <div className={styles.narrationControl}>
       <button
-        className={`${styles.listenButton} ${state === "ready" && !hasPlayed ? styles.listenReady : ""}`}
+        className={`${styles.listenButton} ${!active ? styles.listenReady : ""}`}
         type="button"
-        onClick={state === "playing" ? onStop : onPlay}
-        disabled={state === "preparing"}
+        onClick={active ? onStop : onPlay}
         aria-label={label}
       >
         <span className={styles.soundGlyph} aria-hidden="true"><i /><i /><i /></span>
-        <strong>{label}</strong>
+        <span><strong>{label}</strong><small>{language === "hi" ? "शांत, एक जैसी Bodh आवाज़" : "One calm, consistent Bodh voice"}</small></span>
       </button>
-      <small>{language === "hi"
-        ? "Reviewed OpenAI studio voice · device voice fallback नहीं"
-        : "Reviewed OpenAI studio voice · no device-voice fallback"}</small>
+      <span className={styles.voiceNote}>{language === "hi"
+        ? "आवाज़ तैयार होते समय भी आगे बढ़ सकते हो"
+        : "You can keep learning while the voice gets ready"}</span>
     </div>
   );
 }
@@ -320,12 +327,10 @@ function targetClass(activeTarget: EvaporationCueTarget | null, targets: readonl
 function WaterCycleScene({
   stageIndex,
   activeTarget,
-  cueText,
   language,
 }: {
   stageIndex: number;
   activeTarget: EvaporationCueTarget | null;
-  cueText: string | null;
   language: NarrationLanguage;
 }) {
   const ledger = [
@@ -340,156 +345,292 @@ function WaterCycleScene({
     <div className={styles.sceneShell}>
       <div className={styles.scene} data-stage={stageIndex}>
         <div className={styles.skyWash} aria-hidden="true" />
-        <div className={`${styles.sun} ${targetClass(activeTarget, ["sun"])}`} aria-label={language === "hi" ? "Sunlight puddle को energy देती है" : "Sunlight transfers energy to the puddle"}>
-          <span aria-hidden="true" />
+        <div className={`${styles.sun} ${targetClass(activeTarget, ["sun"])}`} aria-label={language === "hi" ? "धूप पानी को ऊर्जा देती है" : "Sunlight transfers energy to the water"}><span aria-hidden="true" /></div>
+        <div className={`${styles.coolAir} ${targetClass(activeTarget, ["cool-air"])}`} aria-hidden="true"><i>❄</i><i>❄</i><i>❄</i></div>
+        <div className={`${styles.cloud} ${targetClass(activeTarget, ["droplets", "cloud"])}`} aria-label={language === "hi" ? "बादल: तरल पानी की छोटी बूँदें" : "Cloud: tiny drops of liquid water"}>
+          <i /><i /><i /><span>{language === "hi" ? "तरल पानी की बूँदें" : "tiny liquid drops"}</span>
         </div>
-        <div className={`${styles.coolAir} ${targetClass(activeTarget, ["cool-air"])}`} aria-hidden="true">
-          <i>❄</i><i>❄</i><i>❄</i>
-        </div>
-        <div className={`${styles.cloud} ${targetClass(activeTarget, ["droplets", "cloud"])}`} aria-label={language === "hi" ? "Cloud: tiny liquid water droplets" : "Cloud: tiny liquid water droplets"}>
-          <i /><i /><i /><span>{language === "hi" ? "tiny liquid drops" : "tiny liquid drops"}</span>
-        </div>
-        <div className={`${styles.tracker} ${targetClass(activeTarget, ["vapour-tracker", "invisible-note"])}`} aria-label={language === "hi" ? "Bodh tracker invisible water vapour की imagined path दिखाता है" : "Bodh's tracker represents the imagined path of invisible water vapour"}>
-          {Array.from({ length: 9 }, (_, index) => <i style={{ "--tracker-index": index } as React.CSSProperties} key={index} />)}
+        <div className={`${styles.tracker} ${targetClass(activeTarget, ["vapour-tracker", "invisible-note"])}`} aria-label={language === "hi" ? "Bodh के बिंदु अदृश्य जलवाष्प का रास्ता समझाते हैं" : "Bodh's dots map the imagined path of invisible water vapour"}>
+          {Array.from({ length: 9 }, (_, index) => <i key={index} />)}
         </div>
         <div className={styles.trackerLabel}>
-          <strong>{language === "hi" ? "Bodh tracker view" : "Bodh tracker view"}</strong>
-          <span>{language === "hi" ? "Dots केवल invisible water की यात्रा दिखाते हैं" : "Dots only map the invisible water's journey"}</span>
+          <strong>{language === "hi" ? "Bodh का खोजी नक्शा" : "Bodh's tracker"}</strong>
+          <span>{language === "hi" ? "बिंदु केवल अदृश्य पानी का रास्ता दिखाते हैं" : "Dots map invisible water; they are not visible vapour"}</span>
         </div>
-        <div className={`${styles.rain} ${targetClass(activeTarget, ["rain"])}`} aria-label={language === "hi" ? "Rain पानी को धरती पर लौटाती है" : "Rain returns water to Earth"}>
-          {Array.from({ length: 8 }, (_, index) => <i style={{ "--rain-index": index } as React.CSSProperties} key={index} />)}
+        <div className={`${styles.rain} ${targetClass(activeTarget, ["rain"])}`} aria-label={language === "hi" ? "बारिश पानी को धरती पर लौटाती है" : "Rain returns water to Earth"}>
+          {Array.from({ length: 8 }, (_, index) => <i key={index} />)}
         </div>
-        <div className={`${styles.upArrow} ${targetClass(activeTarget, ["surface", "vapour-tracker", "cycle"])}`} aria-hidden="true"><span>↑</span></div>
-        <div className={`${styles.downArrow} ${targetClass(activeTarget, ["rain", "cycle"])}`} aria-hidden="true"><span>↓</span></div>
+        <div className={styles.upArrow} aria-hidden="true"><span>↑</span></div>
+        <div className={styles.downArrow} aria-hidden="true"><span>↓</span></div>
         <div className={styles.ground} aria-hidden="true"><i /><i /><i /></div>
         <div className={`${styles.puddleWrap} ${targetClass(activeTarget, ["puddle", "water-boundary", "surface"])}`}>
           <div className={styles.oldBoundary} aria-hidden="true" />
-          <div className={styles.puddle} role="img" aria-label={language === "hi" ? "Stage के साथ छोटा और rain में फिर बड़ा होता puddle" : "A puddle shrinking through the stages and growing again with rain"}>
-            <i /><i /><i />
-          </div>
+          <div className={styles.puddle} role="img" aria-label={language === "hi" ? "हर पड़ाव पर छोटा होकर बारिश में फिर भरता पानी" : "Water shrinking at each stage and filling again with rain"}><i /><i /><i /></div>
           <span>{stageIndex === 0
-            ? language === "hi" ? "liquid water" : "liquid water"
+            ? language === "hi" ? "तरल पानी" : "liquid water"
             : stageIndex === 4
-              ? language === "hi" ? "वापस धरती पर" : "back on Earth"
-              : language === "hi" ? "कम liquid यहाँ" : "less liquid here"}</span>
+              ? language === "hi" ? "धरती पर वापस" : "back on Earth"
+              : language === "hi" ? "यहाँ कम तरल" : "less liquid here"}</span>
         </div>
       </div>
 
-      <div className={styles.conservationLedger} aria-label={language === "hi" ? "Water conservation tracker" : "Water conservation tracker"}>
-        <div><strong>{language === "hi" ? "Water accounted for" : "Water accounted for"} · 12/12</strong><small>{language === "hi" ? "Bodh के model counters" : "Bodh's model counters"}</small></div>
-        <span>{language === "hi" ? "liquid" : "liquid"} <b>{ledger.liquid}</b></span>
-        <span>{language === "hi" ? "air" : "air"} <b>{ledger.air}</b></span>
-        <span>{language === "hi" ? "cloud/rain" : "cloud/rain"} <b>{ledger.cloud}</b></span>
-      </div>
-
-      <div className={styles.cueRail} aria-live="polite">
-        <span aria-hidden="true">↗</span>
-        <div>
-          <small>{language === "hi" ? "Bodh अभी यहाँ point कर रहा है" : "Bodh is pointing here"}</small>
-          <strong>{cueText ?? (language === "hi" ? "Voice play करें—artifact साथ चलेगा" : "Play the voice—the artifact will follow")}</strong>
-        </div>
+      <div className={styles.conservationLedger} aria-label={language === "hi" ? "पानी की पूरी गिनती" : "Complete water count"}>
+        <div><strong>{language === "hi" ? "पूरा पानी मिला" : "All water accounted for"} · 12/12</strong><small>{language === "hi" ? "Bodh के बारह संकेत" : "Bodh's twelve counters"}</small></div>
+        <span>{language === "hi" ? "तरल" : "liquid"} <b>{ledger.liquid}</b></span>
+        <span>{language === "hi" ? "हवा" : "air"} <b>{ledger.air}</b></span>
+        <span>{language === "hi" ? "बादल/बारिश" : "cloud/rain"} <b>{ledger.cloud}</b></span>
       </div>
     </div>
   );
 }
 
-function TransferExperiment({
+function ScienceJourneyPath({
   language,
-  onComplete,
+  state,
+  onProbe,
+  onConcept,
+  onTransfer,
 }: {
   language: NarrationLanguage;
-  onComplete: () => void;
+  state: EvaporationJourneyState;
+  onProbe: () => void;
+  onConcept: (stageIndex: number) => void;
+  onTransfer: () => void;
 }) {
-  const [lidPlaced, setLidPlaced] = useState(false);
-  const [choice, setChoice] = useState<TransferChoice | null>(null);
-  const [checked, setChecked] = useState(false);
-  const selected = TRANSFER_OPTIONS.find((option) => option.id === choice);
-  const correct = Boolean(checked && selected?.correct);
+  const current = evaporationPathPosition(state);
+  const furthest = state.transferUnlocked ? 6 : state.furthestConcept + 1;
+  const complete = state.screen.kind === "receipt";
 
   return (
-    <section className={styles.transferCard} aria-labelledby="transfer-title">
-      <div className={styles.transferIntro}>
-        <div>
-          <span className={styles.eyebrow}>{language === "hi" ? "नया evidence · वही model" : "New evidence · same model"}</span>
-          <h2 id="transfer-title">{language === "hi" ? "Warm puddle के ऊपर cold lid रखो।" : "Hold a cold lid above the warm puddle."}</h2>
-          <p>{language === "hi" ? "पहले evidence बनाओ, फिर वह story चुनो जो दोनों changes समझाती है।" : "Create the evidence first, then choose the one story that explains both changes."}</p>
-        </div>
-        <BodhMark pose="tinker" size="medium" motion="tinker" />
-      </div>
-
-      <div className={`${styles.lidLab} ${lidPlaced ? styles.lidLabActive : ""}`}>
-        <div className={styles.lid} aria-hidden="true"><span>{language === "hi" ? "cold lid" : "cold lid"}</span><i /><i /><i /><i /></div>
-        <div className={styles.lidTracker} aria-hidden="true">↑ ↑ ↑</div>
-        <div className={styles.warmPuddle} aria-hidden="true"><i /><i /><i /></div>
-        <div className={styles.lidLabels}>
-          <span>{language === "hi" ? "warm water" : "warm water"}</span>
-          <strong>{lidPlaced ? language === "hi" ? "नई drops नीचे दिखीं" : "New drops appeared underneath" : language === "hi" ? "Evidence अभी बनाएँ" : "Create the evidence"}</strong>
-        </div>
-        <button type="button" onClick={() => { setLidPlaced(true); setChecked(false); }} disabled={lidPlaced}>
-          {lidPlaced ? language === "hi" ? "Cold lid रखी गई ✓" : "Cold lid placed ✓" : language === "hi" ? "Cold lid पकड़ें" : "Hold the cold lid"}
-        </button>
-      </div>
-
-      {lidPlaced && (
-        <div className={styles.transferQuestion}>
-          <h3>{language === "hi"
-            ? "कौन-सी story shrinking puddle और lid की नई drops—दोनों को समझाती है?"
-            : "Which story explains both the shrinking puddle and the new drops on the lid?"}</h3>
-          <div className={styles.transferOptions} role="group" aria-label={language === "hi" ? "Transfer check choices" : "Transfer check choices"}>
-            {TRANSFER_OPTIONS.map((option) => (
-              <button
-                className={choice === option.id ? styles.optionSelected : ""}
-                type="button"
-                aria-pressed={choice === option.id}
-                onClick={() => { setChoice(option.id); setChecked(false); }}
-                key={option.id}
-              >
-                <span aria-hidden="true">{option.icon}</span>
-                <strong>{option[language]}</strong>
+    <nav className={styles.pathNav} aria-label={language === "hi" ? "पानी की सीखने की यात्रा" : "Water learning journey"}>
+      <ol className={styles.path}>
+        {PATH_LABELS.map((label, index) => {
+          const enabled = index === 0 || index <= furthest;
+          const done = complete || (index === 6 ? state.transferCompleted : enabled && index !== current);
+          const status = !complete && index === current ? "current" : done ? "done" : "ahead";
+          const onClick = index === 0 ? onProbe : index === 6 ? onTransfer : () => onConcept(index - 1);
+          return (
+            <li data-state={status} key={label.en}>
+              <button type="button" onClick={onClick} disabled={!enabled} aria-current={status === "current" ? "step" : undefined}>
+                {status === "current" && <BodhMark pose="guide" size="mark" motion="guide" className={styles.pathBodh} />}
+                <span>{status === "done" ? "✓" : index + 1}</span>
+                <strong>{label[language]}</strong>
               </button>
-            ))}
-          </div>
-          {checked && !correct && <p className={styles.gentleHint}>{language === "hi"
-            ? "अभी नहीं—एक ही water matter को puddle से air और air से drops तक track करो।"
-            : "Not yet—track the same water matter from puddle to air and from air to drops."}</p>}
-          {correct && <div className={styles.transferSuccess} role="status">
-            <strong>{language === "hi" ? "हाँ—यही condensation है।" : "Yes—that is condensation."}</strong>
-            <p>{language === "hi"
-              ? "Hot shower के बाद cool bathroom mirror पर droplets भी इसी तरह बनती हैं: invisible vapour cool होकर liquid बनती है।"
-              : "Droplets on a cool bathroom mirror after a hot shower form the same way: invisible vapour cools into liquid."}</p>
-          </div>}
-          <button
-            className={styles.primaryAction}
-            type="button"
-            disabled={!choice}
-            onClick={() => correct ? onComplete() : setChecked(true)}
-          >
-            {correct
-              ? language === "hi" ? "Journey पूरी करें और receipt देखें →" : "Finish journey and view receipt →"
-              : language === "hi" ? "मेरी story जाँचें" : "Check my story"}
-          </button>
-        </div>
-      )}
-    </section>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
   );
 }
 
-function CycleCompleteBridge({ language }: { language: NarrationLanguage }) {
+function ProbeScreen({
+  language,
+  mode,
+  choice,
+  carriedChoice,
+  onChoose,
+  onStart,
+  headingRef,
+}: {
+  language: NarrationLanguage;
+  mode: LessonMode;
+  choice: ProbeChoice | null;
+  carriedChoice: ProbeChoice | null;
+  onChoose: (choice: ProbeChoice) => void;
+  onStart: () => void;
+  headingRef: Ref<HTMLHeadingElement>;
+}) {
+  const selected = PROBE_OPTIONS.find((option) => option.id === choice);
+
   return (
-    <section className={styles.cycleCompleteBridge} role="status" aria-live="polite">
-      <div className={styles.cycleCompleteMark} aria-hidden="true">✓</div>
-      <div>
-        <span className={styles.eyebrow}>{language === "hi" ? "Water journey · 5/5 पूरी" : "Water journey · 5/5 complete"}</span>
-        <h2>{language === "hi" ? "तुमने पानी को हर stop पर ढूँढ लिया।" : "You found the water at every stop."}</h2>
-        <p>{language === "hi"
-          ? "अब सिर्फ़ एक final step है: यही model cold lid पर नई situation में इस्तेमाल करो।"
-          : "One final step remains: use the same model in a new cold-lid situation."}</p>
+    <article className={`${styles.screen} ${styles.probeScreen}`} data-science-screen="probe">
+      <section className={styles.probeStory}>
+        <span className={styles.modeBadge}><i aria-hidden="true" />{mode.live
+          ? language === "hi" ? "OpenAI की जाँच पूरी" : "OpenAI diagnosis complete"
+          : language === "hi" ? "जाँची हुई विज्ञान यात्रा" : "Reviewed science journey"}</span>
+        <span className={styles.eyebrow}>{language === "hi" ? "एक बूँद का रहस्य" : "One drop · one mystery"}</span>
+        <h1 ref={headingRef} tabIndex={-1}>{language === "hi" ? "पानी सच में गायब हुआ?" : "Did the water really disappear?"}</h1>
+        <p>{evaporationQuestionFor(language)}</p>
+        <div className={styles.probeVisual} aria-hidden="true">
+          <div className={styles.probeSun} />
+          <div className={styles.probeBoundary} />
+          <div className={styles.probePuddle} />
+          <span>?</span>
+          <BodhMark pose="listen" size="large" motion="listen" priority />
+        </div>
+      </section>
+
+      <section className={styles.probePanel} aria-labelledby="science-probe-title">
+        <div className={styles.panelHeading}>
+          <div><span className={styles.eyebrow}>{language === "hi" ? "पहले अपनी सोच बताओ" : "First, show your thinking"}</span><h2 id="science-probe-title">{language === "hi" ? "पानी के साथ क्या हुआ होगा?" : "What might have happened to the water?"}</h2></div>
+          <span>{language === "hi" ? "कोई अंक नहीं" : "No score"}</span>
+        </div>
+        <div className={styles.probeOptions} role="group" aria-label={language === "hi" ? "शुरुआती सोच के विकल्प" : "Initial thinking choices"}>
+          {PROBE_OPTIONS.map((option) => (
+            <button className={choice === option.id ? styles.optionSelected : ""} type="button" aria-pressed={choice === option.id} onClick={() => onChoose(option.id)} key={option.id}>
+              <span aria-hidden="true">{option.icon}</span><strong>{option[language]}</strong>
+            </button>
+          ))}
+        </div>
+        {choice && <p className={styles.probeResponse} role="status">{carriedChoice === choice
+          ? language === "hi" ? "तुम्हारी पहले वाली सोच यहाँ सुरक्षित आई है। चाहो तो बदल सकते हो।" : "Your earlier idea arrived safely. You can still change it."
+          : selected?.correct
+            ? language === "hi" ? "अच्छी शुरुआत। अब इसे सबूत से परखते हैं।" : "Strong start. Now let's test it with evidence."
+            : language === "hi" ? "यह उपयोगी शुरुआत है। Bodh इसे तस्वीर से परखेगा।" : "That is a useful starting point. Bodh will test it with the visual."}</p>}
+        <button className={styles.primaryAction} type="button" disabled={!choice} onClick={onStart}>
+          {language === "hi" ? "पानी के साथ चलें" : "Follow the water"} <span aria-hidden="true">→</span>
+        </button>
+      </section>
+    </article>
+  );
+}
+
+function ConceptScreen({
+  language,
+  stageIndex,
+  narration,
+  onAdvance,
+  headingRef,
+}: {
+  language: NarrationLanguage;
+  stageIndex: number;
+  narration: ReturnType<typeof useEvaporationNarration>;
+  onAdvance: () => void;
+  headingRef: Ref<HTMLHeadingElement>;
+}) {
+  const stage = EVAPORATION_CONCEPT_STAGES[stageIndex];
+  const matterState = [
+    { hi: "अवस्था · तरल", en: "STATE · LIQUID" },
+    { hi: "अवस्था · गरम होता तरल", en: "STATE · WARMING LIQUID" },
+    { hi: "अवस्था · गैस", en: "STATE · GAS" },
+    { hi: "अवस्था · गैस → तरल", en: "STATE · GAS → LIQUID" },
+    { hi: "अवस्था · तरल", en: "STATE · LIQUID" },
+  ][stageIndex][language];
+  const cue = narration.activeBeat?.key[language]
+    ?? (language === "hi" ? "Bodh को सुनो—तीर उसी जगह चलेगा" : "Listen to Bodh—the pointer will follow");
+
+  return (
+    <article className={`${styles.screen} ${styles.conceptScreen}`} data-science-screen={`concept-${stageIndex + 1}`}>
+      <header className={styles.stageHeading}>
+        <div>
+          <span className={styles.eyebrow}>{stage.eyebrow[language]} · {stageIndex + 1}/5</span>
+          <h1 ref={headingRef} tabIndex={-1}>{stage.title[language]}</h1>
+          <div className={styles.stageKeyRow}><p>{stage.screenKey[language]}</p><span>{matterState}</span></div>
+        </div>
+        <BodhMark pose={stageIndex < 2 ? "guide" : "tinker"} size="small" motion={stageIndex < 2 ? "guide" : "tinker"} />
+      </header>
+
+      <div className={styles.conceptGrid}>
+        <WaterCycleScene stageIndex={stageIndex} activeTarget={narration.activeBeat?.target ?? null} language={language} />
+        <aside className={styles.conceptAside}>
+          <NarrationControl
+            language={language}
+            state={narration.state}
+            activeBeatIndex={narration.activeBeatIndex}
+            beatCount={narration.beatCount}
+            hasPlayed={narration.hasPlayed}
+            onPlay={narration.play}
+            onStop={narration.stop}
+          />
+          <div className={styles.cueRail} aria-live="polite"><span aria-hidden="true">↗</span><div><small>{language === "hi" ? "Bodh यहाँ दिखा रहा है" : "Bodh is pointing here"}</small><strong>{cue}</strong></div></div>
+          <div className={styles.evidenceCard}><span>{language === "hi" ? "क्या देखा?" : "What did you notice?"}</span><strong>{stage.evidence[language]}</strong></div>
+          <button className={styles.primaryAction} type="button" onClick={onAdvance}>{stage.action[language]} <span aria-hidden="true">→</span></button>
+        </aside>
       </div>
-      <div className={styles.cycleCompleteMascot}>
-        <BodhMark pose="guide" size="medium" motion="guide" />
-        <strong>{language === "hi" ? "अंतिम step → Transfer" : "Final step → Transfer"}</strong>
+    </article>
+  );
+}
+
+function BridgeScreen({ language, onContinue, headingRef }: { language: NarrationLanguage; onContinue: () => void; headingRef: Ref<HTMLHeadingElement> }) {
+  return (
+    <article className={`${styles.screen} ${styles.bridgeScreen}`} data-science-screen="bridge">
+      <div className={styles.bridgeOrbit} aria-hidden="true"><i /><i /><i /><i /><i /></div>
+      <div className={styles.bridgeMascot}><BodhMark pose="celebrate" size="hero" motion="celebrate" /></div>
+      <div className={styles.bridgeCopy}>
+        <span className={styles.completionChip}>✓ {language === "hi" ? "पानी की यात्रा · 5/5" : "Water journey · 5/5"}</span>
+        <h1 ref={headingRef} tabIndex={-1}>{language === "hi" ? "तुमने पानी को हर पड़ाव पर ढूँढ लिया।" : "You found the water at every stop."}</h1>
+        <p>{language === "hi" ? "अब वही समझ एक बिल्कुल नई स्थिति में आज़माओ। यही असली समझ की जाँच है।" : "Now use the same idea in a completely new situation. That is the real understanding check."}</p>
+        <button className={styles.primaryAction} type="button" onClick={onContinue}>{language === "hi" ? "नई स्थिति आज़माएँ" : "Try a new situation"} <span aria-hidden="true">→</span></button>
       </div>
-    </section>
+    </article>
+  );
+}
+
+function LidExperiment({ language, onPlace }: { language: NarrationLanguage; onPlace: () => void }) {
+  return (
+    <div className={styles.lidLab}>
+      <div className={styles.lid} aria-hidden="true"><span>{language === "hi" ? "ठंडा ढक्कन" : "cold lid"}</span><i /><i /><i /><i /></div>
+      <div className={styles.lidTracker} aria-hidden="true">↑ ↑ ↑</div>
+      <div className={styles.warmPuddle} aria-hidden="true"><i /><i /><i /></div>
+      <div className={styles.lidLabels}><span>{language === "hi" ? "गर्म पानी" : "warm water"}</span><strong>{language === "hi" ? "ढक्कन को पानी के ऊपर रखो" : "Move the lid above the water"}</strong></div>
+      <button type="button" onClick={onPlace}>{language === "hi" ? "ढक्कन रखें" : "Place the lid"}</button>
+    </div>
+  );
+}
+
+function TransferScreen({
+  language,
+  phase,
+  onPlace,
+  onCorrect,
+  onFinish,
+  headingRef,
+}: {
+  language: NarrationLanguage;
+  phase: "evidence" | "choice" | "success";
+  onPlace: () => void;
+  onCorrect: () => void;
+  onFinish: () => void;
+  headingRef: Ref<HTMLHeadingElement>;
+}) {
+  const [choice, setChoice] = useState<TransferChoice | null>(null);
+  const [checked, setChecked] = useState(false);
+  const selected = TRANSFER_OPTIONS.find((option) => option.id === choice);
+
+  if (phase === "success") {
+    return (
+      <article className={`${styles.screen} ${styles.transferSuccessScreen}`} data-science-screen="transfer-success">
+        <div className={styles.successVisual}><span className={styles.successHalo} aria-hidden="true" /><BodhMark pose="celebrate" size="hero" motion="celebrate" /><i aria-hidden="true">✓</i></div>
+        <div>
+          <span className={styles.completionChip}>{language === "hi" ? "नई स्थिति समझ ली" : "New situation understood"}</span>
+          <h1 ref={headingRef} tabIndex={-1}>{language === "hi" ? "वही पानी—बस रूप और जगह बदली।" : "Same water—only its form and location changed."}</h1>
+          <p>{language === "hi" ? "गर्म पानी की जलवाष्प ठंडे ढक्कन पर ठंडी हुई और फिर तरल बूँदें बन गई। तुमने समझ को याद नहीं किया—इस्तेमाल किया।" : "Water vapour from the warm water cooled on the lid and became liquid drops. You did not just remember the idea—you used it."}</p>
+          <button className={styles.primaryAction} type="button" onClick={onFinish}>{language === "hi" ? "मेरी समझ का कार्ड देखें" : "See my understanding card"} <span aria-hidden="true">→</span></button>
+        </div>
+      </article>
+    );
+  }
+
+  return (
+    <article className={`${styles.screen} ${styles.transferScreen}`} data-science-screen={phase === "evidence" ? "transfer-evidence" : "transfer-choice"}>
+      <header className={styles.stageHeading}>
+        <div><span className={styles.eyebrow}>{phase === "evidence" ? language === "hi" ? "नई स्थिति · पहले सबूत" : "New situation · evidence first" : language === "hi" ? "नई स्थिति · अब समझाओ" : "New situation · explain it"}</span><h1 ref={headingRef} tabIndex={-1}>{phase === "evidence" ? language === "hi" ? "गर्म पानी के ऊपर ठंडा ढक्कन रखो।" : "Hold a cold lid above warm water." : language === "hi" ? "ढक्कन के नीचे नई बूँदें क्यों बनीं?" : "Why did new drops appear under the lid?"}</h1></div>
+        <BodhMark pose="tinker" size="small" motion="tinker" />
+      </header>
+
+      {phase === "evidence" ? (
+        <div className={styles.transferEvidenceGrid}>
+          <LidExperiment language={language} onPlace={onPlace} />
+          <aside className={styles.transferPrompt}><span aria-hidden="true">1</span><h2>{language === "hi" ? "कुछ बनाओ, फिर समझाओ" : "Make something happen, then explain it"}</h2><p>{language === "hi" ? "बटन दबाते ही ठंडी सतह पर बूँदें दिखेंगी। अगली स्क्रीन पर तुम उनकी कहानी चुनोगे।" : "Place the lid to reveal drops on the cool surface. On the next screen, you will choose their story."}</p></aside>
+        </div>
+      ) : (
+        <div className={styles.transferChoiceGrid}>
+          <div className={styles.miniEvidence} aria-label={language === "hi" ? "गर्म पानी से ठंडे ढक्कन तक पानी का रास्ता" : "Water path from warm water to the cold lid"}><span>{language === "hi" ? "गर्म पानी" : "warm water"}</span><i>↑</i><span>{language === "hi" ? "हवा" : "air"}</span><i>→</i><span>{language === "hi" ? "ठंडी बूँदें" : "cool drops"}</span></div>
+          <div className={styles.transferQuestion}>
+            <div className={styles.transferOptions} role="group" aria-label={language === "hi" ? "नई स्थिति के उत्तर" : "New-situation answers"}>
+              {TRANSFER_OPTIONS.map((option) => (
+                <button className={choice === option.id ? styles.optionSelected : ""} type="button" aria-pressed={choice === option.id} onClick={() => { setChoice(option.id); setChecked(false); }} key={option.id}>
+                  <span aria-hidden="true">{option.icon}</span><strong>{option[language]}</strong>
+                </button>
+              ))}
+            </div>
+            {checked && !selected?.correct && <p className={styles.gentleHint} role="status">{language === "hi" ? "एक ही पानी को नीचे से हवा और फिर ढक्कन की बूँदों तक खोजो।" : "Track the same water from below, through the air, and into the drops on the lid."}</p>}
+            <button className={styles.primaryAction} type="button" disabled={!choice} onClick={() => selected?.correct ? onCorrect() : setChecked(true)}>{language === "hi" ? "अपनी कहानी जाँचें" : "Check my story"} <span aria-hidden="true">→</span></button>
+          </div>
+        </div>
+      )}
+    </article>
   );
 }
 
@@ -504,247 +645,81 @@ function UnderstandingReceipt({
   onRestart: () => void;
   headingRef: Ref<HTMLHeadingElement>;
 }) {
-  const receiptModel = useMemo(
-    () => createEvaporationReceiptCardModel(language),
-    [language],
-  );
+  const receiptModel = useMemo(() => createEvaporationReceiptCardModel(language), [language]);
 
   return (
-    <article className={styles.receipt}>
-      <div className={styles.journeyCompleteBanner} role="status" aria-live="polite">
-        <span aria-hidden="true">✓</span>
-        <div>
-          <strong>{language === "hi" ? "Journey पूरी · 6/6" : "Journey complete · 6/6"}</strong>
-          <small>{language === "hi"
-            ? "5 water-cycle ideas + 1 नई transfer situation"
-            : "5 water-cycle ideas + 1 new transfer situation"}</small>
-        </div>
-      </div>
-
-      <ReceiptImageCard
-        language={language}
-        variant="curated"
-        model={receiptModel}
-        headingRef={headingRef}
-      />
-
+    <article className={styles.receipt} data-science-screen="receipt">
+      <div className={styles.journeyCompleteBanner} role="status" aria-live="polite"><span aria-hidden="true">✓</span><div><strong>{language === "hi" ? "यात्रा पूरी · 6/6" : "Journey complete · 6/6"}</strong><small>{language === "hi" ? "पाँच विचार + एक नई स्थिति" : "Five ideas + one new situation"}</small></div></div>
+      <ReceiptImageCard language={language} variant="curated" model={receiptModel} headingRef={headingRef} />
       <div className={styles.receiptFooter}>
-        <div className={styles.receiptMeta}>
-          <span>✓ Marble · mt_Qkewo5M3_c</span>
-          <span>✓ Hindi + English</span>
-          {mode.live && <span>✓ {mode.handoff?.model} · seed-09</span>}
-        </div>
-        <p>{language === "hi"
-          ? "यह आज के actions का evidence है—grade या long-term mastery claim नहीं।"
-          : "This records today's actions—not a grade or a claim of long-term mastery."}</p>
-        <div className={styles.receiptActions}>
-          <button className={styles.primaryAction} type="button" onClick={onRestart}>{language === "hi" ? "Journey फिर देखें" : "Replay the journey"}</button>
-          <Link className={styles.secondaryAction} href="/diagnose">{language === "hi" ? "एक और doubt लाएँ" : "Bring another doubt"}</Link>
-        </div>
+        <div className={styles.receiptMeta}><span>✓ Marble · mt_Qkewo5M3_c</span><span>✓ {language === "hi" ? "हिंदी" : "English"}</span>{mode.live && <span>✓ OpenAI · seed-09</span>}</div>
+        <p>{language === "hi" ? "यह आज किए काम का सबूत है—अंक या लंबे समय की महारत का दावा नहीं।" : "This records today's actions—not a grade or a claim of long-term mastery."}</p>
+        <div className={styles.receiptActions}><button className={styles.primaryAction} type="button" onClick={onRestart}>{language === "hi" ? "यात्रा फिर देखें" : "Replay the journey"}</button><Link className={styles.secondaryAction} href="/diagnose">{language === "hi" ? "एक और सवाल लाएँ" : "Bring another doubt"}</Link></div>
       </div>
     </article>
   );
 }
 
+function screenName(state: EvaporationJourneyState) {
+  return state.screen.kind === "concept" ? `${state.screen.kind}-${state.screen.stageIndex}` : state.screen.kind;
+}
+
 export function EvaporationJourney() {
   const language = useNarrationLanguage();
-  const hydrated = useSyncExternalStore(noopSubscribe, browserHydrated, serverHydrated);
-  const mode = useMemo<LessonMode>(() => hydrated
-    ? lessonMode()
-    : { live: false, requestedLive: false, handoff: null }, [hydrated]);
+  const [mode, setMode] = useState<LessonMode>(CURATED_MODE);
+  const [journey, dispatch] = useReducer(evaporationJourneyReducer, INITIAL_EVAPORATION_JOURNEY);
   const [probeChoice, setProbeChoice] = useState<ProbeChoice | null>(null);
-  const [stageIndex, setStageIndex] = useState(0);
-  const [cycleComplete, setCycleComplete] = useState(false);
-  const [receiptVisible, setReceiptVisible] = useState(false);
-  const receiptHeadingRef = useRef<HTMLHeadingElement>(null);
-  const stage = EVAPORATION_CONCEPT_STAGES[stageIndex];
-  const narration = useEvaporationNarration(stageIndex, language);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const activeStageIndex = journey.screen.kind === "concept" ? journey.screen.stageIndex : 0;
+  const narration = useEvaporationNarration(activeStageIndex, language);
   const carriedProbeChoice = mode.live ? probeChoiceFromHandoff(mode.handoff) : null;
   const effectiveProbeChoice = probeChoice ?? carriedProbeChoice;
-  const probe = PROBE_OPTIONS.find((option) => option.id === effectiveProbeChoice);
+  const currentScreenName = screenName(journey);
 
   useEffect(() => {
-    if (!receiptVisible) return;
-    const frame = window.requestAnimationFrame(() => {
-      receiptHeadingRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      receiptHeadingRef.current?.focus({ preventScroll: true });
-    });
+    const frame = window.requestAnimationFrame(() => setMode(readLessonMode()));
     return () => window.cancelAnimationFrame(frame);
-  }, [receiptVisible]);
+  }, []);
 
-  const advanceStage = () => {
+  useEffect(() => {
     narration.stop();
-    if (stageIndex < EVAPORATION_CONCEPT_STAGES.length - 1) {
-      setStageIndex((index) => index + 1);
-      return;
-    }
-    setCycleComplete(true);
-  };
+    const frame = window.requestAnimationFrame(() => headingRef.current?.focus({ preventScroll: true }));
+    return () => window.cancelAnimationFrame(frame);
+    // Narration is intentionally stopped whenever the visible screen changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentScreenName]);
 
   const restart = () => {
     narration.stop();
-    setStageIndex(0);
     setProbeChoice(null);
-    setCycleComplete(false);
-    setReceiptVisible(false);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    dispatch({ type: "restart" });
   };
 
-  if (!hydrated) {
-    return (
-      <main className={`journey-shell ${styles.shell}`} id="main-content" aria-busy="true">
-        <header className="journey-header">
-          <span className="brand brand-compact"><BodhMark size="mark" motion="breathe" priority /><span className="brand-copy"><strong>BODH</strong></span></span>
-        </header>
-        <section className={styles.loadingCard}>
-          <BodhMark pose="guide" size="medium" motion="guide" />
-          <h1>Following one drop of water…</h1>
-        </section>
-      </main>
-    );
-  }
-
   return (
-    <main className={`journey-shell ${styles.shell}`} id="main-content" lang={language}>
+    <main className={`journey-shell ${styles.shell} ${journey.screen.kind === "receipt" ? styles.receiptMode : ""}`} id="main-content" lang={language}>
       <header className="journey-header">
-        <Link className="back-link" href="/diagnose"><span aria-hidden="true">←</span> {language === "hi" ? "Doubts" : "Doubts"}</Link>
-        <Link className="brand brand-compact" href="/" aria-label="Bodh home">
-          <BodhMark size="mark" motion="still" priority />
-          <span className="brand-copy"><strong>BODH</strong></span>
-        </Link>
-        <div className="journey-header-tools">
-          <span className="fixture-label">{mode.live ? "Live Science repair" : "Curated Science"}</span>
-          <NarrationLanguageToggle compact />
-        </div>
+        <Link className="back-link" href="/diagnose"><span aria-hidden="true">←</span> {language === "hi" ? "सवाल" : "Doubts"}</Link>
+        <Link className="brand brand-compact" href="/" aria-label={language === "hi" ? "Bodh का मुखपृष्ठ" : "Bodh home"}><BodhMark size="mark" motion="still" priority /><span className="brand-copy"><strong>BODH</strong></span></Link>
+        <div className="journey-header-tools"><span className="fixture-label">{mode.live ? language === "hi" ? "सीधी विज्ञान जाँच" : "Live science repair" : mode.requestedLive ? language === "hi" ? "जाँचा हुआ सुरक्षित रास्ता" : "Reviewed safe route" : language === "hi" ? "विज्ञान यात्रा" : "Science journey"}</span><NarrationLanguageToggle compact /></div>
       </header>
 
-      {mode.requestedLive && !mode.live && (
-        <div className={styles.safeFallback} role="status">
-          <strong>{language === "hi" ? "Curated fallback खुला है।" : "The reviewed fallback is open."}</strong>
-          <span>{language === "hi" ? "Validated live handoff नहीं मिला, इसलिए Bodh live diagnosis का दावा नहीं करेगा।" : "No validated live handoff was found, so Bodh will not claim a live diagnosis."}</span>
-        </div>
-      )}
+      <ScienceJourneyPath
+        language={language}
+        state={journey}
+        onProbe={() => dispatch({ type: "review-probe" })}
+        onConcept={(stageIndex) => dispatch({ type: "review-concept", stageIndex })}
+        onTransfer={() => dispatch({ type: "review-transfer" })}
+      />
 
-      <ol className={styles.progress} aria-label={language === "hi" ? "Lesson progress" : "Lesson progress"}>
-        {EVAPORATION_CONCEPT_STAGES.map((candidate, index) => (
-          <li className={index < stageIndex || cycleComplete ? styles.progressDone : index === stageIndex ? styles.progressCurrent : ""} aria-current={index === stageIndex && !cycleComplete ? "step" : undefined} key={candidate.id}>
-            <span>{index < stageIndex || cycleComplete ? "✓" : index + 1}</span>
-            <strong>{candidate.screenKey[language]}</strong>
-          </li>
-        ))}
-        <li
-          className={receiptVisible ? styles.progressDone : cycleComplete ? styles.progressCurrent : ""}
-          aria-current={cycleComplete && !receiptVisible ? "step" : undefined}
-        >
-          <span>{receiptVisible ? "✓" : 6}</span>
-          <strong>{language === "hi" ? "नई situation में transfer" : "Transfer to a new situation"}</strong>
-        </li>
-      </ol>
-
-      {!cycleComplete && !receiptVisible && (
-        <article className={styles.lessonCard}>
-          <section className={styles.hero}>
-            <div className={styles.heroCopy}>
-              <span className={`${styles.modeBadge} ${mode.live ? styles.modeBadgeLive : ""}`}><i aria-hidden="true" /> {mode.live ? "Live OpenAI diagnosis" : language === "hi" ? "Curated Science & Earth" : "Curated Science & Earth"}</span>
-              <span className={styles.eyebrow}>{language === "hi" ? "एक puddle · एक deep idea" : "One puddle · one deep idea"}</span>
-              <h1>{language === "hi" ? "Puddle का पानी कहाँ गया?" : "Where did the puddle water go?"}</h1>
-              <p>{language === "hi"
-                ? "पानी को हर state और location में follow करो—फिर bathroom mirror पर वही idea पहचानो।"
-                : "Follow the water through every state and location—then recognise the same idea on a bathroom mirror."}</p>
-              {mode.live && mode.handoff && (
-                <div className={styles.liveTrace}>
-                  <span>{mode.handoff.model}</span><span>{mode.handoff.promptVersion}</span><span>seed-09</span>
-                </div>
-              )}
-            </div>
-            <div className={styles.heroMascot}>
-              <BodhMark pose="listen" size="large" motion="listen" priority />
-              <div><strong>{language === "hi" ? "मैं answer नहीं guess करूँगा।" : "I won't guess the answer."}</strong><span>{language === "hi" ? "हम उसी पानी को track करेंगे।" : "We'll track the same water."}</span></div>
-            </div>
-          </section>
-
-          <section className={styles.questionCarry}>
-            <span>{mode.live ? language === "hi" ? "Live doubt साथ आया" : "Live doubt carried through" : language === "hi" ? "आज का reviewed doubt" : "Today's reviewed doubt"}</span>
-            <strong>{mode.handoff?.canonicalEquation ?? (language === "hi" ? "धूप में puddle का पानी गायब कहाँ हो गया?" : "Where did the puddle water go in the sunshine?")}</strong>
-            <p>{language === "hi"
-              ? "Bodh की जाँच: क्या पानी को destroyed माना गया है, या state और location change अभी missing है?"
-              : "Bodh's check: is the water thought to be destroyed, or is the change of state and location the missing bridge?"}</p>
-          </section>
-
-          <section className={styles.quickProbe} aria-labelledby="quick-probe-title">
-            <div className={styles.probeHeading}>
-              <div><span className={styles.eyebrow}>{language === "hi" ? "पहले एक quick thought" : "First, one quick thought"}</span><h2 id="quick-probe-title">{language === "hi" ? "Puddle छोटा हुआ—पानी के साथ क्या हुआ होगा?" : "The puddle shrank—what might have happened to the water?"}</h2></div>
-              <span>{carriedProbeChoice ? language === "hi" ? "Live probe साथ आया" : "Live probe carried through" : language === "hi" ? "कोई penalty नहीं" : "No penalty"}</span>
-            </div>
-            <div className={styles.probeOptions} role="group" aria-label={language === "hi" ? "Initial probe choices" : "Initial probe choices"}>
-              {PROBE_OPTIONS.map((option) => (
-                <button className={effectiveProbeChoice === option.id ? styles.optionSelected : ""} type="button" aria-pressed={effectiveProbeChoice === option.id} onClick={() => setProbeChoice(option.id)} disabled={Boolean(carriedProbeChoice)} key={option.id}>
-                  <span aria-hidden="true">{option.icon}</span><strong>{option[language]}</strong>
-                </button>
-              ))}
-            </div>
-            {effectiveProbeChoice && <p className={styles.probeResponse} role="status">{carriedProbeChoice
-              ? language === "hi" ? "यह तुम्हारा live diagnosis वाला choice है—दोबारा answer देने की ज़रूरत नहीं।" : "This is your choice from the live diagnosis—you do not need to answer it twice."
-              : probe?.correct
-                ? language === "hi" ? "अच्छा model—अब evidence से इसे साबित करते हैं।" : "Strong model—now let's prove it with evidence."
-              : language === "hi" ? "यह useful starting idea है। इसे challenge नहीं—artifact से जाँचेंगे।" : "That is a useful starting idea. We will test it with the artifact, not challenge you."}</p>}
-          </section>
-
-          <section className={styles.stageCard} aria-labelledby="evaporation-stage-title">
-            <div className={styles.stageHeading}>
-              <div>
-                <span className={styles.eyebrow}>{stage.eyebrow[language]} · {stageIndex + 1}/{EVAPORATION_CONCEPT_STAGES.length}</span>
-                <h2 id="evaporation-stage-title">{stage.title[language]}</h2>
-                <p>{stage.screenKey[language]}</p>
-              </div>
-              <BodhMark pose={stageIndex < 2 ? "guide" : "tinker"} size="small" motion={stageIndex < 2 ? "guide" : "tinker"} />
-            </div>
-
-            <NarrationControl
-              language={language}
-              state={narration.state}
-              activeBeatIndex={narration.activeBeatIndex}
-              beatCount={narration.beatCount}
-              hasPlayed={narration.hasPlayed}
-              onPlay={narration.play}
-              onStop={narration.stop}
-            />
-
-            <WaterCycleScene
-              stageIndex={stageIndex}
-              activeTarget={narration.activeBeat?.target ?? null}
-              cueText={narration.activeBeat?.key[language] ?? null}
-              language={language}
-            />
-
-            <div className={styles.stageActionRow}>
-              <div><span>{language === "hi" ? "देखा गया evidence" : "Evidence to notice"}</span><strong>{stage.evidence[language]}</strong></div>
-              <button className={styles.primaryAction} type="button" disabled={stageIndex === 0 && !effectiveProbeChoice} onClick={advanceStage}>
-                {stage.action[language]} <span aria-hidden="true">→</span>
-              </button>
-            </div>
-          </section>
-        </article>
-      )}
-
-      {cycleComplete && !receiptVisible && (
-        <>
-          <CycleCompleteBridge language={language} />
-          <TransferExperiment language={language} onComplete={() => setReceiptVisible(true)} />
-        </>
-      )}
-      {receiptVisible && (
-        <UnderstandingReceipt
-          language={language}
-          mode={mode}
-          onRestart={restart}
-          headingRef={receiptHeadingRef}
-        />
-      )}
-
-      {!receiptVisible && (
-        <EvaporationCurriculumClimb language={language} stageIndex={cycleComplete ? 4 : stageIndex} />
-      )}
+      <div className={styles.frame} key={currentScreenName}>
+        {journey.screen.kind === "probe" && <ProbeScreen language={language} mode={mode} choice={effectiveProbeChoice} carriedChoice={carriedProbeChoice} onChoose={setProbeChoice} onStart={() => dispatch({ type: "start" })} headingRef={headingRef} />}
+        {journey.screen.kind === "concept" && <ConceptScreen language={language} stageIndex={journey.screen.stageIndex} narration={narration} onAdvance={() => dispatch({ type: "advance-concept" })} headingRef={headingRef} />}
+        {journey.screen.kind === "bridge" && <BridgeScreen language={language} onContinue={() => dispatch({ type: "begin-transfer" })} headingRef={headingRef} />}
+        {journey.screen.kind === "transfer-evidence" && <TransferScreen language={language} phase="evidence" onPlace={() => dispatch({ type: "place-lid" })} onCorrect={() => dispatch({ type: "complete-transfer" })} onFinish={() => dispatch({ type: "show-receipt" })} headingRef={headingRef} />}
+        {journey.screen.kind === "transfer-choice" && <TransferScreen language={language} phase="choice" onPlace={() => dispatch({ type: "place-lid" })} onCorrect={() => dispatch({ type: "complete-transfer" })} onFinish={() => dispatch({ type: "show-receipt" })} headingRef={headingRef} />}
+        {journey.screen.kind === "transfer-success" && <TransferScreen language={language} phase="success" onPlace={() => dispatch({ type: "place-lid" })} onCorrect={() => dispatch({ type: "complete-transfer" })} onFinish={() => dispatch({ type: "show-receipt" })} headingRef={headingRef} />}
+        {journey.screen.kind === "receipt" && <UnderstandingReceipt language={language} mode={mode} onRestart={restart} headingRef={headingRef} />}
+      </div>
     </main>
   );
 }

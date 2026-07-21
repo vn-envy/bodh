@@ -9,6 +9,10 @@ import {
   narrationBeatForEvaporation,
 } from "../lib/evaporation-concept.ts";
 import {
+  evaporationJourneyReducer,
+  INITIAL_EVAPORATION_JOURNEY,
+} from "../lib/evaporation-journey.ts";
+import {
   SCIENCE_PROBE_CATALOG,
   reviewedProbeById,
   reviewedProbeSelectionIsValid,
@@ -126,7 +130,7 @@ test("renders the evaporation Marble graph as a clean, non-crossing dotted route
 });
 
 test("authors the evaporation journey as bilingual, pointer-owned narration beats", () => {
-  assert.equal(EVAPORATION_NARRATION_VERSION, "evaporation-v1");
+  assert.equal(EVAPORATION_NARRATION_VERSION, "evaporation-v2");
   assert.deepEqual(
     EVAPORATION_CONCEPT_STAGES.map((stage) => stage.id),
     ["notice-puddle", "sun-heat", "invisible-vapour", "cooling-cloud", "returning-rain"],
@@ -233,9 +237,10 @@ test("accepts only a real OpenAI science handoff matched to the reviewed seed", 
 });
 
 test("keeps curated science as the default and unlocks live mode only from a matching handoff", async () => {
-  const [pageSource, journeySource] = await Promise.all([
+  const [pageSource, journeySource, cssSource] = await Promise.all([
     readFile(new URL("../app/science/evaporation/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/science/evaporation/EvaporationJourney.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/science/evaporation/EvaporationJourney.module.css", import.meta.url), "utf8"),
   ]);
 
   assert.match(pageSource, /<EvaporationJourney\s*\/>/);
@@ -248,23 +253,92 @@ test("keeps curated science as the default and unlocks live mode only from a mat
   assert.match(journeySource, /"water-destroyed-by-sun": "destroyed"/);
   assert.match(journeySource, /"water-only-underground": "underground"/);
   assert.match(journeySource, /return \{ live: false, requestedLive: true, handoff: null \}/);
-  assert.match(journeySource, /mode\.live \? "Live Science repair" : "Curated Science"/);
-  assert.match(journeySource, /mode\.live \? "Live OpenAI diagnosis"/);
-  assert.match(journeySource, /Curated Science & Earth/);
+  assert.match(journeySource, /OpenAI diagnosis complete/);
+  assert.match(journeySource, /Reviewed science journey/);
   assert.match(journeySource, /createEvaporationReceiptCardModel/);
   assert.match(journeySource, /<ReceiptImageCard/);
   assert.match(journeySource, /Journey complete · 6\/6/);
-  assert.match(journeySource, /Water journey · 5\/5 complete/);
-  assert.match(journeySource, /!cycleComplete && !receiptVisible/);
-  assert.match(journeySource, /receiptHeadingRef\.current\?\.scrollIntoView/);
-  assert.match(journeySource, /!receiptVisible && \(\s*<EvaporationCurriculumClimb/s);
-  assert.doesNotMatch(journeySource, /className=\{styles\.receiptMascot\}/);
+  assert.match(journeySource, /Water journey · 5\/5/);
+  assert.match(journeySource, /useReducer\(evaporationJourneyReducer, INITIAL_EVAPORATION_JOURNEY\)/);
+  assert.match(journeySource, /data-science-screen=/);
+  assert.doesNotMatch(journeySource, /EvaporationCurriculumClimb/);
+  assert.doesNotMatch(journeySource, /mode\.handoff\?\.canonicalEquation/);
+  assert.match(journeySource, /evaporationQuestionFor\(language\)/);
+  assert.match(cssSource, /\.shell \{[\s\S]*?height: 100svh;/);
+  assert.match(cssSource, /\.frame \{[\s\S]*?overflow: hidden;/);
+  assert.doesNotMatch(cssSource, /overflow-y:\s*(?:auto|scroll)/);
+  assert.match(cssSource, /\.path::before \{[\s\S]*?radial-gradient\(circle,/);
+  assert.match(cssSource, /\.path button \{[\s\S]*?min-height: 46px;/);
+  assert.match(cssSource, /pointer-events: none;/);
   assert.match(
     journeySource,
     /\/api\/narration\/\$\{EVAPORATION_NARRATION_VERSION\}\/\$\{language\}\/\$\{stageId\}\/\$\{beatId\}\.mp3/,
   );
-  assert.match(journeySource, /no device-voice fallback/);
+  assert.match(journeySource, /for \(const beat of stage\.narration\)/);
+  assert.match(journeySource, /audio\.preload = "auto"/);
+  assert.match(journeySource, /prepared\.set\(beat\.id, audio\)/);
+  assert.match(journeySource, /new Audio\(narrationUrl/);
+  assert.doesNotMatch(journeySource, /Promise\.all\(stage\.narration/);
   assert.doesNotMatch(journeySource, /speechSynthesis|SpeechSynthesisUtterance/);
+});
+
+test("advances the fixed-window science state machine one screen at a time", () => {
+  let state = INITIAL_EVAPORATION_JOURNEY;
+  assert.equal(state.screen.kind, "probe");
+  assert.equal(
+    evaporationJourneyReducer(state, { type: "review-concept", stageIndex: 3 }),
+    state,
+    "future graph nodes stay locked",
+  );
+
+  state = evaporationJourneyReducer(state, { type: "start" });
+  assert.deepEqual(state.screen, { kind: "concept", stageIndex: 0 });
+  assert.equal(state.furthestConcept, 0);
+  assert.equal(
+    evaporationJourneyReducer(state, { type: "review-concept", stageIndex: 2 }),
+    state,
+  );
+
+  for (let index = 1; index < 5; index += 1) {
+    state = evaporationJourneyReducer(state, { type: "advance-concept" });
+    assert.deepEqual(state.screen, { kind: "concept", stageIndex: index });
+  }
+  state = evaporationJourneyReducer(state, { type: "advance-concept" });
+  assert.equal(state.screen.kind, "bridge");
+  state = evaporationJourneyReducer(state, { type: "begin-transfer" });
+  assert.equal(state.screen.kind, "transfer-evidence");
+  assert.equal(state.transferUnlocked, true);
+  assert.equal(state.transferCompleted, false);
+  state = evaporationJourneyReducer(state, { type: "place-lid" });
+  assert.equal(state.screen.kind, "transfer-choice");
+  state = evaporationJourneyReducer(state, { type: "complete-transfer" });
+  assert.equal(state.screen.kind, "transfer-success");
+  assert.equal(state.transferCompleted, true);
+  state = evaporationJourneyReducer(state, { type: "show-receipt" });
+  assert.equal(state.screen.kind, "receipt");
+  assert.deepEqual(evaporationJourneyReducer(state, { type: "restart" }), INITIAL_EVAPORATION_JOURNEY);
+});
+
+test("reviewing an earlier graph node preserves reached concepts and honest transfer status", () => {
+  let state = evaporationJourneyReducer(INITIAL_EVAPORATION_JOURNEY, { type: "start" });
+  state = evaporationJourneyReducer(state, { type: "advance-concept" });
+  state = evaporationJourneyReducer(state, { type: "advance-concept" });
+  assert.equal(state.furthestConcept, 2);
+
+  state = evaporationJourneyReducer(state, { type: "review-probe" });
+  state = evaporationJourneyReducer(state, { type: "start" });
+  assert.equal(state.furthestConcept, 2, "restarting from Think must not relock visited concepts");
+  state = evaporationJourneyReducer(state, { type: "review-concept", stageIndex: 2 });
+  assert.deepEqual(state.screen, { kind: "concept", stageIndex: 2 });
+
+  state = evaporationJourneyReducer(state, { type: "advance-concept" });
+  state = evaporationJourneyReducer(state, { type: "advance-concept" });
+  state = evaporationJourneyReducer(state, { type: "advance-concept" });
+  state = evaporationJourneyReducer(state, { type: "begin-transfer" });
+  assert.equal(state.transferUnlocked, true);
+  assert.equal(state.transferCompleted, false);
+  state = evaporationJourneyReducer(state, { type: "review-concept", stageIndex: 4 });
+  assert.equal(state.transferCompleted, false, "opening Transfer must not mark it complete");
 });
 
 async function render(pathname) {
@@ -284,9 +358,11 @@ test("server-renders a hydration-stable evaporation route without inventing live
     assert.equal(response.status, 200);
     assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
     const html = await response.text();
-    assert.match(html, /Following one drop of water…/);
-    assert.match(html, /aria-busy="true"/);
+    assert.match(html, /data-science-screen="probe"/);
+    assert.match(html, /पानी सच में गायब हुआ\?/);
+    assert.doesNotMatch(html, /aria-busy="true"/);
+    assert.doesNotMatch(html, /Following one drop of water…/);
     assert.match(html, /Where did the puddle go\?/);
-    assert.doesNotMatch(html, /Live OpenAI diagnosis/);
+    assert.doesNotMatch(html, /OpenAI diagnosis complete/);
   }
 });

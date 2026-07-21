@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useState } from "react";
 import taxonomy from "../../data/taxonomy/evaporation-water-cycle.slice.json";
 import type { LocalizedText, NarrationLanguage } from "../../lib/narration-language";
 import styles from "../science/evaporation/EvaporationJourney.module.css";
@@ -30,44 +30,44 @@ const TOPIC_COPY: Record<TopicId, Readonly<{
   clue: LocalizedText;
 }>> = {
   "mt_TlLE4cZgOr": {
-    short: hiEn("Rain और puddles", "Rain and puddles"),
-    meaning: hiEn("Puddle छोटा होता है क्योंकि पानी हवा में वापस जाता है।", "A puddle shrinks because water moves back into the air."),
-    clue: hiEn("बच्चा पानी को खत्म मानता है या move हुआ मानता है?", "Does the learner think water was destroyed or moved?"),
+    short: hiEn("बारिश और पानी के गड्ढे", "Rain and puddles"),
+    meaning: hiEn("पानी का गड्ढा छोटा होता है क्योंकि पानी हवा में लौट जाता है।", "A puddle shrinks because water moves back into the air."),
+    clue: hiEn("क्या बच्चा मानता है कि पानी खत्म हुआ या केवल दूसरी जगह गया?", "Does the learner think water was destroyed or moved?"),
   },
   "mt_PrWc-HZzDl": {
-    short: hiEn("Temperature", "Temperature"),
-    meaning: hiEn("गर्म और ठंडा होने को describe और measure करना।", "Describe and measure how hot or cold something is."),
-    clue: hiEn("क्या warmth को evaporation की speed से जोड़ सकता है?", "Can warmth be connected to evaporation rate?"),
+    short: hiEn("तापमान", "Temperature"),
+    meaning: hiEn("किसी चीज़ के गर्म या ठंडा होने को बताना और मापना।", "Describe and measure how hot or cold something is."),
+    clue: hiEn("क्या बच्चा गर्मी को पानी के भाप बनने की गति से जोड़ सकता है?", "Can warmth be connected to evaporation rate?"),
   },
   "mt_IhWzO4sQPg": {
-    short: hiEn("Cloud droplets", "Cloud droplets"),
-    meaning: hiEn("Clouds cooled water vapour से बनी tiny liquid droplets हैं।", "Clouds are tiny liquid droplets formed when water vapour cools."),
-    clue: hiEn("क्या cloud और invisible vapour का फर्क साफ़ है?", "Is the difference between a cloud and invisible vapour clear?"),
+    short: hiEn("बादल की बूँदें", "Cloud droplets"),
+    meaning: hiEn("बादल, ठंडी हुई जलवाष्प से बनी तरल पानी की बहुत छोटी बूँदें हैं।", "Clouds are tiny liquid droplets formed when water vapour cools."),
+    clue: hiEn("क्या बादल और अदृश्य जलवाष्प का अंतर साफ़ है?", "Is the difference between a cloud and invisible vapour clear?"),
   },
   "mt_nRF_VRntrW": {
     short: hiEn("पानी कहाँ मिलता है", "Where water is found"),
-    meaning: hiEn("पानी oceans, rivers, ice, underground और atmosphere में मिलता है।", "Water is found in oceans, rivers, ice, underground, and the atmosphere."),
-    clue: hiEn("क्या atmosphere भी पानी की एक location है?", "Can the atmosphere also be a location for water?"),
+    meaning: hiEn("पानी समुद्र, नदियों, बर्फ, जमीन के नीचे और वायुमंडल में मिलता है।", "Water is found in oceans, rivers, ice, underground, and the atmosphere."),
+    clue: hiEn("क्या वायुमंडल भी पानी की एक जगह हो सकता है?", "Can the atmosphere also be a location for water?"),
   },
   "mt_Pl-nsjYGZ3": {
-    short: hiEn("Heating और cooling", "Heating and cooling"),
-    meaning: hiEn("Energy बदलने पर matter की state बदल सकती है।", "A change in energy can change the state of matter."),
-    clue: hiEn("क्या liquid से gas और gas से liquid का कारण समझा सकता है?", "Can the learner explain why liquid becomes gas and gas becomes liquid?"),
+    short: hiEn("गरम और ठंडा होना", "Heating and cooling"),
+    meaning: hiEn("ऊर्जा बदलने पर पदार्थ की अवस्था बदल सकती है।", "A change in energy can change the state of matter."),
+    clue: hiEn("क्या बच्चा तरल से गैस और गैस से तरल बनने का कारण समझा सकता है?", "Can the learner explain why liquid becomes gas and gas becomes liquid?"),
   },
   "mt_ahSqW_kK1b": {
-    short: hiEn("Science के सही शब्द", "Precise science words"),
-    meaning: hiEn("Evaporate और condense अलग state-change processes हैं।", "Evaporate and condense name different state-change processes."),
-    clue: hiEn("क्या बच्चा evaporate, boil और disappear को अलग रखता है?", "Can the learner distinguish evaporate, boil, and disappear?"),
+    short: hiEn("विज्ञान के सही शब्द", "Precise science words"),
+    meaning: hiEn("वाष्पीकरण और संघनन, अवस्था बदलने की अलग प्रक्रियाएँ हैं।", "Evaporate and condense name different state-change processes."),
+    clue: hiEn("क्या बच्चा भाप बनने, उबलने और गायब होने में अंतर समझता है?", "Can the learner distinguish evaporate, boil, and disappear?"),
   },
   "mt_fhqVdj4BYr": {
-    short: hiEn("Water cycle", "Water cycle"),
-    meaning: hiEn("Evaporation, condensation और precipitation पानी को cycle में चलाते हैं।", "Evaporation, condensation, and precipitation move water through a cycle."),
-    clue: hiEn("क्या बच्चा एक ही water matter को पूरे loop में track कर सकता है?", "Can the learner track the same water matter through the whole loop?"),
+    short: hiEn("जल चक्र", "Water cycle"),
+    meaning: hiEn("वाष्पीकरण, संघनन और वर्षा पानी को एक चक्र में चलाते हैं।", "Evaporation, condensation, and precipitation move water through a cycle."),
+    clue: hiEn("क्या बच्चा उसी पानी को पूरे चक्र में पहचान सकता है?", "Can the learner track the same water matter through the whole loop?"),
   },
   "mt_Qkewo5M3_c": {
-    short: hiEn("Evaporation और water cycle", "Evaporation and the water cycle"),
-    meaning: hiEn("Temperature को evaporation rate से और condensation को लौटती liquid से जोड़ना।", "Connect temperature to evaporation rate and condensation to returning liquid."),
-    clue: hiEn("क्या puddle और bathroom mirror दोनों को इसी model से explain कर सकता है?", "Can the same model explain both a puddle and a bathroom mirror?"),
+    short: hiEn("वाष्पीकरण और जल चक्र", "Evaporation and the water cycle"),
+    meaning: hiEn("तापमान को वाष्पीकरण की गति से और संघनन को लौटते तरल पानी से जोड़ना।", "Connect temperature to evaporation rate and condensation to returning liquid."),
+    clue: hiEn("क्या बच्चा पानी के गड्ढे और बाथरूम के शीशे—दोनों को इसी विचार से समझा सकता है?", "Can the same model explain both a puddle and a bathroom mirror?"),
   },
 };
 
@@ -130,7 +130,7 @@ function statusCopy(status: TopicStatus, language: NarrationLanguage) {
     visited: hiEn("देख लिया", "Visited"),
     current: hiEn("Bodh यहाँ है", "Bodh is here"),
     ahead: hiEn("आगे", "Ahead"),
-    support: hiEn("सहायक idea", "Supporting idea"),
+    support: hiEn("सहायक विचार", "Supporting idea"),
   };
   return copy[status][language];
 }
@@ -145,10 +145,7 @@ export function EvaporationCurriculumClimb({
   const boundedStage = Math.max(0, Math.min(stageIndex, TRAVEL_ROUTE.length - 1));
   const currentTopicId = TRAVEL_ROUTE[boundedStage];
   const [selectedTopicId, setSelectedTopicId] = useState<TopicId>(currentTopicId);
-  const effectiveSelection = useMemo(
-    () => selectedTopicId === TRAVEL_ROUTE[Math.max(0, boundedStage - 1)] ? currentTopicId : selectedTopicId,
-    [boundedStage, currentTopicId, selectedTopicId],
-  );
+  const effectiveSelection = selectedTopicId;
   const selected = TOPICS.get(effectiveSelection)!;
   const selectedCopy = TOPIC_COPY[effectiveSelection];
 
@@ -156,20 +153,20 @@ export function EvaporationCurriculumClimb({
     <section className={styles.climb} aria-labelledby="evaporation-climb-title" lang={language}>
       <div className={styles.climbHeading}>
         <div>
-          <span className={styles.eyebrow}>{language === "hi" ? "तुम्हारा असली Marble concept map" : "Your real Marble concept map"}</span>
-          <h2 id="evaporation-climb-title">{language === "hi" ? "Bodh पानी के साथ idea से idea तक चलता है।" : "Bodh travels with the water from idea to idea."}</h2>
+          <span className={styles.eyebrow}>{language === "hi" ? "तुम्हारा असली Marble अवधारणा-मानचित्र" : "Your real Marble concept map"}</span>
+          <h2 id="evaporation-climb-title">{language === "hi" ? "Bodh पानी के साथ एक विचार से दूसरे विचार तक चलता है।" : "Bodh travels with the water from idea to idea."}</h2>
           <p>{language === "hi"
-            ? "हर node os-taxonomy का canonical topic है। Lines केवल source में मौजूद prerequisite dependencies दिखाती हैं।"
+            ? "हर पड़ाव पाठ्यक्रम की एक प्रमाणित अवधारणा है। बिंदीदार रेखाएँ केवल स्रोत में मौजूद ज़रूरी कड़ियाँ दिखाती हैं।"
             : "Every node is a canonical os-taxonomy topic. Lines show only prerequisite dependencies present in the source."}</p>
         </div>
-        <div className={styles.climbSource} lang="en">
-          <strong>{taxonomy.topics.length} Marble topics</strong>
-          <span>{taxonomy.dependencies.length} canonical dependencies</span>
-          <small>source · {taxonomy.source.commit.slice(0, 8)}</small>
+        <div className={styles.climbSource}>
+          <strong>{taxonomy.topics.length} {language === "hi" ? "Marble विषय" : "Marble topics"}</strong>
+          <span>{taxonomy.dependencies.length} {language === "hi" ? "प्रमाणित कड़ियाँ" : "canonical dependencies"}</span>
+          <small>{language === "hi" ? "स्रोत" : "source"} · {taxonomy.source.commit.slice(0, 8)}</small>
         </div>
       </div>
 
-      <div className={styles.climbLegend} aria-label={language === "hi" ? "Map संकेत" : "Map legend"}>
+      <div className={styles.climbLegend} aria-label={language === "hi" ? "मानचित्र संकेत" : "Map legend"}>
         <span data-status="visited">{statusCopy("visited", language)}</span>
         <span data-status="current">{statusCopy("current", language)}</span>
         <span data-status="ahead">{statusCopy("ahead", language)}</span>
@@ -177,7 +174,7 @@ export function EvaporationCurriculumClimb({
       </div>
 
       <div className={styles.climbWorkspace}>
-        <div className={styles.climbCanvas} role="group" aria-label={language === "hi" ? "Water-cycle prerequisite graph" : "Water-cycle prerequisite graph"}>
+        <div className={styles.climbCanvas} role="group" aria-label={language === "hi" ? "जल चक्र की ज़रूरी अवधारणाओं का मानचित्र" : "Water-cycle prerequisite graph"}>
           <div className={styles.climbSky} aria-hidden="true"><i /><i /><i /></div>
           <div className={styles.climbEdges} aria-hidden="true">
             {taxonomy.dependencies.map((edge) => {
@@ -207,7 +204,7 @@ export function EvaporationCurriculumClimb({
               return (
                 <Fragment key={topicId}>
                   {index === MAIN_ROUTE.length && (
-                    <p className={styles.climbSupportHeading}>{language === "hi" ? "सहायक Marble ideas" : "Supporting Marble ideas"}</p>
+                    <p className={styles.climbSupportHeading}>{language === "hi" ? "सहायक Marble विचार" : "Supporting Marble ideas"}</p>
                   )}
                   <button
                     className={`${styles.climbNode} ${routeStep ? styles.climbNodeRoute : ""} ${styles[`climbNode${status[0].toUpperCase()}${status.slice(1)}` as keyof typeof styles]} ${effectiveSelection === topicId ? styles.climbNodeSelected : ""}`}
@@ -215,7 +212,7 @@ export function EvaporationCurriculumClimb({
                     type="button"
                     data-route-step={routeStep ?? undefined}
                     aria-pressed={effectiveSelection === topicId}
-                    aria-label={`${TOPIC_COPY[topicId].short[language]}. ${routeStep ? `${language === "hi" ? "Route कदम" : "Route step"} ${routeStep} of ${MAIN_ROUTE.length}. ` : ""}${statusCopy(status, language)}. Marble: ${topic.name}.`}
+                    aria-label={`${TOPIC_COPY[topicId].short[language]}. ${routeStep ? `${language === "hi" ? "यात्रा पड़ाव" : "Route step"} ${routeStep} ${language === "hi" ? `में से ${MAIN_ROUTE.length}` : `of ${MAIN_ROUTE.length}`}. ` : ""}${statusCopy(status, language)}.${language === "en" ? ` Marble: ${topic.name}.` : ""}`}
                     onClick={() => setSelectedTopicId(topicId)}
                   >
                     {routeStep && <b className={styles.climbRouteBadge} aria-hidden="true">{routeStep}</b>}
@@ -232,8 +229,8 @@ export function EvaporationCurriculumClimb({
 
         <aside className={styles.climbDetail} aria-live="polite">
           <span>{TOPIC_COPY[effectiveSelection].short[language]}</span>
-          <h3>{selected.name}</h3>
-          <small lang="en">Marble · {selected.domain} · ages {selected.ageRangeStart}–{selected.ageRangeEnd}</small>
+          <h3>{language === "hi" ? selectedCopy.short.hi : selected.name}</h3>
+          <small>{language === "hi" ? `Marble · उम्र ${selected.ageRangeStart}–${selected.ageRangeEnd}` : `Marble · ${selected.domain} · ages ${selected.ageRangeStart}–${selected.ageRangeEnd}`}</small>
           <p>{selectedCopy.meaning[language]}</p>
           <div>
             <strong>{language === "hi" ? "Bodh यहाँ क्या देखता है" : "What Bodh looks for here"}</strong>
@@ -243,19 +240,19 @@ export function EvaporationCurriculumClimb({
       </div>
 
       <details className={styles.climbDependencies}>
-        <summary>{language === "hi" ? "Canonical dependencies देखें" : "Inspect canonical dependencies"}</summary>
+        <summary>{language === "hi" ? "प्रमाणित कड़ियाँ देखें" : "Inspect canonical dependencies"}</summary>
         <ol>
           {taxonomy.dependencies.map((edge) => (
             <li key={`${edge.prerequisiteId}:${edge.topicId}`}>
               <span><strong>{TOPIC_COPY[edge.prerequisiteId as TopicId].short[language]}</strong><b aria-hidden="true">→</b><strong>{TOPIC_COPY[edge.topicId as TopicId].short[language]}</strong></span>
-              <small lang="en">{edge.strength} · {edge.reason}</small>
+              <small>{language === "hi" ? "पाठ्यक्रम की ज़रूरी कड़ी" : `${edge.strength} · ${edge.reason}`}</small>
             </li>
           ))}
         </ol>
       </details>
 
       <p className={styles.climbBoundary}>{language === "hi"
-        ? "यह authored learning route है—grade, mastery score या पूरे Science curriculum coverage का दावा नहीं।"
+        ? "यह सोच-समझकर बनाया गया सीखने का रास्ता है—अंक, महारत या पूरे विज्ञान पाठ्यक्रम को ढकने का दावा नहीं।"
         : "This is an authored learning route—not a grade, mastery score, or claim of complete Science curriculum coverage."}</p>
     </section>
   );

@@ -51,6 +51,7 @@ export function ReceiptImageCard({ language, variant, model: suppliedModel, head
           motion="celebrate"
           className={styles.mascot}
           decorative={false}
+          label={language === "hi" ? "Bodh, मित्रवत हाथी मार्गदर्शक" : "Bodh, a friendly elephant mentor"}
         />
       </div>
 
@@ -74,7 +75,7 @@ export function ReceiptImageCard({ language, variant, model: suppliedModel, head
 
 function ReceiptProgressGraph({ model }: { model: ReceiptCardModel }) {
   return (
-    <ol className={styles.path} aria-label={model.language === "hi" ? "आज की learning journey" : "Today's learning journey"}>
+    <ol className={styles.path} aria-label={model.language === "hi" ? "आज की सीखने की यात्रा" : "Today's learning journey"}>
       {model.nodes.map((node) => (
         <li key={node.label}>
           <span aria-hidden="true">✓</span>

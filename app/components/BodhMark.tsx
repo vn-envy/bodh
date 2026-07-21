@@ -11,6 +11,7 @@ type BodhMarkProps = {
   priority?: boolean;
   className?: string;
   decorative?: boolean;
+  label?: string;
 };
 
 const sizeHints: Record<BodhSize, string> = {
@@ -28,6 +29,7 @@ export function BodhMark({
   priority = false,
   className = "",
   decorative = true,
+  label,
 }: BodhMarkProps) {
   const assetSize = size === "mark" || size === "small" ? 512 : 1024;
   const src = `/art/bodh/bodh-${pose}-${assetSize}.webp`;
@@ -36,7 +38,7 @@ export function BodhMark({
     <span
       className={`bodh-mark bodh-mark-${size} bodh-motion-${motion} bodh-pose-${pose} ${className}`.trim()}
       role={decorative ? undefined : "img"}
-      aria-label={decorative ? undefined : "Bodh, a friendly elephant mentor"}
+      aria-label={decorative ? undefined : label ?? "Bodh, a friendly elephant mentor"}
       aria-hidden={decorative ? "true" : undefined}
     >
       <Image

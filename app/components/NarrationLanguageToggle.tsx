@@ -56,8 +56,8 @@ export function NarrationLanguageToggle({ compact = false }: { compact?: boolean
   }, [language]);
 
   return (
-    <fieldset className={`narration-language-toggle ${compact ? "narration-language-compact" : ""}`}>
-      <legend>Lesson language and Bodh voice</legend>
+    <fieldset data-control="Bodh voice" className={`narration-language-toggle ${compact ? "narration-language-compact" : ""}`}>
+      <legend>{language === "hi" ? "पाठ की भाषा और Bodh की आवाज़" : "Lesson language and Bodh voice"}</legend>
       <label className={language === "hi" ? "narration-language-active" : ""}>
         <input
           type="radio"

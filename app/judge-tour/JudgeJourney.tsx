@@ -315,7 +315,13 @@ function CompletionReceipt({
         </section>
       </div>
       <div className={styles.receiptProof}>
-        <strong>{status === "live" && evidence ? "One real OpenAI diagnosis + two reviewed visual repairs" : "Two reviewed visual repairs · deterministic fallback used"}</strong>
+        <strong>{status === "live" && evidence
+          ? "One real OpenAI diagnosis + two reviewed visual repairs"
+          : status === "loading"
+            ? "Live OpenAI diagnosis is still finishing · reviewed visual repairs already complete"
+            : status === "waiting"
+              ? "Live diagnosis has not started · reviewed visual repairs shown"
+              : "Two reviewed visual repairs · deterministic fallback used"}</strong>
         <p>This records today’s interactions—not a grade or a claim of long-term mastery.</p>
       </div>
       <Link className={styles.receiptHome} href="/">Return to Bodh home</Link>
@@ -336,7 +342,7 @@ export function JudgeJourney() {
   const requestRef = useRef<AbortController | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const mathComplete = mathCount === 6;
-  const scienceComplete = Boolean(scienceChoice) && diagnosisStatus !== "loading" && diagnosisStatus !== "waiting";
+  const scienceComplete = Boolean(scienceChoice);
   const transferComplete = transferChoice === "same-matter";
   const journeyFinished = activeIndex === JUDGE_TOUR_STEPS.length - 1;
   const stageComplete = useMemo(() => {

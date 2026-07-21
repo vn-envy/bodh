@@ -45,7 +45,8 @@ test("server-renders the Bodh learner shell", async () => {
   assert.match(html, /हिंदी/);
   assert.match(html, /English/);
   assert.match(html, /Evaluating Bodh\?/);
-  assert.match(html, /90-second guided path/);
+  assert.match(html, /Maths \+ science/);
+  assert.match(html, /one guided journey/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/i);
 });
 
@@ -167,11 +168,20 @@ test("server-renders the diagnostic intake and the judge-readable learning path"
   assert.match(guideHtml, /8\/8/);
   assert.match(guideHtml, /how-it-works/);
 
-  const judgeTour = await render("/judge-tour/seed-01");
+  const judgeTour = await render("/judge-tour");
   assert.equal(judgeTour.status, 200);
   const judgeHtml = await judgeTour.text();
-  assert.match(judgeHtml, /90-second judge tour/);
-  assert.match(judgeHtml, /Committed fixture/);
+  assert.match(judgeHtml, /Guided judge journey/);
+  assert.match(judgeHtml, /one real API call/i);
   assert.match(judgeHtml, /seed-01/);
-  assert.doesNotMatch(judgeHtml, /= 6|answer is 6/i);
+  assert.match(judgeHtml, /seed-09/);
+  assert.match(judgeHtml, /Start guided journey/);
+  assert.doesNotMatch(judgeHtml, /3\/4 = 6\/8|JOURNEY COMPLETE/);
+
+  const legacyJudgeTour = await render("/judge-tour/seed-01");
+  assert.equal(legacyJudgeTour.status, 200);
+  const legacyJudgeHtml = await legacyJudgeTour.text();
+  assert.match(legacyJudgeHtml, /Guided judge journey/);
+  assert.match(legacyJudgeHtml, /seed-01/);
+  assert.match(legacyJudgeHtml, /seed-09/);
 });

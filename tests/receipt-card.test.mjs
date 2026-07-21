@@ -4,12 +4,35 @@ import test from "node:test";
 import {
   RECEIPT_CARD_HEIGHT,
   RECEIPT_CARD_WIDTH,
+  createEvaporationReceiptCardModel,
   createReceiptCardModel,
   createReceiptCardScene,
   downloadReceiptCardPng,
   receiptCardFileName,
   shareReceiptCard,
 } from "../lib/receipt-card.ts";
+
+test("science and mathematics receipts share one deterministic visual contract", () => {
+  for (const language of ["hi", "en"]) {
+    const science = createEvaporationReceiptCardModel(language);
+    const mathematics = createReceiptCardModel(language, "curated");
+
+    assert.equal(science.version, mathematics.version);
+    assert.equal(science.brand, mathematics.brand);
+    assert.equal(science.tagline, mathematics.tagline);
+    assert.equal(science.variant, "curated");
+    assert.equal(science.nodes.length, mathematics.nodes.length);
+    assert.deepEqual(science.nodes.map(({ x }) => x), mathematics.nodes.map(({ x }) => x));
+    assert.match(science.badge, /6\/6/);
+    assert.match(science.idea, language === "hi" ? /पानी गायब नहीं होता/ : /Water does not disappear/);
+    assert.match(science.evidence, /12\/12/);
+    assert.match(science.trust, /mastery|long-term/i);
+    assert.doesNotMatch(
+      JSON.stringify(science),
+      /learnerText|traceId|upload|studentName|Date\(|Math\.random/i,
+    );
+  }
+});
 
 test("receipt image scenes are fixed, bilingual, and contain no learner payload fields", () => {
   for (const language of ["hi", "en"]) {

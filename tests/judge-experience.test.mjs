@@ -6,25 +6,67 @@ async function json(path) {
   return JSON.parse(await readFile(new URL(path, import.meta.url), "utf8"));
 }
 
-test("judge lane is anchored to a real seed without revealing its target answer", async () => {
+test("judge lane opens one five-checkpoint journey anchored to both reviewed seeds", async () => {
   const [seeds, constants, lane, tour] = await Promise.all([
     json("../data/fixtures/seed-cases.json"),
     readFile(new URL("../lib/judge-experience.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/components/JudgeLaneLink.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/judge-tour/seed-01/JudgeTour.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/judge-tour/JudgeJourney.tsx", import.meta.url), "utf8"),
   ]);
-  const seed = seeds.find(({ caseId }) => caseId === "seed-01");
+  const mathSeed = seeds.find(({ caseId }) => caseId === "seed-01");
+  const scienceSeed = seeds.find(({ caseId }) => caseId === "seed-09");
 
-  assert.ok(seed);
-  assert.match(constants, new RegExp(seed.input.problemText.replaceAll("?", "\\?")));
-  assert.match(constants, new RegExp(seed.input.visibleWork.replace("/", "\\/")));
-  assert.match(constants, new RegExp(seed.input.reasoning.raw));
+  assert.ok(mathSeed);
+  assert.ok(scienceSeed);
+  for (const seed of [mathSeed, scienceSeed]) {
+    assert.match(constants, new RegExp(seed.input.problemText.replaceAll("?", "\\?")));
+    assert.match(constants, new RegExp(seed.input.visibleWork.replaceAll("/", "\\/")));
+    assert.match(constants, new RegExp(seed.input.reasoning.raw));
+  }
   assert.match(lane, /setNarrationLanguage\("en"\)/);
-  assert.match(tour, /90-second judge tour/);
-  assert.match(tour, /Committed fixture/);
+  assert.match(lane, /href=\{JUDGE_TOUR_HREF\}/);
+  assert.match(lane, /Maths \+ science · one guided journey/);
+  assert.match(constants, /JUDGE_TOUR_HREF = "\/judge-tour"/);
   assert.match(constants, /caseId: "seed-01"/);
+  assert.match(constants, /caseId: "seed-09"/);
+  assert.equal((constants.match(/\{ id: "(?:promise|mathematics|science|transfer|complete)"/g) ?? []).length, 5);
+  assert.match(tour, /Guided judge journey · about 3 minutes/);
+  assert.match(tour, /Checkpoint 5 of 5|JOURNEY COMPLETE/);
   assert.match(tour, /setNarrationLanguage\("en"\)/);
-  assert.doesNotMatch(`${constants}\n${lane}\n${tour}`, /= 6|answer is 6/i);
+});
+
+test("the judge journey starts one exact science call on click and earns live copy conservatively", async () => {
+  const tour = await readFile(new URL("../app/judge-tour/JudgeJourney.tsx", import.meta.url), "utf8");
+
+  assert.match(tour, /onClick=\{startJourney\}/);
+  assert.match(tour, /const startJourney = \(\) => \{\s*void beginScienceDiagnosis\(\);\s*setActiveIndex\(1\);/s);
+  assert.match(tour, /fetch\("\/api\/diagnose"/);
+  assert.match(tour, /problemText: JUDGE_SEEDS\.science\.problem/);
+  assert.match(tour, /learnerReasoning: JUDGE_SEEDS\.science\.learnerWords/);
+  assert.match(tour, /visibleWorkText: JUDGE_SEEDS\.science\.visibleWork/);
+  assert.match(tour, /reviewedSeedId: JUDGE_SEEDS\.science\.caseId/);
+  assert.match(tour, /value\.mode !== "live"/);
+  assert.match(tour, /diagnosis\.source !== "openai"/);
+  assert.match(tour, /next\.artifactKey !== JUDGE_SEEDS\.science\.caseId/);
+  assert.match(tour, /setDiagnosisStatus\("curated"\)/);
+  assert.match(tour, /Live diagnosis was not claimed/);
+  assert.doesNotMatch(tour, /sessionStorage/);
+});
+
+test("both visual repairs are evidence-gated before the final receipt", async () => {
+  const tour = await readFile(new URL("../app/judge-tour/JudgeJourney.tsx", import.meta.url), "utf8");
+
+  assert.match(tour, /const mathComplete = mathCount === 6/);
+  assert.match(tour, /const scienceComplete = Boolean\(scienceChoice\)/);
+  assert.match(tour, /const transferComplete = transferChoice === "same-matter"/);
+  assert.match(tour, /disabled=\{!mathComplete\}/);
+  assert.match(tour, /disabled=\{!scienceComplete\}/);
+  assert.match(tour, /disabled=\{!transferComplete\}/);
+  assert.match(tour, /const journeyFinished = activeIndex === JUDGE_TOUR_STEPS\.length - 1/);
+  assert.match(tour, /const state = journeyFinished \|\| index < activeIndex \? "done"/);
+  assert.match(tour, /id="judge-complete-title" ref=\{headingRef\} tabIndex=\{-1\}/);
+  assert.match(tour, /You reached the end of the guided journey/);
+  assert.match(tour, /This records today’s interactions—not a grade or a claim of long-term mastery/);
 });
 
 test("the 33-case working corpus does not rewrite the recorded 32-case release", async () => {

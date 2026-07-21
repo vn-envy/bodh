@@ -14,7 +14,7 @@ Every requirement has one owner phase, a verification method, and a visible demo
 | BODH-R08 | Return to original homework | P1 | End-to-end state test | Original problem reappears unchanged |
 | BODH-R09 | Hindi-first dual terminology | P3 | Glossary consistency and meaning-preservation eval | `हर (denominator)` appears consistently |
 | BODH-R10 | Inspectable reasoning trace | P2 | Trace schema and required-field tests | Input → graph → hypothesis → probe → artifact |
-| BODH-R11 | Deterministic judge-demo path | P0/P1 | API-free smoke test | Clearly labelled curated demo always runs |
+| BODH-R11 | Reliable judge-demo path | P0/P1/P2 | Guided-route smoke test plus bounded API fallback test | One path shows maths, science, a truthful live-call status, and completion |
 | BODH-R12 | License, privacy, setup, submission | P0/P6 | Notice, secret scan, fresh install, checklist | Judges can run and attribute the project |
 
 ## Phase 0 gate
@@ -33,7 +33,7 @@ Every requirement has one owner phase, a verification method, and a visible demo
 | BODH-R06 | The fraction-fit lab exposes only eight rendered slots, allows placement only in the six `3/4` target slots, and requires the exact six-slot predicate. |
 | BODH-R07 | The ribbon/bookmark transfer has a fixed answer (`4`) checked by shared answer-normalization code. |
 | BODH-R08 | The exact source equation returns after transfer, accepts `6`, `६`, or `6/1`, and only then opens the receipt. |
-| BODH-R11 | Every state uses the committed fixture and deterministic helpers; no API key or external model call is in the path. |
+| BODH-R11 | The complete maths journey uses the committed fixture and deterministic helpers; the combined judge route adds one bounded science diagnosis while preserving a clearly labelled curated fallback. |
 
 ## Atomic pedagogy and motion evidence
 
@@ -69,5 +69,5 @@ Every requirement has one owner phase, a verification method, and a visible demo
 |---|---|
 | BODH-R02 | Supported browsers expose `hi-IN` / `en-IN` reasoning dictation; interim and final hypotheses compose into the same bounded editable field, while unsupported browsers hide the control. |
 | BODH-R06 | The six learner-controlled eighths can be viewed and changed through either the fraction bar or a 0-to-1 number line; both representations call the same tile-state transition. |
-| BODH-R11 | A quiet English-first judge lane opens a four-checkpoint 90-second route anchored to committed `seed-01`, then enters the API-free curated journey. |
+| BODH-R11 | A quiet English-first judge lane opens one five-checkpoint route spanning reviewed maths `seed-01` and science `seed-09`. It makes one bounded science diagnosis only after the judge starts, labels live OpenAI output only when the response proves it, falls back to the reviewed fixture otherwise, and ends with an unmistakable shared Bodh receipt. |
 | BODH-R12 | `/how-it-works` exposes the versioned 8 + 16 + 8 corpus, recorded 32/32 and 8/8 result, checks performed, and explicit synthetic-safety/non-efficacy boundary. The receipt renders a fixed 1200×1500 PNG with Bodh, pathway, evidence, native file sharing, and text fallback. |

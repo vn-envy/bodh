@@ -106,3 +106,11 @@ The P1 demo is intentionally curated. Live model diagnosis, image intake, speech
 - Added a five-node homepage Pathfinder preview sourced from the committed Marble taxonomy. Every adjacent node is a real canonical dependency and the copy explicitly avoids grade or mastery claims.
 - Hardened the full prerequisite map alongside the visual pass: suggested-start wording replaces unevidenced “you are here” language, disconnected goals no longer receive a fake direct edge, keyboard focus is distinct, mobile DOM order is topological, edge geometry uses a fixed aspect ratio, and all 12 relationships are inspectable as semantic text.
 - Added regression coverage for the homepage route, correct fraction equivalence, responsive graph invariants, focus treatment, source-derived counts, and claim boundaries.
+
+## 2026-07-21 — Cross-subject judge journey and completion pass
+
+- Joined reviewed maths `seed-01` and evaporation `seed-09` into one English-first judge journey with one deliberate, bounded live science diagnosis and an explicitly labelled curated fallback.
+- Added a clear science finish sequence: five concept stops complete, one transfer step remains, then a focused `Journey complete · 6/6` receipt.
+- Reused the same Bodh-centered receipt component and visual grammar for maths and science so both subjects finish as one product.
+- Rebuilt the evaporation Marble view as a clean dotted, non-crossing route from Rain → Water Cycle → Evaporation, with secondary prerequisites visually subordinated and a compact labelled mobile layout.
+- Kept the combined route self-contained: judges can see the promise, both reviewed doubts, cross-subject transfer, measured/live status, and final evidence without hunting through the product.

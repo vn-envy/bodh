@@ -11,11 +11,12 @@ import styles from "./ReceiptImageCard.module.css";
 type ReceiptImageCardProps = Readonly<{
   language: NarrationLanguage;
   variant: ReceiptShareVariant;
+  model?: ReceiptCardModel;
   headingRef?: Ref<HTMLHeadingElement>;
 }>;
 
-export function ReceiptImageCard({ language, variant, headingRef }: ReceiptImageCardProps) {
-  const model = createReceiptCardModel(language, variant);
+export function ReceiptImageCard({ language, variant, model: suppliedModel, headingRef }: ReceiptImageCardProps) {
+  const model = suppliedModel ?? createReceiptCardModel(language, variant);
 
   return (
     <section

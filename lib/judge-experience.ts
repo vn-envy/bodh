@@ -1,58 +1,35 @@
 import type { BodhPose } from "../app/components/BodhMark";
 
-export const SELECTED_JUDGE_SEED = {
-  caseId: "seed-01",
-  title: "Hero doubt: rule without meaning",
-  problem: "3/4 ÷ 1/8 = ?",
-  visibleWork: "3/4 × 8/1",
-  learnerWords: "मुझे समझ नहीं आता कि इसे उल्टा करके multiply क्यों करते हैं।",
-  tourHref: "/judge-tour/seed-01",
-  journeyHref: "/demo?seed=seed-01&judge=1",
+export const JUDGE_TOUR_HREF = "/judge-tour" as const;
+
+export const JUDGE_SEEDS = {
+  mathematics: {
+    caseId: "seed-01",
+    subject: "Mathematics",
+    title: "Rule remembered, meaning missing",
+    problem: "3/4 ÷ 1/8 = ?",
+    visibleWork: "3/4 × 8/1",
+    learnerWords: "मुझे समझ नहीं आता कि इसे उल्टा करके multiply क्यों करते हैं।",
+  },
+  science: {
+    caseId: "seed-09",
+    subject: "Science",
+    title: "Where did the puddle water go?",
+    problem: "धूप में puddle का पानी गायब कहाँ हो गया?",
+    visibleWork: "Puddle → धूप → गायब",
+    learnerWords: "मुझे लगता है Sun ने पानी पी लिया या पानी खत्म हो गया—वह हवा में कैसे जा सकता है?",
+  },
 } as const;
+
 export const JUDGE_TOUR_STEPS = [
-  {
-    id: "listen",
-    time: "0–15 sec",
-    shortLabel: "Listen",
-    title: "Start with the learner’s exact doubt.",
-    body: "Bodh preserves the equation, visible work, and the learner’s own words. It does not infer a polished solution or replace what the child actually said.",
-    evidence: "Input fidelity before interpretation",
-    pose: "listen",
-  },
-  {
-    id: "diagnose",
-    time: "15–35 sec",
-    shortLabel: "Diagnose",
-    title: "Find one idea worth checking.",
-    body: "A bounded curriculum slice and one short probe help distinguish a remembered rule from an understood relationship. The probe chooses where teaching begins; it is not a grade.",
-    evidence: "Probe before teaching, never an answer dump",
-    pose: "guide",
-  },
-  {
-    id: "repair",
-    time: "35–70 sec",
-    shortLabel: "Repair",
-    title: "Rebuild the relationship in small visual steps.",
-    body: "Bodh moves from the chosen whole to equal parts, unit size, numerator count, equivalent repartition, repeated composition, and division as a missing count.",
-    evidence: "Seven authored ideas; one visible action at a time",
-    pose: "tinker",
-  },
-  {
-    id: "transfer",
-    time: "70–90 sec",
-    shortLabel: "Transfer",
-    title: "Ask the learner to use the idea again.",
-    body: "The learner builds the original relationship, tries a new problem, explains what the number means, and returns to the first doubt. The receipt records this session only—not long-term mastery.",
-    evidence: "Action-backed session evidence, not a score",
-    pose: "celebrate",
-  },
+  { id: "promise", shortLabel: "Promise", pose: "listen" },
+  { id: "mathematics", shortLabel: "Maths", pose: "tinker" },
+  { id: "science", shortLabel: "Science", pose: "guide" },
+  { id: "transfer", shortLabel: "Transfer", pose: "tinker" },
+  { id: "complete", shortLabel: "Complete", pose: "celebrate" },
 ] as const satisfies readonly {
   id: string;
-  time: string;
   shortLabel: string;
-  title: string;
-  body: string;
-  evidence: string;
   pose: BodhPose;
 }[];
 

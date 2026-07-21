@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import taxonomy from "../../data/taxonomy/evaporation-water-cycle.slice.json";
 import type { LocalizedText, NarrationLanguage } from "../../lib/narration-language";
 import styles from "../science/evaporation/EvaporationJourney.module.css";
@@ -9,13 +9,13 @@ import { BodhMark } from "./BodhMark";
 
 const TOPIC_IDS = [
   "mt_TlLE4cZgOr",
-  "mt_PrWc-HZzDl",
+  "mt_fhqVdj4BYr",
+  "mt_Qkewo5M3_c",
   "mt_IhWzO4sQPg",
+  "mt_PrWc-HZzDl",
   "mt_nRF_VRntrW",
   "mt_Pl-nsjYGZ3",
   "mt_ahSqW_kK1b",
-  "mt_fhqVdj4BYr",
-  "mt_Qkewo5M3_c",
 ] as const;
 
 type TopicId = (typeof TOPIC_IDS)[number];
@@ -72,15 +72,25 @@ const TOPIC_COPY: Record<TopicId, Readonly<{
 };
 
 const GRAPH_LAYOUT: Record<TopicId, GraphPoint> = {
-  "mt_TlLE4cZgOr": { x: 10, y: 77 },
-  "mt_PrWc-HZzDl": { x: 11, y: 24 },
-  "mt_IhWzO4sQPg": { x: 36, y: 13 },
-  "mt_nRF_VRntrW": { x: 35, y: 88 },
-  "mt_Pl-nsjYGZ3": { x: 35, y: 52 },
-  "mt_ahSqW_kK1b": { x: 66, y: 83 },
-  "mt_fhqVdj4BYr": { x: 66, y: 35 },
-  "mt_Qkewo5M3_c": { x: 90, y: 20 },
+  "mt_TlLE4cZgOr": { x: 13, y: 50 },
+  "mt_PrWc-HZzDl": { x: 54, y: 14 },
+  "mt_IhWzO4sQPg": { x: 32, y: 18 },
+  "mt_nRF_VRntrW": { x: 32, y: 82 },
+  "mt_Pl-nsjYGZ3": { x: 69, y: 82 },
+  "mt_ahSqW_kK1b": { x: 89, y: 82 },
+  "mt_fhqVdj4BYr": { x: 54, y: 50 },
+  "mt_Qkewo5M3_c": { x: 87, y: 50 },
 };
+
+const MAIN_ROUTE = [
+  "mt_TlLE4cZgOr",
+  "mt_fhqVdj4BYr",
+  "mt_Qkewo5M3_c",
+] as const satisfies readonly TopicId[];
+
+const MAIN_ROUTE_PAIRS = new Set(
+  MAIN_ROUTE.slice(0, -1).map((topicId, index) => `${topicId}:${MAIN_ROUTE[index + 1]}`),
+);
 
 const TRAVEL_ROUTE = [
   "mt_TlLE4cZgOr",
@@ -173,9 +183,10 @@ export function EvaporationCurriculumClimb({
             {taxonomy.dependencies.map((edge) => {
               const from = edge.prerequisiteId as TopicId;
               const to = edge.topicId as TopicId;
+              const isMainRoute = MAIN_ROUTE_PAIRS.has(`${from}:${to}`);
               return (
                 <span
-                  className={`${styles.climbEdge} ${edge.strength === "hard" ? styles.climbEdgeHard : styles.climbEdgeSoft}`}
+                  className={`${styles.climbEdge} ${isMainRoute ? styles.climbEdgeRoute : styles.climbEdgeSupport}`}
                   style={edgeStyle(GRAPH_LAYOUT[from], GRAPH_LAYOUT[to])}
                   key={`${from}:${to}`}
                 />
@@ -183,29 +194,37 @@ export function EvaporationCurriculumClimb({
             })}
           </div>
           <div className={styles.climbNodes}>
-            {TOPIC_IDS.map((topicId) => {
+            {TOPIC_IDS.map((topicId, index) => {
               const topic = TOPICS.get(topicId)!;
               const point = GRAPH_LAYOUT[topicId];
               const status = topicStatus(topicId, currentTopicId, boundedStage);
+              const routeIndex = MAIN_ROUTE.indexOf(topicId as (typeof MAIN_ROUTE)[number]);
+              const routeStep = routeIndex >= 0 ? routeIndex + 1 : null;
               const nodeStyle = {
                 "--science-node-x": `${point.x}%`,
                 "--science-node-y": `${point.y}%`,
               } as CSSProperties;
               return (
-                <button
-                  className={`${styles.climbNode} ${styles[`climbNode${status[0].toUpperCase()}${status.slice(1)}` as keyof typeof styles]} ${effectiveSelection === topicId ? styles.climbNodeSelected : ""}`}
-                  style={nodeStyle}
-                  type="button"
-                  aria-pressed={effectiveSelection === topicId}
-                  aria-label={`${TOPIC_COPY[topicId].short[language]}. ${statusCopy(status, language)}. Marble: ${topic.name}.`}
-                  onClick={() => setSelectedTopicId(topicId)}
-                  key={topicId}
-                >
-                  {status === "current" && <span className={styles.climbBodh}><BodhMark pose="guide" size="mark" motion="guide" /></span>}
-                  <small>{statusCopy(status, language)}</small>
-                  <strong>{TOPIC_COPY[topicId].short[language]}</strong>
-                  <span>{topic.ageRangeStart}–{topic.ageRangeEnd}</span>
-                </button>
+                <Fragment key={topicId}>
+                  {index === MAIN_ROUTE.length && (
+                    <p className={styles.climbSupportHeading}>{language === "hi" ? "सहायक Marble ideas" : "Supporting Marble ideas"}</p>
+                  )}
+                  <button
+                    className={`${styles.climbNode} ${routeStep ? styles.climbNodeRoute : ""} ${styles[`climbNode${status[0].toUpperCase()}${status.slice(1)}` as keyof typeof styles]} ${effectiveSelection === topicId ? styles.climbNodeSelected : ""}`}
+                    style={nodeStyle}
+                    type="button"
+                    data-route-step={routeStep ?? undefined}
+                    aria-pressed={effectiveSelection === topicId}
+                    aria-label={`${TOPIC_COPY[topicId].short[language]}. ${routeStep ? `${language === "hi" ? "Route कदम" : "Route step"} ${routeStep} of ${MAIN_ROUTE.length}. ` : ""}${statusCopy(status, language)}. Marble: ${topic.name}.`}
+                    onClick={() => setSelectedTopicId(topicId)}
+                  >
+                    {routeStep && <b className={styles.climbRouteBadge} aria-hidden="true">{routeStep}</b>}
+                    {status === "current" && <span className={styles.climbBodh}><BodhMark pose="guide" size="mark" motion="guide" /></span>}
+                    <small>{statusCopy(status, language)}</small>
+                    <strong>{TOPIC_COPY[topicId].short[language]}</strong>
+                    <span>{topic.ageRangeStart}–{topic.ageRangeEnd}</span>
+                  </button>
+                </Fragment>
               );
             })}
           </div>

@@ -71,6 +71,60 @@ test("pins the evaporation climb to canonical Marble topics and dependencies", (
   );
 });
 
+test("renders the evaporation Marble graph as a clean, non-crossing dotted route", async () => {
+  const [componentSource, cssSource] = await Promise.all([
+    readFile(new URL("../app/components/EvaporationCurriculumClimb.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/science/evaporation/EvaporationJourney.module.css", import.meta.url), "utf8"),
+  ]);
+
+  const layout = new Map(
+    [...componentSource.matchAll(/"(mt_[^"]+)": \{ x: (\d+), y: (\d+) \}/g)]
+      .map((match) => [match[1], { x: Number(match[2]), y: Number(match[3]) }]),
+  );
+  assert.equal(layout.size, evaporationTaxonomy.topics.length);
+  for (const topic of evaporationTaxonomy.topics) {
+    assert.ok(layout.has(topic.id), `${topic.id} needs a graph coordinate`);
+  }
+
+  const orientation = (start, end, point) => (
+    (end.x - start.x) * (point.y - start.y)
+    - (end.y - start.y) * (point.x - start.x)
+  );
+  const crosses = (left, right) => {
+    const leftStart = layout.get(left.prerequisiteId);
+    const leftEnd = layout.get(left.topicId);
+    const rightStart = layout.get(right.prerequisiteId);
+    const rightEnd = layout.get(right.topicId);
+    return orientation(leftStart, leftEnd, rightStart) * orientation(leftStart, leftEnd, rightEnd) < 0
+      && orientation(rightStart, rightEnd, leftStart) * orientation(rightStart, rightEnd, leftEnd) < 0;
+  };
+
+  for (let leftIndex = 0; leftIndex < evaporationTaxonomy.dependencies.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < evaporationTaxonomy.dependencies.length; rightIndex += 1) {
+      const left = evaporationTaxonomy.dependencies[leftIndex];
+      const right = evaporationTaxonomy.dependencies[rightIndex];
+      const sharedEndpoint = [left.prerequisiteId, left.topicId]
+        .some((topicId) => topicId === right.prerequisiteId || topicId === right.topicId);
+      if (!sharedEndpoint) {
+        assert.equal(crosses(left, right), false, `${left.prerequisiteId}→${left.topicId} crosses ${right.prerequisiteId}→${right.topicId}`);
+      }
+    }
+  }
+
+  assert.match(
+    componentSource,
+    /const MAIN_ROUTE = \[\s*"mt_TlLE4cZgOr",\s*"mt_fhqVdj4BYr",\s*"mt_Qkewo5M3_c",/,
+  );
+  assert.match(componentSource, /styles\.climbEdgeRoute/);
+  assert.match(componentSource, /data-route-step=\{routeStep \?\? undefined\}/);
+  assert.match(cssSource, /\.climbCanvas \{[\s\S]*?aspect-ratio: 1 \/ 1;/);
+  assert.match(cssSource, /\.climbEdge \{[\s\S]*?radial-gradient\(circle,/);
+  assert.match(cssSource, /\.climbEdgeRoute \{[\s\S]*?radial-gradient\(circle,/);
+  assert.doesNotMatch(cssSource, /\.climbEdge::after/);
+  assert.match(cssSource, /\.climbSky, \.climbEdges \{ display: none; \}/);
+  assert.doesNotMatch(cssSource, /\.climbNode small[^}]*display: none;/);
+});
+
 test("authors the evaporation journey as bilingual, pointer-owned narration beats", () => {
   assert.equal(EVAPORATION_NARRATION_VERSION, "evaporation-v1");
   assert.deepEqual(
@@ -194,8 +248,17 @@ test("keeps curated science as the default and unlocks live mode only from a mat
   assert.match(journeySource, /"water-destroyed-by-sun": "destroyed"/);
   assert.match(journeySource, /"water-only-underground": "underground"/);
   assert.match(journeySource, /return \{ live: false, requestedLive: true, handoff: null \}/);
-  assert.match(journeySource, /Live OpenAI diagnosis · reviewed visual evidence/);
-  assert.match(journeySource, /Curated Science journey/);
+  assert.match(journeySource, /mode\.live \? "Live Science repair" : "Curated Science"/);
+  assert.match(journeySource, /mode\.live \? "Live OpenAI diagnosis"/);
+  assert.match(journeySource, /Curated Science & Earth/);
+  assert.match(journeySource, /createEvaporationReceiptCardModel/);
+  assert.match(journeySource, /<ReceiptImageCard/);
+  assert.match(journeySource, /Journey complete · 6\/6/);
+  assert.match(journeySource, /Water journey · 5\/5 complete/);
+  assert.match(journeySource, /!cycleComplete && !receiptVisible/);
+  assert.match(journeySource, /receiptHeadingRef\.current\?\.scrollIntoView/);
+  assert.match(journeySource, /!receiptVisible && \(\s*<EvaporationCurriculumClimb/s);
+  assert.doesNotMatch(journeySource, /className=\{styles\.receiptMascot\}/);
   assert.match(
     journeySource,
     /\/api\/narration\/\$\{EVAPORATION_NARRATION_VERSION\}\/\$\{language\}\/\$\{stageId\}\/\$\{beatId\}\.mp3/,
@@ -224,6 +287,6 @@ test("server-renders a hydration-stable evaporation route without inventing live
     assert.match(html, /Following one drop of water…/);
     assert.match(html, /aria-busy="true"/);
     assert.match(html, /Where did the puddle go\?/);
-    assert.doesNotMatch(html, /Live OpenAI diagnosis · reviewed visual evidence/);
+    assert.doesNotMatch(html, /Live OpenAI diagnosis/);
   }
 });

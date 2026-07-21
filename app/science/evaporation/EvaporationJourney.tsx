@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type Ref,
 } from "react";
 import {
   EVAPORATION_CONCEPT_STAGES,
@@ -20,12 +21,14 @@ import {
   SEEDED_JOURNEY_STORAGE_KEY,
   type SeedJourneyHandoff,
 } from "../../../lib/seeded-journey";
+import { createEvaporationReceiptCardModel } from "../../../lib/receipt-card";
 import { BodhMark } from "../../components/BodhMark";
 import { EvaporationCurriculumClimb } from "../../components/EvaporationCurriculumClimb";
 import {
   NarrationLanguageToggle,
   useNarrationLanguage,
 } from "../../components/NarrationLanguageToggle";
+import { ReceiptImageCard } from "../../components/ReceiptImageCard";
 import styles from "./EvaporationJourney.module.css";
 
 type AudioState = "preparing" | "ready" | "playing" | "unavailable";
@@ -462,7 +465,7 @@ function TransferExperiment({
             onClick={() => correct ? onComplete() : setChecked(true)}
           >
             {correct
-              ? language === "hi" ? "Understanding receipt बनाएँ →" : "Make my understanding receipt →"
+              ? language === "hi" ? "Journey पूरी करें और receipt देखें →" : "Finish journey and view receipt →"
               : language === "hi" ? "मेरी story जाँचें" : "Check my story"}
           </button>
         </div>
@@ -471,44 +474,69 @@ function TransferExperiment({
   );
 }
 
+function CycleCompleteBridge({ language }: { language: NarrationLanguage }) {
+  return (
+    <section className={styles.cycleCompleteBridge} role="status" aria-live="polite">
+      <div className={styles.cycleCompleteMark} aria-hidden="true">✓</div>
+      <div>
+        <span className={styles.eyebrow}>{language === "hi" ? "Water journey · 5/5 पूरी" : "Water journey · 5/5 complete"}</span>
+        <h2>{language === "hi" ? "तुमने पानी को हर stop पर ढूँढ लिया।" : "You found the water at every stop."}</h2>
+        <p>{language === "hi"
+          ? "अब सिर्फ़ एक final step है: यही model cold lid पर नई situation में इस्तेमाल करो।"
+          : "One final step remains: use the same model in a new cold-lid situation."}</p>
+      </div>
+      <div className={styles.cycleCompleteMascot}>
+        <BodhMark pose="guide" size="medium" motion="guide" />
+        <strong>{language === "hi" ? "अंतिम step → Transfer" : "Final step → Transfer"}</strong>
+      </div>
+    </section>
+  );
+}
+
 function UnderstandingReceipt({
   language,
   mode,
   onRestart,
+  headingRef,
 }: {
   language: NarrationLanguage;
   mode: LessonMode;
   onRestart: () => void;
+  headingRef: Ref<HTMLHeadingElement>;
 }) {
+  const receiptModel = useMemo(
+    () => createEvaporationReceiptCardModel(language),
+    [language],
+  );
+
   return (
     <article className={styles.receipt}>
-      <div className={styles.receiptMascot}>
-        <BodhMark pose="celebrate" size="large" motion="celebrate" />
-        <strong>{language === "hi" ? "पानी मिला—समझ भी।" : "Water found. Meaning found."}</strong>
-      </div>
-      <div className={styles.receiptCopy}>
-        <span className={styles.eyebrow}>{mode.live ? "Live OpenAI diagnosis · reviewed visual evidence" : language === "hi" ? "Curated Science journey" : "Curated Science journey"}</span>
-        <h1>{language === "hi" ? "पानी खत्म नहीं हुआ।" : "The water was not destroyed."}</h1>
-        <blockquote>{language === "hi"
-          ? "मैं उसी पानी को liquid puddle → invisible vapour → liquid droplets → rain तक track कर सकता/सकती हूँ।"
-          : "I can track the same water from liquid puddle → invisible vapour → liquid droplets → rain."}</blockquote>
-        <div className={styles.receiptEvidence} aria-label={language === "hi" ? "Evidence chain" : "Evidence chain"}>
-          <span><i aria-hidden="true">◒</i><strong>{language === "hi" ? "Liquid" : "Liquid"}</strong></span>
-          <b aria-hidden="true">→</b>
-          <span><i aria-hidden="true">○</i><strong>{language === "hi" ? "Invisible gas" : "Invisible gas"}</strong></span>
-          <b aria-hidden="true">→</b>
-          <span><i aria-hidden="true">●</i><strong>{language === "hi" ? "Cooled drops" : "Cooled drops"}</strong></span>
-          <b aria-hidden="true">→</b>
-          <span><i aria-hidden="true">☂</i><strong>{language === "hi" ? "Rain" : "Rain"}</strong></span>
+      <div className={styles.journeyCompleteBanner} role="status" aria-live="polite">
+        <span aria-hidden="true">✓</span>
+        <div>
+          <strong>{language === "hi" ? "Journey पूरी · 6/6" : "Journey complete · 6/6"}</strong>
+          <small>{language === "hi"
+            ? "5 water-cycle ideas + 1 नई transfer situation"
+            : "5 water-cycle ideas + 1 new transfer situation"}</small>
         </div>
-        <p>{language === "hi"
-          ? "Evidence: water-cycle interaction और cold-lid transfer check. यह grade या long-term mastery claim नहीं है।"
-          : "Evidence: the water-cycle interaction and cold-lid transfer check. This is not a grade or a claim of long-term mastery."}</p>
+      </div>
+
+      <ReceiptImageCard
+        language={language}
+        variant="curated"
+        model={receiptModel}
+        headingRef={headingRef}
+      />
+
+      <div className={styles.receiptFooter}>
         <div className={styles.receiptMeta}>
           <span>✓ Marble · mt_Qkewo5M3_c</span>
           <span>✓ Hindi + English</span>
           {mode.live && <span>✓ {mode.handoff?.model} · seed-09</span>}
         </div>
+        <p>{language === "hi"
+          ? "यह आज के actions का evidence है—grade या long-term mastery claim नहीं।"
+          : "This records today's actions—not a grade or a claim of long-term mastery."}</p>
         <div className={styles.receiptActions}>
           <button className={styles.primaryAction} type="button" onClick={onRestart}>{language === "hi" ? "Journey फिर देखें" : "Replay the journey"}</button>
           <Link className={styles.secondaryAction} href="/diagnose">{language === "hi" ? "एक और doubt लाएँ" : "Bring another doubt"}</Link>
@@ -528,11 +556,21 @@ export function EvaporationJourney() {
   const [stageIndex, setStageIndex] = useState(0);
   const [cycleComplete, setCycleComplete] = useState(false);
   const [receiptVisible, setReceiptVisible] = useState(false);
+  const receiptHeadingRef = useRef<HTMLHeadingElement>(null);
   const stage = EVAPORATION_CONCEPT_STAGES[stageIndex];
   const narration = useEvaporationNarration(stageIndex, language);
   const carriedProbeChoice = mode.live ? probeChoiceFromHandoff(mode.handoff) : null;
   const effectiveProbeChoice = probeChoice ?? carriedProbeChoice;
   const probe = PROBE_OPTIONS.find((option) => option.id === effectiveProbeChoice);
+
+  useEffect(() => {
+    if (!receiptVisible) return;
+    const frame = window.requestAnimationFrame(() => {
+      receiptHeadingRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      receiptHeadingRef.current?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [receiptVisible]);
 
   const advanceStage = () => {
     narration.stop();
@@ -594,9 +632,16 @@ export function EvaporationJourney() {
             <strong>{candidate.screenKey[language]}</strong>
           </li>
         ))}
+        <li
+          className={receiptVisible ? styles.progressDone : cycleComplete ? styles.progressCurrent : ""}
+          aria-current={cycleComplete && !receiptVisible ? "step" : undefined}
+        >
+          <span>{receiptVisible ? "✓" : 6}</span>
+          <strong>{language === "hi" ? "नई situation में transfer" : "Transfer to a new situation"}</strong>
+        </li>
       </ol>
 
-      {!receiptVisible && (
+      {!cycleComplete && !receiptVisible && (
         <article className={styles.lessonCard}>
           <section className={styles.hero}>
             <div className={styles.heroCopy}>
@@ -682,10 +727,24 @@ export function EvaporationJourney() {
         </article>
       )}
 
-      {cycleComplete && !receiptVisible && <TransferExperiment language={language} onComplete={() => setReceiptVisible(true)} />}
-      {receiptVisible && <UnderstandingReceipt language={language} mode={mode} onRestart={restart} />}
+      {cycleComplete && !receiptVisible && (
+        <>
+          <CycleCompleteBridge language={language} />
+          <TransferExperiment language={language} onComplete={() => setReceiptVisible(true)} />
+        </>
+      )}
+      {receiptVisible && (
+        <UnderstandingReceipt
+          language={language}
+          mode={mode}
+          onRestart={restart}
+          headingRef={receiptHeadingRef}
+        />
+      )}
 
-      <EvaporationCurriculumClimb language={language} stageIndex={receiptVisible || cycleComplete ? 4 : stageIndex} />
+      {!receiptVisible && (
+        <EvaporationCurriculumClimb language={language} stageIndex={cycleComplete ? 4 : stageIndex} />
+      )}
     </main>
   );
 }

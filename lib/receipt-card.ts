@@ -108,6 +108,47 @@ export function createReceiptCardModel(
   };
 }
 
+/**
+ * Uses the same reviewed receipt contract and visual grammar for the science
+ * journey. Like the mathematics receipt, it accepts no learner payload, score,
+ * name, or unreviewed model text.
+ */
+export function createEvaporationReceiptCardModel(
+  language: NarrationLanguage,
+): ReceiptCardModel {
+  const isHindi = language === "hi";
+  const labels = isHindi
+    ? ["देखा", "Track किया", "नई जगह", "समझाया"]
+    : ["Noticed", "Tracked", "New case", "Explained"];
+
+  return {
+    version: RECEIPT_CARD_VERSION,
+    language,
+    variant: "curated",
+    brand: "BODH",
+    tagline: isHindi ? "जो सच में समझ आया" : "That which is truly understood",
+    badge: isHindi ? "JOURNEY पूरी · 6/6" : "JOURNEY COMPLETE · 6/6",
+    title: isHindi
+      ? "मैंने उसी पानी को नई situation में भी track किया।"
+      : "I tracked the same water in a new situation.",
+    ideaLabel: isHindi ? "आज की बड़ी idea" : "TODAY'S BIG IDEA",
+    idea: isHindi
+      ? "पानी गायब नहीं होता—उसकी state और location बदल सकती है।"
+      : "Water does not disappear—it can change state and location.",
+    evidence: isHindi
+      ? "Puddle से 12/12 water track किया · cold lid पर वही idea इस्तेमाल की"
+      : "Tracked 12/12 water from the puddle · used the same idea with a cold lid",
+    firstLabel: isHindi ? "PUDDLE JOURNEY" : "PUDDLE JOURNEY",
+    firstEquation: isHindi ? "liquid → invisible vapour" : "liquid → invisible vapour",
+    transferLabel: isHindi ? "नई SITUATION" : "NEW SITUATION",
+    transferEquation: isHindi ? "vapour → liquid drops" : "vapour → liquid drops",
+    trust: isHindi
+      ? "यह आज के actions का evidence है—grade या long-term mastery का दावा नहीं।"
+      : "This records today's actions—not a grade or a claim of long-term mastery.",
+    nodes: labels.map((label, index) => ({ label, x: NODE_X[index] })),
+  };
+}
+
 export function createReceiptCardScene(
   language: NarrationLanguage,
   variant: ReceiptShareVariant,

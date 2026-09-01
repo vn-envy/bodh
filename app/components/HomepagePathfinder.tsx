@@ -37,7 +37,7 @@ const PATH_LABELS = {
 const topicsById = new Map(taxonomy.topics.map((topic) => [topic.id, topic]));
 
 export function HomepagePathfinder({ language }: { language: NarrationLanguage }) {
-  const english = language === "en";
+  const english = language !== "hi";
 
   return (
     <article className={styles.card} aria-labelledby="home-pathfinder-title" role="listitem">

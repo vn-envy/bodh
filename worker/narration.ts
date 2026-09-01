@@ -35,6 +35,7 @@ const TTS_PROFILE_VERSION = "calm-tutor-v2";
 const VOICE_INSTRUCTIONS: Record<NarrationLanguage, string> = {
   hi: "Speak entirely in the supplied natural Indian Hindi, like a calm, warm primary-school tutor. Speak clearly at a moderate-slow pace, with thoughtful pauses around each idea. Sound reassuring and curious, never theatrical, patronising, challenging, or sing-song. Pronounce the supplied maths and science words exactly as written. Do not translate, add, remove, count, solve, or answer anything.",
   en: "Speak entirely in clear Indian English, like a calm, warm primary-school tutor. Speak at a moderate-slow pace, with thoughtful pauses around each idea. Sound reassuring and curious, never theatrical, patronising, challenging, or sing-song. Pronounce the supplied maths and science terms naturally and exactly preserve the supplied meaning. Do not translate, add, remove, count, solve, or answer anything.",
+  ta: "Speak entirely in the supplied natural Tamil, like a calm, warm primary-school tutor. Speak clearly at a moderate-slow pace, with thoughtful pauses around each idea. Sound reassuring and curious, never theatrical, patronising, challenging, or sing-song. Pronounce the supplied maths and science words exactly as written, including any English terms. Do not translate, add, remove, count, solve, or answer anything.",
 };
 
 function json(body: unknown, status: number, headers?: HeadersInit) {
@@ -109,11 +110,22 @@ function cacheRequestFor(
 ) {
   const model = env.BODH_TTS_MODEL || DEFAULT_TTS_MODEL;
   const voice = env.BODH_TTS_VOICE || DEFAULT_TTS_VOICE;
-  const key = stableHash(`${narrationVersion}\n${TTS_PROFILE_VERSION}\n${language}\n${model}\n${voice}\n${VOICE_INSTRUCTIONS[language]}\n${text}`);
+  const key = stableHash(`${narrationVersion}\n${TTS_PROFILE_VERSION}\n${language}\n${model}\n${voice}\n${VOICE_INSTRUCTIONS[voiceInstructionLanguage(text, language)]}\n${text}`);
   const cacheUrl = new URL(request.url);
   cacheUrl.pathname = `/_bodh-audio-cache/${narrationVersion}/${language}/${encodeURIComponent(model)}/${encodeURIComponent(voice)}/${stageId}/${beatId}-${key}.mp3`;
   cacheUrl.search = "";
   return new Request(cacheUrl, { method: "GET" });
+}
+
+const TAMIL_SCRIPT = /[\u0B80-\u0BFF]/;
+
+/**
+ * A Tamil beat without a reviewed overlay is served as its English source, so
+ * the tutor profile must match the script actually being spoken.
+ */
+export function voiceInstructionLanguage(text: string, language: NarrationLanguage): NarrationLanguage {
+  if (language === "ta" && !TAMIL_SCRIPT.test(text)) return "en";
+  return language;
 }
 
 export function speechRequestFor(
@@ -125,7 +137,7 @@ export function speechRequestFor(
     model: env.BODH_TTS_MODEL || DEFAULT_TTS_MODEL,
     voice: env.BODH_TTS_VOICE || DEFAULT_TTS_VOICE,
     input: text,
-    instructions: VOICE_INSTRUCTIONS[language],
+    instructions: VOICE_INSTRUCTIONS[voiceInstructionLanguage(text, language)],
     response_format: "mp3",
     speed: 0.9,
   };

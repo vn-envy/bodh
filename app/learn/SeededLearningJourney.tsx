@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import type { NarrationLanguage } from "../../lib/narration-language";
+import { localized, type LocalizedText, type NarrationLanguage } from "../../lib/narration-language";
 import {
   SEEDED_JOURNEY_STORAGE_KEY,
   parseSeedJourneyHandoff,
@@ -277,6 +277,8 @@ export function SeededLearningJourney() {
 
   if (!handoff || !lesson || !seed) return <MissingJourney language={language} />;
 
+  const t = (text: LocalizedText) => localized(text, language);
+
   const checkAnswer = () => {
     const option = lesson.check.options.find((candidate) => candidate.id === selectedCheck);
     setCheckState(option?.correct ? "correct" : "try-again");
@@ -313,9 +315,9 @@ export function SeededLearningJourney() {
           <section className={styles.lessonIntro}>
             <div>
               <span className={styles.liveBadge}><i aria-hidden="true" /> {language === "hi" ? "Live OpenAI diagnosis" : "Live OpenAI diagnosis"}</span>
-              <span className="eyebrow">{seed.concept[language]}</span>
-              <h1>{lesson.title[language]}</h1>
-              <p>{lesson.promise[language]}</p>
+              <span className="eyebrow">{t(seed.concept)}</span>
+              <h1>{t(lesson.title)}</h1>
+              <p>{t(lesson.promise)}</p>
               <div className={styles.traceLine}>
                 <span>{handoff.model}</span><span>{handoff.promptVersion}</span><span>{handoff.seedId}</span>
               </div>
@@ -326,29 +328,29 @@ export function SeededLearningJourney() {
           <section className={styles.questionCarry} aria-label={language === "hi" ? "तुम्हारा exact सवाल" : "Your exact question"}>
             <span>{language === "hi" ? "Bodh यही doubt साथ लाया" : "Bodh carried this exact doubt"}</span>
             <strong>{handoff.canonicalEquation}</strong>
-            <p>{lesson.diagnosis[language]}</p>
+            <p>{t(lesson.diagnosis)}</p>
           </section>
 
           <section className={styles.atomicRow} aria-label={language === "hi" ? "तीन छोटी ideas" : "Three small ideas"}>
             {lesson.atomicIdeas.map((idea, index) => (
-              <article key={index}><span>{index + 1}</span><p>{idea[language]}</p></article>
+              <article key={index}><span>{index + 1}</span><p>{t(idea)}</p></article>
             ))}
           </section>
 
           <section className={styles.interactionCard}>
             <div className={styles.interactionHeading}>
-              <div><span className="reasoning-label">{language === "hi" ? "अब picture से बनाओ" : "Now build it with a picture"}</span><h2>{lesson.interactionTitle[language]}</h2><p>{lesson.interactionHelp[language]}</p></div>
+              <div><span className="reasoning-label">{language === "hi" ? "अब picture से बनाओ" : "Now build it with a picture"}</span><h2>{t(lesson.interactionTitle)}</h2><p>{t(lesson.interactionHelp)}</p></div>
               <BodhMark pose="tinker" size="small" motion="tinker" />
             </div>
             <SeedRepairArtifact key={lesson.seedId} visual={lesson.visual} language={language} onComplete={() => setVisualComplete(true)} />
-            {visualComplete && <p className={styles.completionCopy}>{lesson.completion[language]}</p>}
+            {visualComplete && <p className={styles.completionCopy}>{t(lesson.completion)}</p>}
           </section>
 
           {visualComplete && (
             <section className={styles.meaningCheck} aria-labelledby="seed-meaning-check-title">
               <span className="reasoning-label">{language === "hi" ? "एक छोटा transfer check" : "One small transfer check"}</span>
-              <h2 id="seed-meaning-check-title">{lesson.check.question[language]}</h2>
-              <div className={styles.checkOptions} role="group" aria-label={lesson.check.question[language]}>
+              <h2 id="seed-meaning-check-title">{t(lesson.check.question)}</h2>
+              <div className={styles.checkOptions} role="group" aria-label={t(lesson.check.question)}>
                 {lesson.check.options.map((option) => (
                   <button
                     className={selectedCheck === option.id ? styles.checkSelected : ""}
@@ -356,10 +358,10 @@ export function SeededLearningJourney() {
                     aria-pressed={selectedCheck === option.id}
                     onClick={() => { setSelectedCheck(option.id); setCheckState("idle"); }}
                     key={option.id}
-                  >{option.label[language]}</button>
+                  >{t(option.label)}</button>
                 ))}
               </div>
-              {checkState === "try-again" && <p className={styles.gentleHint}>{language === "hi" ? "अभी नहीं—" : "Not yet—"}{lesson.check.hint[language]}</p>}
+              {checkState === "try-again" && <p className={styles.gentleHint}>{language === "hi" ? "अभी नहीं—" : "Not yet—"}{t(lesson.check.hint)}</p>}
               {checkState === "correct" && <p className={styles.correctNote}>{language === "hi" ? "हाँ—अब picture और meaning जुड़े हुए हैं।" : "Yes—the picture and the meaning are connected now."}</p>}
               {checkState === "correct" ? (
                 <button className="button button-primary" type="button" onClick={() => setReceiptVisible(true)}>{language === "hi" ? "मेरी understanding receipt बनाएँ" : "Make my understanding receipt"} <span aria-hidden="true">→</span></button>
@@ -375,8 +377,8 @@ export function SeededLearningJourney() {
           <div className={styles.receiptCopy}>
             <span className="eyebrow">Live diagnosis · reviewed visual evidence</span>
             <h1>{language === "hi" ? "सिर्फ answer नहीं—meaning भी साथ गया।" : "Not just an answer—the meaning came with it."}</h1>
-            <div className={styles.receiptQuestion}><span>{seed.title[language]}</span><strong>{handoff.canonicalEquation}</strong></div>
-            <blockquote>{lesson.receiptIdea[language]}</blockquote>
+            <div className={styles.receiptQuestion}><span>{t(seed.title)}</span><strong>{handoff.canonicalEquation}</strong></div>
+            <blockquote>{t(lesson.receiptIdea)}</blockquote>
             <p>{language === "hi" ? "यह आज की activity का evidence है—grade, score, या long-term mastery claim नहीं।" : "This is evidence from today's activity—not a grade, score, or long-term mastery claim."}</p>
             <div className={styles.receiptMeta}><span>✓ {handoff.model}</span><span>✓ {handoff.seedId}</span><span>✓ Marble grounded</span></div>
             <div className={styles.receiptActions}>

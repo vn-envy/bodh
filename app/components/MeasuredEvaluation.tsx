@@ -1,5 +1,5 @@
 import { DIAGNOSTIC_RELEASE_EVIDENCE } from "../../lib/judge-experience";
-import type { NarrationLanguage } from "../../lib/narration-language";
+import { authoredLanguageFor, type NarrationLanguage } from "../../lib/narration-language";
 import styles from "./JudgeExperience.module.css";
 
 const localized = {
@@ -44,7 +44,7 @@ const localized = {
 } as const;
 
 export function MeasuredEvaluation({ language }: { language: NarrationLanguage }) {
-  const text = localized[language];
+  const text = localized[authoredLanguageFor(language)];
   const { corpus, recordedLiveResult } = DIAGNOSTIC_RELEASE_EVIDENCE;
 
   return (

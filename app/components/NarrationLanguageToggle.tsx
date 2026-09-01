@@ -4,12 +4,21 @@ import { useEffect, useSyncExternalStore } from "react";
 import {
   DEFAULT_NARRATION_LANGUAGE,
   isNarrationLanguage,
+  localizedFrom,
+  NARRATION_LANGUAGE_LABEL,
+  NARRATION_LANGUAGES,
   type NarrationLanguage,
 } from "../../lib/narration-language";
 
 const STORAGE_KEY = "bodh:narration-language";
 const CHANGE_EVENT = "bodh:narration-language-change";
 let memoryLanguage: NarrationLanguage = DEFAULT_NARRATION_LANGUAGE;
+
+const LEGEND = {
+  hi: "पाठ की भाषा और Bodh की आवाज़",
+  en: "Lesson language and Bodh voice",
+  ta: "பாடத்தின் மொழி மற்றும் போதின் குரல்",
+} as const;
 
 function currentLanguage(): NarrationLanguage {
   if (typeof window === "undefined") return DEFAULT_NARRATION_LANGUAGE;
@@ -57,27 +66,19 @@ export function NarrationLanguageToggle({ compact = false }: { compact?: boolean
 
   return (
     <fieldset data-control="Bodh voice" className={`narration-language-toggle ${compact ? "narration-language-compact" : ""}`}>
-      <legend>{language === "hi" ? "पाठ की भाषा और Bodh की आवाज़" : "Lesson language and Bodh voice"}</legend>
-      <label className={language === "hi" ? "narration-language-active" : ""}>
-        <input
-          type="radio"
-          name="bodh-narration-language"
-          value="hi"
-          checked={language === "hi"}
-          onChange={() => setNarrationLanguage("hi")}
-        />
-        <span lang="hi">हिंदी</span>
-      </label>
-      <label className={language === "en" ? "narration-language-active" : ""}>
-        <input
-          type="radio"
-          name="bodh-narration-language"
-          value="en"
-          checked={language === "en"}
-          onChange={() => setNarrationLanguage("en")}
-        />
-        <span lang="en">English</span>
-      </label>
+      <legend>{localizedFrom(LEGEND, language)}</legend>
+      {NARRATION_LANGUAGES.map((candidate) => (
+        <label className={language === candidate ? "narration-language-active" : ""} key={candidate}>
+          <input
+            type="radio"
+            name="bodh-narration-language"
+            value={candidate}
+            checked={language === candidate}
+            onChange={() => setNarrationLanguage(candidate)}
+          />
+          <span lang={candidate}>{NARRATION_LANGUAGE_LABEL[candidate]}</span>
+        </label>
+      ))}
     </fieldset>
   );
 }

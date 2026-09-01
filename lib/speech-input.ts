@@ -1,4 +1,4 @@
-import type { NarrationLanguage } from "./narration-language";
+import { NARRATION_SPEECH_LOCALE, type NarrationLanguage } from "./narration-language.ts";
 
 export type SpeechInputError =
   | "permission-denied"
@@ -23,7 +23,7 @@ function compactSpeech(value: string) {
 }
 
 export function speechInputLocale(language: NarrationLanguage) {
-  return language === "hi" ? "hi-IN" : "en-IN";
+  return NARRATION_SPEECH_LOCALE[language];
 }
 
 /** Keeps final and interim recognition hypotheses separate so interim words are never duplicated. */

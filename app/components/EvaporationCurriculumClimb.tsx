@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import { Fragment, useState } from "react";
 import taxonomy from "../../data/taxonomy/evaporation-water-cycle.slice.json";
-import type { LocalizedText, NarrationLanguage } from "../../lib/narration-language";
+import { localized, type LocalizedText, type NarrationLanguage } from "../../lib/narration-language";
 import styles from "../science/evaporation/EvaporationJourney.module.css";
 import { BodhMark } from "./BodhMark";
 
@@ -132,7 +132,7 @@ function statusCopy(status: TopicStatus, language: NarrationLanguage) {
     ahead: hiEn("आगे", "Ahead"),
     support: hiEn("सहायक विचार", "Supporting idea"),
   };
-  return copy[status][language];
+  return localized(copy[status], language);
 }
 
 export function EvaporationCurriculumClimb({
@@ -212,13 +212,13 @@ export function EvaporationCurriculumClimb({
                     type="button"
                     data-route-step={routeStep ?? undefined}
                     aria-pressed={effectiveSelection === topicId}
-                    aria-label={`${TOPIC_COPY[topicId].short[language]}. ${routeStep ? `${language === "hi" ? "यात्रा पड़ाव" : "Route step"} ${routeStep} ${language === "hi" ? `में से ${MAIN_ROUTE.length}` : `of ${MAIN_ROUTE.length}`}. ` : ""}${statusCopy(status, language)}.${language === "en" ? ` Marble: ${topic.name}.` : ""}`}
+                    aria-label={`${localized(TOPIC_COPY[topicId].short, language)}. ${routeStep ? `${language === "hi" ? "यात्रा पड़ाव" : "Route step"} ${routeStep} ${language === "hi" ? `में से ${MAIN_ROUTE.length}` : `of ${MAIN_ROUTE.length}`}. ` : ""}${statusCopy(status, language)}.${language === "en" ? ` Marble: ${topic.name}.` : ""}`}
                     onClick={() => setSelectedTopicId(topicId)}
                   >
                     {routeStep && <b className={styles.climbRouteBadge} aria-hidden="true">{routeStep}</b>}
                     {status === "current" && <span className={styles.climbBodh}><BodhMark pose="guide" size="mark" motion="guide" /></span>}
                     <small>{statusCopy(status, language)}</small>
-                    <strong>{TOPIC_COPY[topicId].short[language]}</strong>
+                    <strong>{localized(TOPIC_COPY[topicId].short, language)}</strong>
                     <span>{topic.ageRangeStart}–{topic.ageRangeEnd}</span>
                   </button>
                 </Fragment>
@@ -228,13 +228,13 @@ export function EvaporationCurriculumClimb({
         </div>
 
         <aside className={styles.climbDetail} aria-live="polite">
-          <span>{TOPIC_COPY[effectiveSelection].short[language]}</span>
+          <span>{localized(TOPIC_COPY[effectiveSelection].short, language)}</span>
           <h3>{language === "hi" ? selectedCopy.short.hi : selected.name}</h3>
           <small>{language === "hi" ? `Marble · उम्र ${selected.ageRangeStart}–${selected.ageRangeEnd}` : `Marble · ${selected.domain} · ages ${selected.ageRangeStart}–${selected.ageRangeEnd}`}</small>
-          <p>{selectedCopy.meaning[language]}</p>
+          <p>{localized(selectedCopy.meaning, language)}</p>
           <div>
             <strong>{language === "hi" ? "Bodh यहाँ क्या देखता है" : "What Bodh looks for here"}</strong>
-            <p>{selectedCopy.clue[language]}</p>
+            <p>{localized(selectedCopy.clue, language)}</p>
           </div>
         </aside>
       </div>
@@ -244,7 +244,7 @@ export function EvaporationCurriculumClimb({
         <ol>
           {taxonomy.dependencies.map((edge) => (
             <li key={`${edge.prerequisiteId}:${edge.topicId}`}>
-              <span><strong>{TOPIC_COPY[edge.prerequisiteId as TopicId].short[language]}</strong><b aria-hidden="true">→</b><strong>{TOPIC_COPY[edge.topicId as TopicId].short[language]}</strong></span>
+              <span><strong>{localized(TOPIC_COPY[edge.prerequisiteId as TopicId].short, language)}</strong><b aria-hidden="true">→</b><strong>{localized(TOPIC_COPY[edge.topicId as TopicId].short, language)}</strong></span>
               <small>{language === "hi" ? "पाठ्यक्रम की ज़रूरी कड़ी" : `${edge.strength} · ${edge.reason}`}</small>
             </li>
           ))}

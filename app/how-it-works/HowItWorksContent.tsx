@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { authoredLanguageFor } from "../../lib/narration-language";
 import { BodhMark } from "../components/BodhMark";
 import { MeasuredEvaluation } from "../components/MeasuredEvaluation";
 import {
@@ -67,7 +68,7 @@ const colors = ["pink", "olive", "peach", "blue"] as const;
 
 export function HowItWorksContent() {
   const language = useNarrationLanguage();
-  const text = copy[language];
+  const text = copy[authoredLanguageFor(language)];
 
   return (
     <main className="guide-shell" id="main-content" lang={language}>

@@ -1,4 +1,4 @@
-import type { NarrationLanguage } from "../../lib/narration-language";
+import { authoredLanguageFor, type NarrationLanguage } from "../../lib/narration-language";
 import { BodhMark, type BodhPose } from "./BodhMark";
 
 const stages = {
@@ -15,10 +15,11 @@ export function ProgressPath({
   active?: number;
   language?: NarrationLanguage;
 }) {
-  const journeyComplete = active > stages[language].length;
+  const stageLabels = stages[authoredLanguageFor(language)];
+  const journeyComplete = active > stageLabels.length;
   const bodhPosition = journeyComplete
-    ? stages[language].length
-    : Math.max(1, Math.min(active, stages[language].length));
+    ? stageLabels.length
+    : Math.max(1, Math.min(active, stageLabels.length));
 
   return (
     <ol
@@ -26,7 +27,7 @@ export function ProgressPath({
       aria-label={language === "hi" ? "सीखने की journey" : "Learning journey"}
       lang={language}
     >
-      {stages[language].map((stage, index) => {
+      {stageLabels.map((stage, index) => {
         const position = index + 1;
         const state = position < active ? "complete" : position === active ? "active" : "future";
         const carriesBodh = position === bodhPosition;

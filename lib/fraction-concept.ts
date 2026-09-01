@@ -1,5 +1,6 @@
 import {
   DEFAULT_NARRATION_LANGUAGE,
+  localized,
   type LocalizedText,
   type NarrationLanguage,
 } from "./narration-language.ts";
@@ -462,7 +463,7 @@ export function resolveNarrationBeat(
   beat: FractionNarrationBeat,
   language: NarrationLanguage,
 ): ResolvedFractionNarrationBeat {
-  return { id: beat.id, target: beat.target, text: beat.text[language], key: beat.key[language] };
+  return { id: beat.id, target: beat.target, text: localized(beat.text, language), key: localized(beat.key, language) };
 }
 
 export function narrationBeatFor(

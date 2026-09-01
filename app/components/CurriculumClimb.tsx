@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import { useMemo, useState } from "react";
 import taxonomy from "../../data/taxonomy/fractions-division.slice.json";
-import type { LocalizedText, NarrationLanguage } from "../../lib/narration-language";
+import { localized, type LocalizedText, type NarrationLanguage } from "../../lib/narration-language";
 import { BodhMark } from "./BodhMark";
 
 type Topic = (typeof taxonomy.topics)[number];
@@ -149,7 +149,7 @@ function statusCopy(status: "ready" | "here" | "next" | "goal" | "nearby", langu
     goal: hiEn("आज की चोटी", "Today's summit"),
     nearby: hiEn("पास की skill", "Nearby skill"),
   } as const;
-  return copy[status][language];
+  return localized(copy[status], language);
 }
 
 export function CurriculumClimb({
@@ -248,13 +248,13 @@ export function CurriculumClimb({
                   style={nodeStyle}
                   type="button"
                   aria-pressed={selectedTopicId === topicId}
-                  aria-label={`${TOPIC_COPY[topicId].short[language]}. Marble: ${topic.name}. ${statusCopy(status, language)}.`}
+                  aria-label={`${localized(TOPIC_COPY[topicId].short, language)}. Marble: ${topic.name}. ${statusCopy(status, language)}.`}
                   onClick={() => setSelection({ focus, selected: topicId })}
                   key={topicId}
                 >
                   {status === "here" && <span className="climb-bodh"><BodhMark pose="guide" size="mark" motion="guide" /></span>}
                   <small>{statusCopy(status, language)}</small>
-                  <strong>{TOPIC_COPY[topicId].short[language]}</strong>
+                  <strong>{localized(TOPIC_COPY[topicId].short, language)}</strong>
                   <span>{topic.ageRangeStart}–{topic.ageRangeEnd}</span>
                 </button>
               );
@@ -264,12 +264,12 @@ export function CurriculumClimb({
 
         <aside className={`climb-detail climb-detail-${selectedStatus}`} aria-live="polite">
           <span>{statusCopy(selectedStatus, language)}</span>
-          <h3>{selectedCopy.short[language]}</h3>
+          <h3>{localized(selectedCopy.short, language)}</h3>
           <small lang="en">Marble · {selected.name} · ages {selected.ageRangeStart}–{selected.ageRangeEnd}</small>
-          <p>{selectedCopy.meaning[language]}</p>
+          <p>{localized(selectedCopy.meaning, language)}</p>
           <div>
             <strong>{language === "hi" ? "Bodh यहाँ क्या देखेगा" : "What Bodh looks for here"}</strong>
-            <p>{selectedCopy.prompt[language]}</p>
+            <p>{localized(selectedCopy.prompt, language)}</p>
           </div>
           {!hasCanonicalRoute && <p className="climb-route-warning">{language === "hi"
             ? "इस slice में suggested start से goal तक canonical dependency path नहीं है, इसलिए Bodh सीधी line का दावा नहीं करता।"
@@ -285,9 +285,9 @@ export function CurriculumClimb({
           {FORWARD_EDGES.map((edge) => (
             <li key={`${edge.from}-${edge.to}`}>
               <span>
-                <strong>{TOPIC_COPY[edge.from].short[language]}</strong>
+                <strong>{localized(TOPIC_COPY[edge.from].short, language)}</strong>
                 <b aria-hidden="true">→</b>
-                <strong>{TOPIC_COPY[edge.to].short[language]}</strong>
+                <strong>{localized(TOPIC_COPY[edge.to].short, language)}</strong>
               </span>
               <small lang="en">{edge.strength} dependency · {edge.reason}</small>
             </li>
@@ -314,7 +314,7 @@ const STAGE_TO_CLIMB_INDEX = [0, 0, 1, 1, 2, 3, 4] as const;
 
 export function LessonClimb({ stageIndex, language }: { stageIndex: number; language: NarrationLanguage }) {
   const currentIndex = STAGE_TO_CLIMB_INDEX[Math.max(0, Math.min(stageIndex, STAGE_TO_CLIMB_INDEX.length - 1))];
-  const currentTopic = TOPIC_COPY[LESSON_CLIMB_TOPIC_IDS[currentIndex]].short[language];
+  const currentTopic = localized(TOPIC_COPY[LESSON_CLIMB_TOPIC_IDS[currentIndex]].short, language);
   return (
     <details className="lesson-climb" aria-labelledby="lesson-climb-title">
       <summary className="lesson-climb-heading">
@@ -330,7 +330,7 @@ export function LessonClimb({ stageIndex, language }: { stageIndex: number; lang
           return (
             <li className={`lesson-climb-${state}`} aria-current={state === "current" ? "step" : undefined} key={topicId}>
               <span aria-hidden="true">{state === "visited" ? "✓" : index + 1}</span>
-              <strong>{TOPIC_COPY[topicId].short[language]}</strong>
+              <strong>{localized(TOPIC_COPY[topicId].short, language)}</strong>
               {state === "current" && <BodhMark className="lesson-climb-bodh" pose="guide" size="mark" motion="guide" />}
             </li>
           );

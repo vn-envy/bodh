@@ -7,7 +7,7 @@ import {
   serializeAdaptiveSessionPayload,
   sessionPayloadForSelection,
 } from "../../lib/adaptive-repair";
-import type { LocalizedText, NarrationLanguage } from "../../lib/narration-language";
+import { localized, type LocalizedText, type NarrationLanguage } from "../../lib/narration-language";
 import {
   SEEDED_DOUBTS,
   learningHrefForSeed,
@@ -77,7 +77,7 @@ const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 const CLIENT_TIMEOUT_MS = 45_000;
 
 const text = (hi: string, en: string): LocalizedText => ({ hi, en });
-const ui = (copy: LocalizedText, language: NarrationLanguage) => copy[language];
+const ui = (copy: LocalizedText, language: NarrationLanguage) => localized(copy, language);
 
 const INTAKE_COPY = {
   back: text("वापस", "Back"),
@@ -276,9 +276,9 @@ export function DiagnosticIntake() {
   const canUseProbe = !needsNotationConfirmation || notationConfirmed;
   const visibleProbe = liveDiagnosis
     ? {
-        question: adaptiveProbe?.question[probeLanguage] ?? liveDiagnosis.probe.questionHi,
+        question: adaptiveProbe ? localized(adaptiveProbe.question, probeLanguage) : liveDiagnosis.probe.questionHi,
         options: adaptiveProbe
-          ? adaptiveProbe.options.map((option) => ({ id: option.id, label: option.label[probeLanguage] }))
+          ? adaptiveProbe.options.map((option) => ({ id: option.id, label: localized(option.label, probeLanguage) }))
           : liveDiagnosis.probe.optionLabelsHi.map((label, index) => ({ id: `generated-${index}`, label })),
       }
     : null;
@@ -525,7 +525,7 @@ export function DiagnosticIntake() {
                 <option value="">{ui(INTAKE_COPY.samplePlaceholder, language)}</option>
                 {SEEDED_DOUBTS.map((sample, index) => (
                   <option value={sample.id} key={sample.id}>
-                    {index + 1}. {sample.subject === "science" ? "Science · " : ""}{sample.title[language]}
+                    {index + 1}. {sample.subject === "science" ? "Science · " : ""}{ui(sample.title, language)}
                   </option>
                 ))}
               </select>
@@ -533,7 +533,7 @@ export function DiagnosticIntake() {
 
             {selectedSeed && (
               <div className={`sample-readback sample-readback-${selectedSeed.kind} ${scienceSelected ? "sample-readback-science" : ""}`}>
-                <span>{selectedSeed.concept[language]}</span>
+                <span>{ui(selectedSeed.concept, language)}</span>
                 <strong>{selectedSeed.kind === "safe-retry"
                     ? language === "hi" ? "Safe retry behavior" : "Safe retry behavior"
                     : language === "hi" ? "Live API · इसी doubt की visual repair" : "Live API · visual repair for this exact doubt"}</strong>

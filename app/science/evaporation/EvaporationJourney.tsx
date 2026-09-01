@@ -21,7 +21,7 @@ import {
   INITIAL_EVAPORATION_JOURNEY,
   type EvaporationJourneyState,
 } from "../../../lib/evaporation-journey";
-import type { NarrationLanguage } from "../../../lib/narration-language";
+import { localized, type NarrationLanguage } from "../../../lib/narration-language";
 import {
   parseSeedJourneyHandoff,
   SEEDED_JOURNEY_STORAGE_KEY,
@@ -414,7 +414,7 @@ function ScienceJourneyPath({
               <button type="button" onClick={onClick} disabled={!enabled} aria-current={status === "current" ? "step" : undefined}>
                 {status === "current" && <BodhMark pose="guide" size="mark" motion="guide" className={styles.pathBodh} />}
                 <span>{status === "done" ? "✓" : index + 1}</span>
-                <strong>{label[language]}</strong>
+                <strong>{localized(label, language)}</strong>
               </button>
             </li>
           );
@@ -469,7 +469,7 @@ function ProbeScreen({
         <div className={styles.probeOptions} role="group" aria-label={language === "hi" ? "शुरुआती सोच के विकल्प" : "Initial thinking choices"}>
           {PROBE_OPTIONS.map((option) => (
             <button className={choice === option.id ? styles.optionSelected : ""} type="button" aria-pressed={choice === option.id} onClick={() => onChoose(option.id)} key={option.id}>
-              <span aria-hidden="true">{option.icon}</span><strong>{option[language]}</strong>
+              <span aria-hidden="true">{option.icon}</span><strong>{localized(option, language)}</strong>
             </button>
           ))}
         </div>
@@ -500,23 +500,24 @@ function ConceptScreen({
   headingRef: Ref<HTMLHeadingElement>;
 }) {
   const stage = EVAPORATION_CONCEPT_STAGES[stageIndex];
-  const matterState = [
+  const matterState = localized([
     { hi: "अवस्था · तरल", en: "STATE · LIQUID" },
     { hi: "अवस्था · गरम होता तरल", en: "STATE · WARMING LIQUID" },
     { hi: "अवस्था · गैस", en: "STATE · GAS" },
     { hi: "अवस्था · गैस → तरल", en: "STATE · GAS → LIQUID" },
     { hi: "अवस्था · तरल", en: "STATE · LIQUID" },
-  ][stageIndex][language];
-  const cue = narration.activeBeat?.key[language]
-    ?? (language === "hi" ? "Bodh को सुनो—तीर उसी जगह चलेगा" : "Listen to Bodh—the pointer will follow");
+  ][stageIndex], language);
+  const cue = narration.activeBeat
+    ? localized(narration.activeBeat.key, language)
+    : language === "hi" ? "Bodh को सुनो—तीर उसी जगह चलेगा" : "Listen to Bodh—the pointer will follow";
 
   return (
     <article className={`${styles.screen} ${styles.conceptScreen}`} data-science-screen={`concept-${stageIndex + 1}`}>
       <header className={styles.stageHeading}>
         <div>
-          <span className={styles.eyebrow}>{stage.eyebrow[language]} · {stageIndex + 1}/5</span>
-          <h1 ref={headingRef} tabIndex={-1}>{stage.title[language]}</h1>
-          <div className={styles.stageKeyRow}><p>{stage.screenKey[language]}</p><span>{matterState}</span></div>
+          <span className={styles.eyebrow}>{localized(stage.eyebrow, language)} · {stageIndex + 1}/5</span>
+          <h1 ref={headingRef} tabIndex={-1}>{localized(stage.title, language)}</h1>
+          <div className={styles.stageKeyRow}><p>{localized(stage.screenKey, language)}</p><span>{matterState}</span></div>
         </div>
         <BodhMark pose={stageIndex < 2 ? "guide" : "tinker"} size="small" motion={stageIndex < 2 ? "guide" : "tinker"} />
       </header>
@@ -534,8 +535,8 @@ function ConceptScreen({
             onStop={narration.stop}
           />
           <div className={styles.cueRail} aria-live="polite"><span aria-hidden="true">↗</span><div><small>{language === "hi" ? "Bodh यहाँ दिखा रहा है" : "Bodh is pointing here"}</small><strong>{cue}</strong></div></div>
-          <div className={styles.evidenceCard}><span>{language === "hi" ? "क्या देखा?" : "What did you notice?"}</span><strong>{stage.evidence[language]}</strong></div>
-          <button className={styles.primaryAction} type="button" onClick={onAdvance}>{stage.action[language]} <span aria-hidden="true">→</span></button>
+          <div className={styles.evidenceCard}><span>{language === "hi" ? "क्या देखा?" : "What did you notice?"}</span><strong>{localized(stage.evidence, language)}</strong></div>
+          <button className={styles.primaryAction} type="button" onClick={onAdvance}>{localized(stage.action, language)} <span aria-hidden="true">→</span></button>
         </aside>
       </div>
     </article>
@@ -621,7 +622,7 @@ function TransferScreen({
             <div className={styles.transferOptions} role="group" aria-label={language === "hi" ? "नई स्थिति के उत्तर" : "New-situation answers"}>
               {TRANSFER_OPTIONS.map((option) => (
                 <button className={choice === option.id ? styles.optionSelected : ""} type="button" aria-pressed={choice === option.id} onClick={() => { setChoice(option.id); setChecked(false); }} key={option.id}>
-                  <span aria-hidden="true">{option.icon}</span><strong>{option[language]}</strong>
+                  <span aria-hidden="true">{option.icon}</span><strong>{localized(option, language)}</strong>
                 </button>
               ))}
             </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import type { NarrationLanguage } from "../../lib/narration-language";
+import { localized, type LocalizedText, type NarrationLanguage } from "../../lib/narration-language";
 import type { SpeechInputError } from "../../lib/speech-input";
 import type { ReasoningSpeechStatus } from "./useReasoningSpeechInput";
 import styles from "./ReasoningVoiceControl.module.css";
@@ -11,6 +11,7 @@ type ReasoningVoiceControlProps = {
   status: ReasoningSpeechStatus;
   error: SpeechInputError | null;
   liveTranscript: string;
+  provider?: "browser" | "sarvam";
   disabled?: boolean;
   textareaId: string;
   helpId: string;
@@ -30,6 +31,10 @@ const copy = {
   privacy: {
     hi: "Browser आवाज़ को text बनाता है। Bodh को ऊपर लिखा हुआ text ही submit होगा, और तुम उसे बदल सकते हो।",
     en: "Your browser turns speech into text. Only the editable text above is submitted to Bodh.",
+  },
+  privacySarvam: {
+    hi: "आवाज़ Sarvam को text बनाने के लिए जाती है और तुरंत हटा दी जाती है—store नहीं होती। Bodh को ऊपर लिखा हुआ text ही submit होगा।",
+    en: "Your voice goes to Sarvam only to become text and is discarded immediately—never stored. Only the editable text above is submitted to Bodh.",
   },
 } as const;
 
@@ -66,6 +71,7 @@ export function ReasoningVoiceControl({
   status,
   error,
   liveTranscript,
+  provider = "browser",
   disabled = false,
   textareaId,
   helpId,
@@ -75,18 +81,19 @@ export function ReasoningVoiceControl({
   if (!isSupported) return null;
 
   const active = status === "starting" || status === "listening" || status === "stopping";
+  const t = (text: LocalizedText) => localized(text, language);
   const statusText = status === "starting"
-    ? copy.starting[language]
+    ? t(copy.starting)
     : status === "listening"
-      ? copy.listening[language]
+      ? t(copy.listening)
       : status === "stopping"
-        ? copy.stopping[language]
-        : copy.ready[language];
+        ? t(copy.stopping)
+        : t(copy.ready);
   const buttonText = active
-    ? copy.stop[language]
+    ? t(copy.stop)
     : error
-      ? copy.retry[language]
-      : copy.start[language];
+      ? t(copy.retry)
+      : t(copy.start);
 
   return (
     <div className={styles.voiceControl} data-voice-status={status}>
@@ -109,11 +116,11 @@ export function ReasoningVoiceControl({
       </div>
       {active && liveTranscript && (
         <p className={styles.liveTranscript} aria-hidden="true">
-          <span>{copy.live[language]}</span> · “{liveTranscript}”
+          <span>{t(copy.live)}</span> · “{liveTranscript}”
         </p>
       )}
-      <p className={styles.privacy} id={helpId}>{copy.privacy[language]}</p>
-      {error && <p className={styles.error} role="alert">{errorCopy[error][language]}</p>}
+      <p className={styles.privacy} id={helpId}>{t(provider === "sarvam" ? copy.privacySarvam : copy.privacy)}</p>
+      {error && <p className={styles.error} role="alert">{t(errorCopy[error])}</p>}
     </div>
   );
 }

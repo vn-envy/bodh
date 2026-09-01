@@ -84,6 +84,31 @@ for (const slice of taxonomies) {
   }
 }
 
+// Bodh Van: reviewed atom slot fills must satisfy the same schema a model output must.
+const atomFillSchema = readJson("schemas/atom-slot-fill.schema.json");
+const validateFill = ajv.compile(atomFillSchema);
+const { validateAtomFill } = await import("../lib/atom-fill-guardrails.ts");
+const { ATOM_TEMPLATE_IDS } = await import("../lib/atom-templates.ts");
+let fillCount = 0;
+for (const templateId of ATOM_TEMPLATE_IDS) {
+  const fills = readJson(`data/fixtures/atom-fills/${templateId}.json`);
+  if (!Array.isArray(fills) || fills.length < 2) errors.push(`${templateId}: expected authored fills for hi and en`);
+  const languages = new Set();
+  for (const fill of fills ?? []) {
+    fillCount += 1;
+    languages.add(fill.language);
+    if (!validateFill(fill)) errors.push(`${templateId} fill (${fill.language}): ${ajv.errorsText(validateFill.errors, { separator: "\n  " })}`);
+    const verdict = validateAtomFill(fill);
+    if (!verdict.ok) errors.push(`${templateId} fill (${fill.language}) rejected by guardrails: ${verdict.reason}`);
+    if (fill.templateId !== templateId) errors.push(`${templateId} fill declares template ${fill.templateId}`);
+  }
+  for (const language of ["hi", "en"]) {
+    if (!languages.has(language)) errors.push(`${templateId}: missing authored fill for ${language}`);
+  }
+}
+const growthGraphSchema = readJson("schemas/growth-graph.schema.json");
+ajv.compile(growthGraphSchema);
+
 if (errors.length > 0) {
   console.error("Phase 0 validation failed:\n");
   for (const error of errors) console.error(`- ${error}`);
@@ -91,5 +116,5 @@ if (errors.length > 0) {
 }
 
 console.log(
-  `Phase 0 validation passed: 1 artifact, ${cases.length} seeds, ${topicIds.length} topics, ${taxonomies.reduce((total, slice) => total + slice.dependencies.length, 0)} edges.`,
+  `Phase 0 validation passed: 1 artifact, ${cases.length} seeds, ${topicIds.length} topics, ${taxonomies.reduce((total, slice) => total + slice.dependencies.length, 0)} edges, ${fillCount} atom fills.`,
 );

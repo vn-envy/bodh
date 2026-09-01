@@ -96,3 +96,50 @@ The hosted live path must process every reviewed seed with schema-valid, equatio
 ## Evaluation reserve
 
 The golden set grows from 8 seed cases to 16 development-gold cases and finally 8 frozen holdouts. Feature work stops before the concentrated evaluation window. Required release invariants are 100% equation preservation, schema validity, deterministic mathematical correctness, and supported taxonomy-ID validity.
+
+---
+
+# Roadmap v2 — Bodh Van
+
+> See `docs/VISION_BODH_VAN.md`, `docs/GROWTH_GRAPH.md`, `docs/WEBMCP_TOOLS.md`, `docs/SARVAM.md`, and decisions D-014 to D-020.
+
+## Scope contract v2
+
+Keep every Build Week invariant. Add memory (growth graph), freedom (a walkable world), a body (deterministic physics stations), one action path (typed tools, WebMCP-registered where available), and Indic voice (Hindi, Tamil, English via Sarvam). Generation fills authored slots only.
+
+### Still non-goals
+
+Accounts, dashboards, payments, social features, native apps, XP/levels/streaks, arbitrary generated UI, long-term mastery claims, ages outside 8–12.
+
+## Phases
+
+| Phase | Outcome | Exit gate |
+|---|---|---|
+| V0 — Decisions and language | D-014..D-020, docs, `ta` as a first-class language with `en` fallback, concept bridge | Existing 115 checks pass; Tamil toggle renders every existing route |
+| V1 — Growth graph | `lib/growth-graph.ts`, adapters from both existing journeys, on-device store, Bodhi seed | Reducer, frontier, and serialisation tests pass; same events → same graph |
+| V2 — Tool surface | `lib/world-tools.ts`, WebMCP registration, declarative forms, `GET /api/tools` | Every tool has a schema and gate; manifest parity test passes |
+| V3 — World and Puddle Ghat | Rapier deterministic wrapper, places and fog from frontier, Canvas renderer, `/van` | Same seed and inputs → same state hash; conservation invariant holds |
+| V4 — Roti Chowk and the map | Seesaw station, god's-eye map, homepage entry | Seesaw predicate equals the six-eighths lab predicate |
+| V5 — Sarvam | STT route, Bulbul voice source incl. `ta`, generated-hash narration, translate helper | Mocked-fetch bounds tests pass; device-voice fallback preserved |
+| V6 — Generation | LLM provider abstraction, atom templates, slot-fill schema, authored fallbacks | Fixture fills validate; OpenAI diagnosis path unchanged |
+| V7 — Tutor and end-to-end | In-page tutor restricted to registered tools; headless agent journey test | A full station journey completes through tools alone |
+
+## Deliverables
+
+- [x] V0: `docs/VISION_BODH_VAN.md`, `docs/GROWTH_GRAPH.md`, `docs/WEBMCP_TOOLS.md`, `docs/SARVAM.md`
+- [x] V0: D-014..D-020 in `docs/DECISIONS.md`; `NOTICE.md` and `.env.example` updated
+- [x] V0: `NarrationLanguage` = `hi | en | ta`; `lib/concept-bridge.ts` with Tamil terms
+- [x] V1: `lib/growth-graph.ts`, `schemas/growth-graph.schema.json`, `lib/growth-graph-store.ts`, tests
+- [x] V2: `lib/world-tools.ts`, `WorldToolProvider`, `worker/tools-manifest.ts`, tests
+- [x] V3: `lib/world/physics.ts`, `lib/world/places.ts`, Puddle Ghat station, `/van`, tests
+- [x] V4: Roti Chowk seesaw, `/van/map`, homepage CTA
+- [x] V5: `worker/sarvam.ts`, `worker/translate.ts`, narration `ta` + Sarvam source, client STT wiring, tests
+- [x] V6: `worker/llm-provider.ts`, `lib/atom-templates.ts`, `schemas/atom-slot-fill.schema.json`, `data/fixtures/atom-fills/`
+- [x] V7: tutor loop (`lib/tutor-policy.ts`, `POST /api/tutor/step`), `tests/agent-journey.test.mjs`, README
+
+## Next gates (not started)
+
+- Tamil review pass over `lib/i18n/ta-overlay.data.ts` and the concept bridge by a native speaker.
+- `taught-back`: the child explains an idea to Bodh (Saaras transcript → rubric check) to reach the top rung.
+- A third place and template so the frontier has real choice; a 3D layer if a JS binding for Box3D lands.
+- Classroom pilot before any efficacy claim (the recorded 32/32 eval covers diagnostic safety only).

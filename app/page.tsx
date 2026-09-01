@@ -5,6 +5,7 @@ import { BodhMark } from "./components/BodhMark";
 import { HomepagePathfinder } from "./components/HomepagePathfinder";
 import { JudgeLaneLink } from "./components/JudgeLaneLink";
 import { NarrationLanguageToggle, useNarrationLanguage } from "./components/NarrationLanguageToggle";
+import { localized } from "../lib/narration-language";
 import styles from "./home.module.css";
 
 function FractionTile({ value }: { value: "1/4" | "1/8" }) {
@@ -20,7 +21,9 @@ function FractionTile({ value }: { value: "1/4" | "1/8" }) {
 
 export default function Home() {
   const language = useNarrationLanguage();
-  const english = language === "en";
+  // Tamil falls back to the English copy on this page (see lib/narration-language.ts).
+  const english = language !== "hi";
+  const t = (text: { hi: string; en: string }) => localized(text, language);
 
   return (
     <main className={`site-shell ${styles.page}`} id="main-content" lang={language}>
@@ -54,14 +57,23 @@ export default function Home() {
           </p>
 
           <div className={styles.actions}>
-            <Link className="button button-primary" href="/diagnose">
-              {english ? "Understand my question" : "अपना सवाल समझें"}
+            <Link className="button button-primary" href="/van" data-cta="bodh-van">
+              {t({ hi: "Bodh Van में जाओ", en: "Enter Bodh Van" })}
               <span aria-hidden="true">→</span>
+            </Link>
+            <Link className="button button-secondary" href="/diagnose">
+              {english ? "Understand my question" : "अपना सवाल समझें"}
             </Link>
             <Link className="button button-secondary" href="/how-it-works">
               {english ? "See how Bodh helps" : "देखें Bodh कैसे मदद करता है"}
             </Link>
           </div>
+          <p className={styles.vanNote}>
+            {t({
+              hi: "एक दुनिया जिसमें तुम चलते हो। जगहें तब रोशन होती हैं जब तुम समझते हो; नक्शा तुम्हारी अपनी बढ़त है।",
+              en: "A world you walk through. Places light up as you understand; the map is your own growth.",
+            })}
+          </p>
 
           <div className={styles.trust} aria-label={english ? "Bodh learner fit" : "Bodh learner fit"}>
             <span><i aria-hidden="true" />{english ? "Grounded in Marble concepts" : "Marble concepts पर आधारित"}</span>

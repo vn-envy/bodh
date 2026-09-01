@@ -11,7 +11,7 @@ import {
   type ResolvedFractionNarrationBeat,
   type FractionVisualState,
 } from "../../lib/fraction-concept";
-import { type LocalizedText, type NarrationLanguage, NARRATION_SPEECH_LOCALE } from "../../lib/narration-language";
+import { localized, type LocalizedText, type NarrationLanguage, NARRATION_SPEECH_LOCALE } from "../../lib/narration-language";
 import { selectStableSpeechVoice } from "../../lib/narration-voice";
 import { useNarrationLanguage } from "./NarrationLanguageToggle";
 import { LessonClimb } from "./CurriculumClimb";
@@ -279,12 +279,12 @@ function FractionArtifact({
     <div
       className={`atomic-artifact atomic-visual-${state} ${beat ? `atomic-cue-${beat.target}` : ""}`}
       role="img"
-      aria-label={visualLabels[state][language]}
+      aria-label={localized(visualLabels[state], language)}
       data-cue-target={beat?.target}
     >
       <div className={`atomic-artifact-caption ${beat ? "atomic-artifact-caption-active" : ""}`} aria-hidden="true">
         <span>↘</span>
-        <strong>{beat ? pointerLabel[beat.target][language] : language === "hi" ? "Bodh का इशारा यहाँ आएगा" : "Bodh will point here"}</strong>
+        <strong>{beat ? localized(pointerLabel[beat.target], language) : language === "hi" ? "Bodh का इशारा यहाँ आएगा" : "Bodh will point here"}</strong>
       </div>
       <div ref={artifactRef} className="atomic-artifact-canvas">
         <div className="atomic-whole-label" aria-hidden="true" data-bodh-obstacle>
@@ -414,7 +414,7 @@ export function FractionConceptExplainer({
   );
   const activeBeat = activeBeatIndex >= 0 ? narration[activeBeatIndex] ?? null : null;
   const pointerBeat = activeBeat;
-  const visibleKey = activeBeat?.key ?? stage.screenKey[language];
+  const visibleKey = activeBeat?.key ?? localized(stage.screenKey, language);
   const voiceAnnouncement = voiceState === "loading"
     ? language === "hi"
       ? "Bodh की आवाज़ अपने आप तैयार हो रही है। तैयार होते ही अब सुनो बटन चमकेगा।"
@@ -973,8 +973,8 @@ export function FractionConceptExplainer({
       <div className="atomic-explainer-grid">
         <div className="atomic-stage-copy">
           <span className="atomic-step-count">{language === "hi" ? "बात" : "IDEA"} {stageIndex + 1} / {FRACTION_CONCEPT_STAGES.length}</span>
-          <p className="atomic-eyebrow">{stage.eyebrow[language]}</p>
-          <h2 ref={stageHeadingRef} tabIndex={-1}>{stage.title[language]}</h2>
+          <p className="atomic-eyebrow">{localized(stage.eyebrow, language)}</p>
+          <h2 ref={stageHeadingRef} tabIndex={-1}>{localized(stage.title, language)}</h2>
           <p className="atomic-key-copy" aria-live="polite">{visibleKey}</p>
           <div className="atomic-speaking-line">
             <span className={voiceState === "playing" ? "atomic-wave-active" : ""} aria-hidden="true">•••</span>
@@ -1008,7 +1008,7 @@ export function FractionConceptExplainer({
               <small>{proved
                 ? language === "hi" ? "तुमने चित्र में देखा" : "You saw it in the picture"
                 : language === "hi" ? "पहले चित्र पर यह करके देखो" : "First, do this on the picture"}</small>
-              <strong>{proved ? stage.evidence[language] : stage.action[language]}</strong>
+              <strong>{proved ? localized(stage.evidence, language) : localized(stage.action, language)}</strong>
             </div>
           </div>
         </div>
@@ -1036,7 +1036,7 @@ export function FractionConceptExplainer({
         )}
         <button className="button button-primary atomic-primary" type="button" onClick={takePrimaryAction}>
           {!proved
-            ? stage.action[language]
+            ? localized(stage.action, language)
             : isLastStage
               ? language === "hi" ? "अब खुद बनाकर देखें" : "Now build it yourself"
               : language === "hi" ? "अगली बात" : "Next idea"}

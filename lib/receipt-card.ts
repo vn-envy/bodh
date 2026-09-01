@@ -1,4 +1,4 @@
-import type { NarrationLanguage } from "./narration-language";
+import { localized, type NarrationLanguage } from "./narration-language.ts";
 import type { ReceiptShareVariant } from "./demo-journey-copy";
 
 export const RECEIPT_CARD_VERSION = "bodh-receipt-card-v1" as const;
@@ -89,7 +89,7 @@ export function createReceiptCardModel(
     brand: "BODH",
     tagline: isHindi ? "जो सच में समझ आया" : "That which is truly understood",
     badge: isHindi ? "आज की समझ" : "TODAY'S UNDERSTANDING",
-    title: VARIANT_TITLE[variant][language],
+    title: localized(VARIANT_TITLE[variant], language),
     ideaLabel: isHindi ? "आज की बड़ी idea" : "TODAY'S BIG IDEA",
     idea: isHindi
       ? "Division पूछ सकती है: इस size के कितने बराबर groups fit होते हैं?"

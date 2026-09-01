@@ -17,6 +17,23 @@ export const diagnosticTraces = sqliteTable(
   (table) => [index("diagnostic_traces_created_at_idx").on(table.createdAt)],
 );
 
+/**
+ * Server-produced narration text for generated atom slots, keyed by content
+ * hash. The generated-narration route may only speak text found here, so
+ * learner input can never reach text-to-speech (D-018, D-019).
+ */
+export const generatedBeats = sqliteTable(
+  "generated_beats",
+  {
+    hash: text("hash").primaryKey(),
+    language: text("language").notNull(),
+    templateId: text("template_id").notNull(),
+    text: text("text").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("generated_beats_created_at_idx").on(table.createdAt)],
+);
+
 export const diagnosisRateLimits = sqliteTable(
   "diagnosis_rate_limits",
   {

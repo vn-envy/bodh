@@ -14,6 +14,7 @@ describe("reasoning speech input", () => {
   it("uses the Indian locale that matches the learner language", () => {
     assert.equal(speechInputLocale("hi"), "hi-IN");
     assert.equal(speechInputLocale("en"), "en-IN");
+    assert.equal(speechInputLocale("ta"), "ta-IN");
   });
 
   it("keeps final and interim hypotheses separate and composes editable text once", () => {

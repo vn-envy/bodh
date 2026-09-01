@@ -13,10 +13,12 @@
     "validate:evals": "node scripts/validate-evals.mjs",
     "eval:live": "node scripts/run-golden-evals.mjs",
     "db:generate": "drizzle-kit generate",
+    "i18n:ta": "node scripts/generate-tamil-overlay.mjs",
     "test": "npm run validate:phase0 && npm run validate:evals && npm run build && node --test tests/*.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
   },
   "dependencies": {
+    "@dimforge/rapier2d-deterministic-compat": "^0.20.0",
     "ajv": "^8.17.1",
     "drizzle-orm": "^0.45.2",
     "next": "16.2.6",

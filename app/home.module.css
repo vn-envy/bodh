@@ -132,6 +132,14 @@
   margin-top: 28px;
 }
 
+.vanNote {
+  margin: 12px 0 0;
+  max-width: 46ch;
+  color: var(--ink-soft);
+  font-size: 0.98rem;
+  line-height: 1.5;
+}
+
 .trust {
   display: flex;
   align-items: center;

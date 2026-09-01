@@ -2,7 +2,11 @@
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
 import { handleDiagnosis, handleTrace } from "./diagnose";
-import { handleNarration } from "./narration";
+import { handleGenerateAtom } from "./generate-atom";
+import { handleGeneratedNarration, handleNarration } from "./narration";
+import { handleSpeechCapabilities, handleTranscribe } from "./sarvam";
+import { handleToolsManifest } from "./tools-manifest";
+import { handleTutorStep } from "./tutor";
 
 interface Env {
   ASSETS: Fetcher;
@@ -14,6 +18,15 @@ interface Env {
   BODH_TTS_MODEL?: string;
   BODH_TTS_VOICE?: string;
   BODH_TTS_RUNTIME_ENABLED?: string;
+  SARVAM_API_KEY?: string;
+  BODH_SARVAM_TTS_MODEL?: string;
+  BODH_SARVAM_STT_MODEL?: string;
+  BODH_SARVAM_SPEAKER_HI?: string;
+  BODH_SARVAM_SPEAKER_TA?: string;
+  BODH_SARVAM_SPEAKER_EN?: string;
+  BODH_STT_PROVIDER?: string;
+  BODH_LLM_PROVIDER?: string;
+  BODH_SARVAM_CHAT_MODEL?: string;
   IMAGES: {
     input(stream: ReadableStream): {
       transform(options: Record<string, unknown>): {
@@ -35,11 +48,38 @@ interface ExecutionContext {
 // const imageConfig: ImageConfig = { dangerouslyAllowSVG: true };
 
 const worker = {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, rawEnv: Env | undefined, ctx: ExecutionContext): Promise<Response> {
+    // Local `vinext start` runs without Cloudflare bindings; API routes must still degrade cleanly.
+    const env = rawEnv ?? ({} as Env);
     const url = new URL(request.url);
 
     if (url.pathname === "/api/diagnose") {
       return handleDiagnosis(request, env);
+    }
+
+    if (url.pathname === "/api/tools") {
+      return handleToolsManifest(request);
+    }
+
+    if (url.pathname === "/api/generate-atom") {
+      return handleGenerateAtom(request, env);
+    }
+
+    if (url.pathname === "/api/tutor/step") {
+      return handleTutorStep(request, env);
+    }
+
+    if (url.pathname === "/api/speech/capabilities") {
+      return handleSpeechCapabilities(request, env);
+    }
+
+    if (url.pathname === "/api/speech/transcribe") {
+      return handleTranscribe(request, env);
+    }
+
+    const generatedMatch = url.pathname.match(/^\/api\/narration\/generated\/(hi|en|ta)\/([0-9a-f]{8,64})\.mp3$/i);
+    if (generatedMatch) {
+      return handleGeneratedNarration(request, env, generatedMatch[1].toLowerCase(), generatedMatch[2].toLowerCase());
     }
 
     const traceMatch = url.pathname.match(/^\/api\/trace\/([0-9a-f-]{36})$/i);
@@ -48,7 +88,7 @@ const worker = {
     }
 
     const narrationMatch = url.pathname.match(
-      /^\/api\/narration\/(fractions-v2|evaporation-v2)\/(hi|en)\/([a-z0-9-]+)\/([a-z0-9-]+)\.mp3$/i,
+      /^\/api\/narration\/(fractions-v2|evaporation-v2)\/(hi|en|ta)\/([a-z0-9-]+)\/([a-z0-9-]+)\.mp3$/i,
     );
     if (narrationMatch) {
       return handleNarration(
@@ -72,7 +112,7 @@ const worker = {
       }, allowedWidths);
     }
 
-    return handler.fetch(request, env, ctx);
+    return handler.fetch(request, rawEnv as Env, ctx);
   },
 };
 

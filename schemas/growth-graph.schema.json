@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bodh.education/schemas/growth-graph.schema.json",
+  "title": "Bodh growth graph (per-learner evidence, device-local)",
+  "description": "Per-node evidence only. Topology lives in lib/growth-graph-catalog.ts. No learner text, timestamps, scores, or identifiers.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "tick", "nodes"],
+  "properties": {
+    "version": { "const": "growth-graph-v1" },
+    "tick": { "type": "integer", "minimum": 0 },
+    "nodes": {
+      "type": "object",
+      "propertyNames": { "pattern": "^(mt_[A-Za-z0-9_-]+|[a-z][a-z0-9-]{2,40})$" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rung", "attempts", "misconceptionSignals", "lastTick", "dueTick"],
+        "properties": {
+          "rung": { "enum": ["unseen", "noticed", "tinkered", "explained", "transferred", "taught-back"] },
+          "attempts": { "type": "integer", "minimum": 0 },
+          "misconceptionSignals": {
+            "type": "array",
+            "uniqueItems": true,
+            "maxItems": 13,
+            "items": {
+              "enum": [
+                "division-always-makes-smaller",
+                "reciprocal-rule-without-meaning",
+                "dividend-divisor-role-confusion",
+                "unit-fraction-size-confusion",
+                "fraction-as-two-whole-numbers",
+                "unknown-factor-not-connected",
+                "arithmetic-slip",
+                "insufficient-evidence",
+                "answer-only-intent",
+                "water-disappears-when-dry",
+                "evaporation-requires-boiling",
+                "vapour-is-visible-steam",
+                "condensation-link-missing"
+              ]
+            }
+          },
+          "lastTick": { "type": "integer", "minimum": 0 },
+          "dueTick": { "type": ["integer", "null"], "minimum": 0 }
+        }
+      }
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import {
   DEFAULT_NARRATION_LANGUAGE,
+  localized,
   type LocalizedText,
   type NarrationLanguage,
 } from "./narration-language.ts";
@@ -245,6 +246,6 @@ export function narrationBeatForEvaporation(
   const stage = EVAPORATION_CONCEPT_STAGES.find((candidate) => candidate.id === stageId);
   const beat = stage?.narration.find((candidate) => candidate.id === beatId);
   return beat
-    ? { id: beat.id, text: beat.text[language], key: beat.key[language], target: beat.target }
+    ? { id: beat.id, text: localized(beat.text, language), key: localized(beat.key, language), target: beat.target }
     : null;
 }

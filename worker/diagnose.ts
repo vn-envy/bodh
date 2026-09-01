@@ -16,6 +16,7 @@ import {
 import { HINDI_BRIDGE_TERMS, inferLearnerRegister, resolveBridgeTerms } from "../lib/hindi-bridge";
 import { toOpenAiStructuredOutputSchema } from "../lib/openai-structured-schema";
 import { selectReviewedProbe } from "../lib/reviewed-probes";
+import { completeStructured, llmModelFor, selectLlmProvider, type LlmEnv, type LlmProvider } from "./llm-provider";
 import {
   curatedFallbackForSeed,
   learningHrefForSeed,
@@ -23,7 +24,7 @@ import {
   type SeededDoubt,
 } from "../lib/seeded-doubts";
 
-export type DiagnosticEnv = {
+export type DiagnosticEnv = LlmEnv & {
   DB?: D1Database;
   OPENAI_API_KEY?: string;
   BODH_MODEL?: string;
@@ -464,6 +465,7 @@ async function liveDiagnosisResponse(
   inputFingerprint: string,
   output: DiagnosticOutput,
   source: "openai" | "reviewed_recovery",
+  provider: LlmProvider = "openai",
 ) {
   const diagnostic = applyDeterministicDiagnosticSignals(output, input);
   const reviewedSeed = verifiedSeededDoubtForInput(input.reviewedSeedId, input);
@@ -513,6 +515,8 @@ async function liveDiagnosisResponse(
     mode: "live",
     diagnosis: {
       source,
+      provider,
+      model,
       inputFidelity: diagnostic.inputFidelity,
       concepts: topicSummary(diagnostic.candidateTopicIds, curriculum),
       hypotheses: diagnostic.hypotheses,
@@ -604,7 +608,11 @@ export async function handleDiagnosis(request: Request, env: DiagnosticEnv) {
     );
   }
 
-  if (!env.OPENAI_API_KEY) {
+  // Sarvam-105B may serve text-only diagnosis when explicitly selected; photos always use OpenAI.
+  const llmProvider: LlmProvider | null = selectLlmProvider(env) === "sarvam" && !input.imageDataUrl
+    ? "sarvam"
+    : env.OPENAI_API_KEY ? "openai" : null;
+  if (!llmProvider) {
     return fallback(env, input, "live_not_configured", model, inputFingerprint);
   }
   const deterministicRecovery = deterministicDiagnosticForInput(input);
@@ -631,6 +639,27 @@ export async function handleDiagnosis(request: Request, env: DiagnosticEnv) {
     },
   ];
   if (input.imageDataUrl) content.push({ type: "input_image", image_url: input.imageDataUrl });
+
+  if (llmProvider === "sarvam") {
+    const sarvamModel = llmModelFor("sarvam", env);
+    const completion = await completeStructured({
+      instructions: SYSTEM_INSTRUCTIONS,
+      input: content[0].text,
+      schemaName: "bodh_diagnosis",
+      schema: diagnosticSchema,
+    }, env);
+    if (!completion.ok) {
+      return recoverOrFallback(completion.reason === "invalid_response" ? "model_response_invalid" : "live_unavailable");
+    }
+    let sarvamOutput: unknown;
+    try {
+      sarvamOutput = JSON.parse(completion.text);
+    } catch {
+      return recoverOrFallback("model_response_invalid");
+    }
+    if (!isDiagnosticOutputShape(sarvamOutput)) return recoverOrFallback("model_response_invalid");
+    return liveDiagnosisResponse(env, input, sarvamModel, inputFingerprint, sarvamOutput, "openai", "sarvam");
+  }
 
   let modelResponse: Response;
   try {

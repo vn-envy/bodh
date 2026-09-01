@@ -1,5 +1,5 @@
 import taxonomy from "../../data/taxonomy/fractions-division.slice.json";
-import type { NarrationLanguage } from "../../lib/narration-language";
+import { localized, type NarrationLanguage } from "../../lib/narration-language";
 import { BodhMark } from "./BodhMark";
 import styles from "./HomepagePathfinder.module.css";
 
@@ -37,7 +37,7 @@ const PATH_LABELS = {
 const topicsById = new Map(taxonomy.topics.map((topic) => [topic.id, topic]));
 
 export function HomepagePathfinder({ language }: { language: NarrationLanguage }) {
-  const english = language === "en";
+  const english = language !== "hi";
 
   return (
     <article className={styles.card} aria-labelledby="home-pathfinder-title" role="listitem">
@@ -70,7 +70,7 @@ export function HomepagePathfinder({ language }: { language: NarrationLanguage }
             return (
               <li className={`${styles.node} ${styles[`node${index + 1}`]}`} key={topicId}>
                 <span aria-hidden="true">{index + 1}</span>
-                <strong>{PATH_LABELS[topicId][language]}</strong>
+                <strong>{localized(PATH_LABELS[topicId], language)}</strong>
                 <small>{english ? `Ages ${topic?.ageRangeStart}–${topic?.ageRangeEnd}` : `उम्र ${topic?.ageRangeStart}–${topic?.ageRangeEnd}`}</small>
               </li>
             );

@@ -50,6 +50,7 @@ import {
   downloadReceiptCardPng,
   shareReceiptCard,
 } from "../../lib/receipt-card";
+import { localized } from "../../lib/narration-language";
 
 type JourneyStep = CuratedJourneyStep | "loading" | "route";
 type CheckState = "idle" | "try-again" | "correct";
@@ -99,7 +100,7 @@ export function DemoJourney() {
   const meaningHeadingRef = useRef<HTMLHeadingElement>(null);
   const lastFocusedStepRef = useRef<JourneyStep>("loading");
 
-  const t = (text: { hi: string; en: string }) => text[language];
+  const t = (text: { hi: string; en: string }) => localized(text, language);
   const labComplete = useMemo(() => isLabComplete(placedSlots), [placedSlots]);
   const adaptiveProbe = adaptiveSession ? adaptiveProbeById(adaptiveSession.probeId) : null;
   const adaptiveOption = adaptiveProbe?.options.find((option) => option.id === adaptiveSession?.optionId) ?? null;
@@ -384,7 +385,7 @@ export function DemoJourney() {
 
             <div className="adaptive-probe-readback">
               <small>{t(DEMO_JOURNEY_COPY.route.chosen)}</small>
-              <strong>{adaptiveOption.label[language]}</strong>
+              <strong>{t(adaptiveOption.label)}</strong>
             </div>
 
             <ol className="adaptive-route-path" aria-label={t(DEMO_JOURNEY_COPY.route.pathAria)}>
@@ -662,7 +663,7 @@ export function DemoJourney() {
                         key={choice.id}
                         onClick={() => chooseMeaning(choice.id)}
                       >
-                        {choice.label[language]}
+                        {t(choice.label)}
                       </button>
                     ))}
                   </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { NarrationLanguage } from "../../lib/narration-language";
+import { authoredLanguageFor, type NarrationLanguage } from "../../lib/narration-language";
 import styles from "./FractionLabRepresentation.module.css";
 
 type Representation = "bar" | "line";
@@ -61,7 +61,7 @@ export function FractionLabRepresentation({
   onToggle: (slot: number) => void;
 }) {
   const [representation, setRepresentation] = useState<Representation>("bar");
-  const text = copy[language];
+  const text = copy[authoredLanguageFor(language)];
   const tickLabels = TICK_LABELS.slice(0, totalSlots + 1);
 
   return (

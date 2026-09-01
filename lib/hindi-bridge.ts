@@ -1,97 +1,35 @@
-export const BRIDGE_TERM_IDS = [
-  "unit-fraction",
-  "denominator",
-  "numerator",
-  "equivalent-fraction",
-  "equal-groups",
-  "unknown-factor",
-  "reciprocal",
-  "evaporation",
-  "water-vapour",
-  "condensation",
-  "precipitation",
-] as const;
+/**
+ * Compatibility surface for the recorded diagnostic contract (prompt `p3.7`,
+ * `schemas/diagnostic-output.schema.json`). Terms are derived from
+ * `concept-bridge.ts` so there is one vocabulary, but the shape sent to the
+ * model and the three-way register are frozen here so the recorded 32-case
+ * evaluation remains reproducible.
+ */
+import {
+  BRIDGE_TERM_IDS,
+  CONCEPT_BRIDGE_TERMS,
+  isBridgeTermId,
+  type BridgeTermId,
+} from "./concept-bridge.ts";
 
-export type BridgeTermId = (typeof BRIDGE_TERM_IDS)[number];
+export { BRIDGE_TERM_IDS, isBridgeTermId };
+export type { BridgeTermId };
+
 export type LearnerRegister = "hindi" | "hinglish" | "english";
 
-export const HINDI_BRIDGE_TERMS: Record<BridgeTermId, {
+export type HindiBridgeTerm = Readonly<{
   id: BridgeTermId;
   hindi: string;
   english: string;
   childMeaningHi: string;
-}> = {
-  "unit-fraction": {
-    id: "unit-fraction",
-    hindi: "इकाई भिन्न",
-    english: "unit fraction",
-    childMeaningHi: "ऐसा fraction जिसमें ऊपर 1 हो—जैसे 1/8।",
-  },
-  denominator: {
-    id: "denominator",
-    hindi: "हर",
-    english: "denominator",
-    childMeaningHi: "चुना हुआ whole कितने बराबर parts में बँटा है—यही हर unit का size तय करता है।",
-  },
-  numerator: {
-    id: "numerator",
-    hindi: "अंश",
-    english: "numerator",
-    childMeaningHi: "दिए हुए size के कितने बराबर units हम गिन रहे हैं।",
-  },
-  "equivalent-fraction": {
-    id: "equivalent-fraction",
-    hindi: "समतुल्य भिन्न",
-    english: "equivalent fraction",
-    childMeaningHi: "Parts या नाम अलग, लेकिन मात्रा वही—जैसे 1/2 और 2/4।",
-  },
-  "equal-groups": {
-    id: "equal-groups",
-    hindi: "बराबर समूह",
-    english: "equal groups",
-    childMeaningHi: "एक ही size के groups—division पूछती है कि कितने ऐसे groups बनते हैं।",
-  },
-  "unknown-factor": {
-    id: "unknown-factor",
-    hindi: "छुपा हुआ गुणक",
-    english: "unknown factor",
-    childMeaningHi: "वह number जो पता करना है: कितनी बार एक size लेने पर दूसरी quantity बनेगी?",
-  },
-  reciprocal: {
-    id: "reciprocal",
-    hindi: "उलटा भिन्न",
-    english: "reciprocal",
-    childMeaningHi: "ऊपर और नीचे को बदल देने का नाम; Bodh पहले इसका meaning picture से जोड़ेगा।",
-  },
-  evaporation: {
-    id: "evaporation",
-    hindi: "वाष्पीकरण",
-    english: "evaporation",
-    childMeaningHi: "Liquid water के surface से कुछ पानी invisible gas बनकर हवा में चला जाता है।",
-  },
-  "water-vapour": {
-    id: "water-vapour",
-    hindi: "जलवाष्प",
-    english: "water vapour",
-    childMeaningHi: "हवा में मौजूद water का invisible gas रूप—पानी खत्म नहीं हुआ है।",
-  },
-  condensation: {
-    id: "condensation",
-    hindi: "संघनन",
-    english: "condensation",
-    childMeaningHi: "Water vapour ठंडी होकर फिर tiny liquid droplets बनती है।",
-  },
-  precipitation: {
-    id: "precipitation",
-    hindi: "वर्षण",
-    english: "precipitation",
-    childMeaningHi: "Cloud के droplets बड़े और भारी होकर rain, snow, या hail की तरह नीचे आते हैं।",
-  },
-};
+}>;
 
-export function isBridgeTermId(value: string): value is BridgeTermId {
-  return (BRIDGE_TERM_IDS as readonly string[]).includes(value);
-}
+export const HINDI_BRIDGE_TERMS: Readonly<Record<BridgeTermId, HindiBridgeTerm>> = Object.fromEntries(
+  BRIDGE_TERM_IDS.map((id) => {
+    const term = CONCEPT_BRIDGE_TERMS[id];
+    return [id, { id, hindi: term.term.hi, english: term.term.en, childMeaningHi: term.childMeaning.hi }];
+  }),
+) as Record<BridgeTermId, HindiBridgeTerm>;
 
 export function resolveBridgeTerms(termIds: string[]) {
   return termIds.filter(isBridgeTermId).map((termId) => HINDI_BRIDGE_TERMS[termId]);

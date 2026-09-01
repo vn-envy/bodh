@@ -36,7 +36,9 @@ interface ExecutionContext {
 // const imageConfig: ImageConfig = { dangerouslyAllowSVG: true };
 
 const worker = {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, rawEnv: Env | undefined, ctx: ExecutionContext): Promise<Response> {
+    // Local `vinext start` runs without Cloudflare bindings; API routes must still degrade cleanly.
+    const env = rawEnv ?? ({} as Env);
     const url = new URL(request.url);
 
     if (url.pathname === "/api/diagnose") {
@@ -77,7 +79,7 @@ const worker = {
       }, allowedWidths);
     }
 
-    return handler.fetch(request, env, ctx);
+    return handler.fetch(request, rawEnv as Env, ctx);
   },
 };
 

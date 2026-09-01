@@ -17,6 +17,7 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
   },
   "dependencies": {
+    "@dimforge/rapier2d-deterministic-compat": "^0.20.0",
     "ajv": "^8.17.1",
     "drizzle-orm": "^0.45.2",
     "next": "16.2.6",

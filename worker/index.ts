@@ -2,7 +2,8 @@
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
 import { handleDiagnosis, handleTrace } from "./diagnose";
-import { handleNarration } from "./narration";
+import { handleGeneratedNarration, handleNarration } from "./narration";
+import { handleSpeechCapabilities, handleTranscribe } from "./sarvam";
 import { handleToolsManifest } from "./tools-manifest";
 
 interface Env {
@@ -15,6 +16,15 @@ interface Env {
   BODH_TTS_MODEL?: string;
   BODH_TTS_VOICE?: string;
   BODH_TTS_RUNTIME_ENABLED?: string;
+  SARVAM_API_KEY?: string;
+  BODH_SARVAM_TTS_MODEL?: string;
+  BODH_SARVAM_STT_MODEL?: string;
+  BODH_SARVAM_SPEAKER_HI?: string;
+  BODH_SARVAM_SPEAKER_TA?: string;
+  BODH_SARVAM_SPEAKER_EN?: string;
+  BODH_STT_PROVIDER?: string;
+  BODH_LLM_PROVIDER?: string;
+  BODH_SARVAM_CHAT_MODEL?: string;
   IMAGES: {
     input(stream: ReadableStream): {
       transform(options: Record<string, unknown>): {
@@ -47,6 +57,19 @@ const worker = {
 
     if (url.pathname === "/api/tools") {
       return handleToolsManifest(request);
+    }
+
+    if (url.pathname === "/api/speech/capabilities") {
+      return handleSpeechCapabilities(request, env);
+    }
+
+    if (url.pathname === "/api/speech/transcribe") {
+      return handleTranscribe(request, env);
+    }
+
+    const generatedMatch = url.pathname.match(/^\/api\/narration\/generated\/(hi|en|ta)\/([0-9a-f]{8,64})\.mp3$/i);
+    if (generatedMatch) {
+      return handleGeneratedNarration(request, env, generatedMatch[1].toLowerCase(), generatedMatch[2].toLowerCase());
     }
 
     const traceMatch = url.pathname.match(/^\/api\/trace\/([0-9a-f-]{36})$/i);

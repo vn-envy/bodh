@@ -10,6 +10,7 @@ import {
   type SpeechInputError,
   type SpeechInputSegment,
 } from "../../lib/speech-input";
+import { useSarvamSpeechInput, useSpeechProvider } from "./useSarvamSpeechInput";
 
 export type ReasoningSpeechStatus = "idle" | "starting" | "listening" | "stopping" | "error";
 
@@ -85,7 +86,22 @@ function segmentsFromResults(results: SpeechRecognitionResultListLike) {
   return segments;
 }
 
-export function useReasoningSpeechInput({
+/**
+ * Chooses the transcription provider the Worker advertises: Sarvam Saaras v3
+ * (code-mixed Hinglish / Tanglish / English, recorded with MediaRecorder) when
+ * configured, otherwise the browser's Web Speech API. Both feed the same
+ * editable text box; nothing bypasses the validated text pipeline.
+ */
+export function useReasoningSpeechInput(options: UseReasoningSpeechInputOptions) {
+  const provider = useSpeechProvider();
+  const sarvam = useSarvamSpeechInput({ ...options, enabled: provider === "sarvam" });
+  const browser = useBrowserSpeechInput(options);
+  return provider === "sarvam" && sarvam.isSupported
+    ? { ...sarvam, provider: "sarvam" as const }
+    : { ...browser, provider: "browser" as const };
+}
+
+function useBrowserSpeechInput({
   language,
   value,
   maxLength,

@@ -587,6 +587,7 @@ export function DiagnosticIntake() {
                 status={reasoningSpeech.status}
                 error={reasoningSpeech.error}
                 liveTranscript={reasoningSpeech.liveTranscript}
+                provider={reasoningSpeech.provider}
                 disabled={isSubmitting}
                 textareaId="reasoning-text"
                 helpId="reasoning-voice-help"

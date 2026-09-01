@@ -11,6 +11,7 @@ type ReasoningVoiceControlProps = {
   status: ReasoningSpeechStatus;
   error: SpeechInputError | null;
   liveTranscript: string;
+  provider?: "browser" | "sarvam";
   disabled?: boolean;
   textareaId: string;
   helpId: string;
@@ -30,6 +31,10 @@ const copy = {
   privacy: {
     hi: "Browser आवाज़ को text बनाता है। Bodh को ऊपर लिखा हुआ text ही submit होगा, और तुम उसे बदल सकते हो।",
     en: "Your browser turns speech into text. Only the editable text above is submitted to Bodh.",
+  },
+  privacySarvam: {
+    hi: "आवाज़ Sarvam को text बनाने के लिए जाती है और तुरंत हटा दी जाती है—store नहीं होती। Bodh को ऊपर लिखा हुआ text ही submit होगा।",
+    en: "Your voice goes to Sarvam only to become text and is discarded immediately—never stored. Only the editable text above is submitted to Bodh.",
   },
 } as const;
 
@@ -66,6 +71,7 @@ export function ReasoningVoiceControl({
   status,
   error,
   liveTranscript,
+  provider = "browser",
   disabled = false,
   textareaId,
   helpId,
@@ -113,7 +119,7 @@ export function ReasoningVoiceControl({
           <span>{t(copy.live)}</span> · “{liveTranscript}”
         </p>
       )}
-      <p className={styles.privacy} id={helpId}>{t(copy.privacy)}</p>
+      <p className={styles.privacy} id={helpId}>{t(provider === "sarvam" ? copy.privacySarvam : copy.privacy)}</p>
       {error && <p className={styles.error} role="alert">{t(errorCopy[error])}</p>}
     </div>
   );

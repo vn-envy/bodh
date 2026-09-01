@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bodh.education/schemas/atom-slot-fill.schema.json",
+  "title": "Bodh atom slot fill (model output or authored fallback)",
+  "description": "Only story slots inside an authored atom template. Mechanics, predicates and cue targets are shipped code; nothing here may carry an answer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "templateId", "language", "objectId", "story", "distractors", "beats", "termIds"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "templateId": { "enum": ["fit-count", "balance-equivalence", "conserve-and-track"] },
+    "language": { "enum": ["hi", "en", "ta"] },
+    "objectId": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,31}$" },
+    "story": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "invitation"],
+      "properties": {
+        "title": { "type": "string", "minLength": 3, "maxLength": 80 },
+        "invitation": { "type": "string", "minLength": 10, "maxLength": 240 }
+      }
+    },
+    "distractors": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 3, "maxLength": 120 }
+    },
+    "beats": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "text", "target"],
+        "properties": {
+          "key": { "type": "string", "minLength": 3, "maxLength": 60 },
+          "text": { "type": "string", "minLength": 20, "maxLength": 320 },
+          "target": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,31}$" }
+        }
+      }
+    },
+    "termIds": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "unit-fraction",
+          "denominator",
+          "numerator",
+          "equivalent-fraction",
+          "equal-groups",
+          "unknown-factor",
+          "reciprocal",
+          "evaporation",
+          "water-vapour",
+          "condensation",
+          "precipitation"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+[
+  {
+    "schemaVersion": "1.0.0",
+    "templateId": "balance-equivalence",
+    "language": "hi",
+    "objectId": "chikki",
+    "story": {
+      "title": "चिक्की का तराज़ू",
+      "invitation": "एक पैन में चिक्की का तीन चौथाई टुकड़ा है। दूसरे पैन में छोटे बराबर टुकड़े रखो जब तक तराज़ू सीधा न हो जाए। हर टुकड़े के बाद झुकाव देखो।"
+    },
+    "distractors": [
+      "ऊपर की संख्या जितने टुकड़े रखो",
+      "नीचे की संख्या जितने टुकड़े रखो",
+      "जब तक पैन भर न जाए, रखते जाओ"
+    ],
+    "beats": [
+      {
+        "key": "वही मात्रा, नए नाम",
+        "text": "जब हम हर चौथाई को दो बराबर हिस्सों में काटते हैं, तो चिक्की की मात्रा नहीं बदलती। सिर्फ़ टुकड़ों का नाम बदलता है।",
+        "target": "eighth-seams"
+      },
+      {
+        "key": "तराज़ू क्या बताता है",
+        "text": "तराज़ू मात्रा तौलता है, नाम नहीं। जब दोनों पैन में एक जैसी मात्रा होती है, तब वह सीधा होता है—यही समतुल्य भिन्न का मतलब है।",
+        "target": "equivalence"
+      }
+    ],
+    "termIds": ["equivalent-fraction", "denominator"]
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "templateId": "balance-equivalence",
+    "language": "en",
+    "objectId": "chikki",
+    "story": {
+      "title": "The chikki seesaw",
+      "invitation": "One pan holds three quarters of a chikki bar. Stack small equal pieces on the other pan until the beam is level. Watch the tilt after every piece."
+    },
+    "distractors": [
+      "Place as many pieces as the top number",
+      "Place as many pieces as the bottom number",
+      "Keep adding until the pan is full"
+    ],
+    "beats": [
+      {
+        "key": "Same amount, new names",
+        "text": "When we cut every quarter into two equal parts, the amount of chikki does not change. Only the name of the pieces changes.",
+        "target": "eighth-seams"
+      },
+      {
+        "key": "What the seesaw tells us",
+        "text": "A seesaw weighs amounts, not names. It is level only when both pans hold the same amount—that is what an equivalent fraction means.",
+        "target": "equivalence"
+      }
+    ],
+    "termIds": ["equivalent-fraction", "denominator"]
+  }
+]

@@ -1,0 +1,66 @@
+[
+  {
+    "schemaVersion": "1.0.0",
+    "templateId": "conserve-and-track",
+    "language": "hi",
+    "objectId": "wet-clothes",
+    "story": {
+      "title": "छत पर सूखते कपड़े",
+      "invitation": "सुबह धुले कपड़े छत पर टपक रहे थे। दोपहर तक वे सूख गए। पानी कहीं गया ज़रूर है—सूरज, हवा और ठंडी चीज़ बदलकर उसे खोजो।"
+    },
+    "distractors": [
+      "सूरज ने पानी को खत्म कर दिया",
+      "पानी कपड़ों के अंदर छिप गया"
+    ],
+    "beats": [
+      {
+        "key": "गर्मी कणों को धक्का देती है",
+        "text": "धूप और हवा पानी को पीते नहीं हैं। वे पानी के सबसे ऊपर के कणों को ऊर्जा देते हैं, जिससे वे कपड़े से निकलकर हवा में चले जाते हैं।",
+        "target": "surface"
+      },
+      {
+        "key": "अदृश्य, पर मौजूद",
+        "text": "हवा में गया पानी अब जलवाष्प है। वह दिखता नहीं, इसलिए गायब लगता है—लेकिन गिनती वही रहती है, बस जगह और रूप बदल गया।",
+        "target": "invisible-note"
+      },
+      {
+        "key": "ठंडा मिले तो वापस",
+        "text": "जब यही जलवाष्प किसी ठंडी सतह से मिलती है, तो फिर छोटी बूँदों में बदल जाती है। इसी को संघनन कहते हैं।",
+        "target": "droplets"
+      }
+    ],
+    "termIds": ["evaporation", "water-vapour", "condensation"]
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "templateId": "conserve-and-track",
+    "language": "en",
+    "objectId": "wet-clothes",
+    "story": {
+      "title": "Clothes drying on the roof",
+      "invitation": "This morning the washed clothes were dripping on the roof. By afternoon they were dry. The water went somewhere—change the sun, the wind and a cold surface to find it."
+    },
+    "distractors": [
+      "The sun used up the water",
+      "The water hid inside the cloth"
+    ],
+    "beats": [
+      {
+        "key": "Heat pushes the particles",
+        "text": "Sunshine and wind do not drink the water. They give energy to the topmost water particles, which leave the cloth and move into the air.",
+        "target": "surface"
+      },
+      {
+        "key": "Invisible, but present",
+        "text": "The water in the air is now water vapour. You cannot see it, so it seems gone—but the count stays the same; only its place and form have changed.",
+        "target": "invisible-note"
+      },
+      {
+        "key": "Cold brings it back",
+        "text": "When that same vapour meets a cold surface, it turns back into tiny droplets. That is called condensation.",
+        "target": "droplets"
+      }
+    ],
+    "termIds": ["evaporation", "water-vapour", "condensation"]
+  }
+]

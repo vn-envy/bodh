@@ -33,7 +33,7 @@ Translation requests wrap protected terms (`हर`, `denominator`, the Tamil eq
 ## Spending the million credits well
 
 - **Cache everything by content hash.** TTS output is immutable per `(text, language, speaker, model)`; the edge cache and static clips absorb repeat traffic.
-- **Translate once, review, commit.** Tamil overlays for authored copy are generated into `data/i18n/ta/*.json`, marked `reviewed: false`, and committed. Runtime translation is only for generated slot text.
+- **Translate once, review, commit.** Tamil overlays for authored copy are generated into `lib/i18n/ta-overlay.data.ts` by `npm run i18n:ta` (`scripts/generate-tamil-overlay.mjs`), marked `reviewed: false`, and committed. Runtime translation is only for generated slot text.
 - **Bound STT.** 30-second cap per utterance; the client stops recording on silence.
 - **Rate-limit per client.** Same hashed-IP window as `/api/diagnose`.
 - **Never pay for learner text twice.** Transcripts feed the existing validated text pipeline; they are not re-sent to TTS or translation.

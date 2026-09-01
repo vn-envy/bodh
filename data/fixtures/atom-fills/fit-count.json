@@ -1,0 +1,66 @@
+[
+  {
+    "schemaVersion": "1.0.0",
+    "templateId": "fit-count",
+    "language": "hi",
+    "objectId": "roti",
+    "story": {
+      "title": "रोटी के बराबर टुकड़े",
+      "invitation": "अम्मा ने एक रोटी के तीन चौथाई हिस्से रखे हैं। छोटे 1/8 टुकड़े उठाओ और देखो कितने उसी जगह में fit होते हैं—गिनती जल्दी मत करो, देखो।"
+    },
+    "distractors": [
+      "दूसरे fraction को उल्टा करके multiply करो",
+      "दोनों नीचे की संख्याओं को जोड़ दो"
+    ],
+    "beats": [
+      {
+        "key": "पहले पूरा चुनो",
+        "text": "यह पूरी रोटी हमारा एक पूरा है। जो भी टुकड़ा हम बनाएँगे, उसकी तुलना इसी पूरी रोटी से होगी।",
+        "target": "whole"
+      },
+      {
+        "key": "हर टुकड़े का size",
+        "text": "1/8 का मतलब है पूरी रोटी के आठ बराबर टुकड़ों में से एक। नीचे का आठ बताता है कि टुकड़ा कितना छोटा है।",
+        "target": "eighth-units"
+      },
+      {
+        "key": "division पूछती है: कितने fit?",
+        "text": "जब हम पूछते हैं तीन चौथाई में 1/8 कितनी बार आता है, तो हम इसी size के टुकड़े गिन रहे हैं। यही division का मतलब है।",
+        "target": "divide"
+      }
+    ],
+    "termIds": ["unit-fraction", "denominator", "equal-groups"]
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "templateId": "fit-count",
+    "language": "en",
+    "objectId": "roti",
+    "story": {
+      "title": "Equal pieces of a roti",
+      "invitation": "Amma has set aside three quarters of a roti. Pick up small 1/8 pieces and see how many fit in exactly that space—look before you count."
+    },
+    "distractors": [
+      "Flip the second fraction and multiply",
+      "Add the two bottom numbers together"
+    ],
+    "beats": [
+      {
+        "key": "Choose the whole first",
+        "text": "This whole roti is our one whole. Every piece we make will be compared with this same roti.",
+        "target": "whole"
+      },
+      {
+        "key": "The size of each piece",
+        "text": "One eighth means one of eight equal pieces of the whole roti. The eight underneath tells us how small the piece is.",
+        "target": "eighth-units"
+      },
+      {
+        "key": "Division asks: how many fit?",
+        "text": "When we ask how many times 1/8 goes into three quarters, we are counting pieces of exactly this size. That is what division means.",
+        "target": "divide"
+      }
+    ],
+    "termIds": ["unit-fraction", "denominator", "equal-groups"]
+  }
+]

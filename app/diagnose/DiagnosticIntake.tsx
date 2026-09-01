@@ -40,6 +40,7 @@ type LiveResult = {
   mode: "live";
   diagnosis: {
     source: "openai" | "reviewed_recovery";
+    provider?: "openai" | "sarvam";
     inputFidelity: { canonicalEquation: string; preservedTokens: string[]; confidence: number };
     concepts: Array<{ id: string; name: string; domain: string }>;
     hypotheses: Array<{ id: string; labelHi: string; evidence: { source: string; quote: string } }>;
@@ -661,7 +662,9 @@ export function DiagnosticIntake() {
             <div className="stage-with-bodh diagnosis-result-heading">
               <div>
                 <span className="eyebrow">{result.diagnosis.source === "openai"
-                  ? language === "hi" ? "Live OpenAI response · Bodh ने क्या सुना" : "Live OpenAI response · what Bodh heard"
+                  ? result.diagnosis.provider === "sarvam"
+                    ? language === "hi" ? "Live Sarvam response · Bodh ने क्या सुना" : "Live Sarvam response · what Bodh heard"
+                    : language === "hi" ? "Live OpenAI response · Bodh ने क्या सुना" : "Live OpenAI response · what Bodh heard"
                   : language === "hi" ? "Reviewed recovery · Bodh ने क्या सुना" : "Reviewed recovery · what Bodh heard"}</span>
                 <h2 ref={resultHeadingRef} tabIndex={-1}>
                   {language === "hi" ? "चलो इस idea को एक छोटी जाँच से समझें।" : "Let’s understand this idea with one short probe."}

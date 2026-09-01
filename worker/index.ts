@@ -2,6 +2,7 @@
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
 import { handleDiagnosis, handleTrace } from "./diagnose";
+import { handleGenerateAtom } from "./generate-atom";
 import { handleGeneratedNarration, handleNarration } from "./narration";
 import { handleSpeechCapabilities, handleTranscribe } from "./sarvam";
 import { handleToolsManifest } from "./tools-manifest";
@@ -57,6 +58,10 @@ const worker = {
 
     if (url.pathname === "/api/tools") {
       return handleToolsManifest(request);
+    }
+
+    if (url.pathname === "/api/generate-atom") {
+      return handleGenerateAtom(request, env);
     }
 
     if (url.pathname === "/api/speech/capabilities") {

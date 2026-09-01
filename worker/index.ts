@@ -3,6 +3,7 @@ import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } fr
 import handler from "vinext/server/app-router-entry";
 import { handleDiagnosis, handleTrace } from "./diagnose";
 import { handleNarration } from "./narration";
+import { handleToolsManifest } from "./tools-manifest";
 
 interface Env {
   ASSETS: Fetcher;
@@ -40,6 +41,10 @@ const worker = {
 
     if (url.pathname === "/api/diagnose") {
       return handleDiagnosis(request, env);
+    }
+
+    if (url.pathname === "/api/tools") {
+      return handleToolsManifest(request);
     }
 
     const traceMatch = url.pathname.match(/^\/api\/trace\/([0-9a-f-]{36})$/i);

@@ -8,6 +8,7 @@ import { observeWorld } from "../../lib/world/session";
 import { BodhMark } from "../components/BodhMark";
 import { NarrationLanguageToggle, useNarrationLanguage } from "../components/NarrationLanguageToggle";
 import { StationPanel } from "../components/world/StationPanel";
+import { TutorLead } from "../components/world/TutorLead";
 import { WorldCanvas } from "../components/world/WorldCanvas";
 import { WorldToolProvider, useWorld } from "../components/world/WorldToolProvider";
 import styles from "./BodhVan.module.css";
@@ -103,7 +104,10 @@ function VanInner() {
         <div className={styles.canvasWrap}>
           <WorldCanvas observation={observation} station={session.world.station} language={language} onPlaceTap={onPlaceTap} />
         </div>
-        <StationPanel observation={observation} station={session.world.station} language={language} lastResult={lastResult} invoke={invoke} />
+        <div className={styles.panelColumn}>
+          <StationPanel observation={observation} station={session.world.station} language={language} lastResult={lastResult} invoke={invoke} />
+          <TutorLead session={session} language={language} invoke={invoke} />
+        </div>
       </div>
 
       <details className={styles.agents}>

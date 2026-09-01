@@ -128,11 +128,18 @@ Accounts, dashboards, payments, social features, native apps, XP/levels/streaks,
 
 - [x] V0: `docs/VISION_BODH_VAN.md`, `docs/GROWTH_GRAPH.md`, `docs/WEBMCP_TOOLS.md`, `docs/SARVAM.md`
 - [x] V0: D-014..D-020 in `docs/DECISIONS.md`; `NOTICE.md` and `.env.example` updated
-- [ ] V0: `NarrationLanguage` = `hi | en | ta`; `lib/concept-bridge.ts` with Tamil terms
-- [ ] V1: `lib/growth-graph.ts`, `schemas/growth-graph.schema.json`, `lib/growth-graph-store.ts`, tests
-- [ ] V2: `lib/world-tools.ts`, `WorldToolProvider`, `worker/tools-manifest.ts`, tests
-- [ ] V3: `lib/world/physics.ts`, `lib/world/places.ts`, Puddle Ghat station, `/van`, tests
-- [ ] V4: Roti Chowk seesaw, `/van/map`, homepage CTA
-- [ ] V5: `worker/sarvam.ts`, `worker/translate.ts`, narration `ta` + Sarvam source, client STT wiring, tests
-- [ ] V6: `worker/llm-provider.ts`, `lib/atom-templates.ts`, `schemas/atom-slot-fill.schema.json`, `data/fixtures/atom-fills/`
-- [ ] V7: tutor loop, `tests/agent-journey.test.mjs`, README
+- [x] V0: `NarrationLanguage` = `hi | en | ta`; `lib/concept-bridge.ts` with Tamil terms
+- [x] V1: `lib/growth-graph.ts`, `schemas/growth-graph.schema.json`, `lib/growth-graph-store.ts`, tests
+- [x] V2: `lib/world-tools.ts`, `WorldToolProvider`, `worker/tools-manifest.ts`, tests
+- [x] V3: `lib/world/physics.ts`, `lib/world/places.ts`, Puddle Ghat station, `/van`, tests
+- [x] V4: Roti Chowk seesaw, `/van/map`, homepage CTA
+- [x] V5: `worker/sarvam.ts`, `worker/translate.ts`, narration `ta` + Sarvam source, client STT wiring, tests
+- [x] V6: `worker/llm-provider.ts`, `lib/atom-templates.ts`, `schemas/atom-slot-fill.schema.json`, `data/fixtures/atom-fills/`
+- [x] V7: tutor loop (`lib/tutor-policy.ts`, `POST /api/tutor/step`), `tests/agent-journey.test.mjs`, README
+
+## Next gates (not started)
+
+- Tamil review pass over `lib/i18n/ta-overlay.data.ts` and the concept bridge by a native speaker.
+- `taught-back`: the child explains an idea to Bodh (Saaras transcript → rubric check) to reach the top rung.
+- A third place and template so the frontier has real choice; a 3D layer if a JS binding for Box3D lands.
+- Classroom pilot before any efficacy claim (the recorded 32/32 eval covers diagnostic safety only).

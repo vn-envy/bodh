@@ -6,6 +6,7 @@ import { handleGenerateAtom } from "./generate-atom";
 import { handleGeneratedNarration, handleNarration } from "./narration";
 import { handleSpeechCapabilities, handleTranscribe } from "./sarvam";
 import { handleToolsManifest } from "./tools-manifest";
+import { handleTutorStep } from "./tutor";
 
 interface Env {
   ASSETS: Fetcher;
@@ -62,6 +63,10 @@ const worker = {
 
     if (url.pathname === "/api/generate-atom") {
       return handleGenerateAtom(request, env);
+    }
+
+    if (url.pathname === "/api/tutor/step") {
+      return handleTutorStep(request, env);
     }
 
     if (url.pathname === "/api/speech/capabilities") {

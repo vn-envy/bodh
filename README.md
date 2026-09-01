@@ -31,6 +31,24 @@
   <img src="./public/og-science.png" alt="Bodh teaching evaporation and the water cycle" width="100%" />
 </p>
 
+## Bodh Van — the world layer
+
+> **Van** (वन) — a forest. A place you wander into because you want to, not because a bell rang.
+
+Bodh Van turns the tutor into a place. Open **[/van](https://bodh-learning.neekhil007.chatgpt.site/van)** and you are standing in a small world with Bodh beside you. There is a puddle by a ghat and a chowk where rotis are torn into equal pieces. Lit places can be entered; misty ones open as the ideas that lead to them are understood. Zoom out (**[/van/map](https://bodh-learning.neekhil007.chatgpt.site/van/map)**) and the world becomes your **growth graph**: every concept as a hill, lit as you understand, never a score.
+
+| Layer | What it is | Where |
+|---|---|---|
+| Growth graph | Per-learner evidence ladder `unseen → noticed → tinkered → explained → transferred → taught-back`; failed attempts are evidence, not penalties; device-local with a portable Bodhi seed | `lib/growth-graph*.ts`, `docs/GROWTH_GRAPH.md` |
+| World | Places and physics stations rendered from the graph's frontier; Puddle Ghat (conservation of water under sun, wind and a cold lid) and Roti Chowk (a seesaw that balances `3/4` against `1/8` pieces); Rapier deterministic physics | `lib/world/*`, `app/van/*` |
+| Tools | Every action is a typed, gated tool shaped like a WebMCP `ModelContextTool`; child taps, Bodh's tutor, external agents and the test suite share one path; registered with `document.modelContext` when the browser offers it | `lib/world-tools.ts`, `GET /api/tools`, `docs/WEBMCP_TOOLS.md` |
+| Voice | Hindi, Tamil and English. Sarvam Saaras v3 (code-mixed) transcription, Bulbul v3 narration, glossary-pinned translation; OpenAI remains the default diagnosis model | `worker/sarvam.ts`, `docs/SARVAM.md` |
+| Generation | On demand, but only into story slots of authored atom templates under a strict schema and answer-leak guardrails; reviewed fills are the fallback | `lib/atom-templates.ts`, `worker/generate-atom.ts` |
+
+The tutor leads navigation and explanation and never does the child's doing: it cannot answer a probe, move a control, or press check (`lib/tutor-policy.ts`). A headless test drives complete journeys through the tools alone and proves the same seed replays to the same state.
+
+Why it stands apart, and the learning science behind each choice, is in [docs/VISION_BODH_VAN.md](./docs/VISION_BODH_VAN.md). Decisions D-014 to D-020 are in [docs/DECISIONS.md](./docs/DECISIONS.md).
+
 ## Why Bodh exists
 
 A child can remember a rule and still not understand the idea that makes it true. Translating the rule does not repair that bottleneck, and immediately showing the answer can hide it.
@@ -106,6 +124,7 @@ Bodh is not a scorekeeper. The elephant stays emotionally steady while the learn
 | Voice | Authored Hindi and Indian-English narration IDs, synchronized pointers, one pinned Bodh voice per selected language, and replay |
 | Sharing | Deterministic 1200×1500 Canvas receipt, PNG download/share, and text fallback |
 | Resilience | Every hero journey runs without an API key; live failure continues through an explicitly labelled reviewed route |
+| Bodh Van | Walkable world at `/van` with two physics stations, god's-eye growth map at `/van/map`, Bodhi seed export/restore, Tamil as a first-class language, WebMCP-registered tools, `GET /api/tools` |
 
 ## Pedagogy before spectacle
 
@@ -199,6 +218,16 @@ BODH_TTS_VOICE=marin
 BODH_TTS_RUNTIME_ENABLED=true
 ```
 
+For Indic voice through Sarvam (Hindi, Tamil, English narration; code-mixed transcription; optional Sarvam-105B diagnosis):
+
+```bash
+SARVAM_API_KEY=your_sarvam_key
+BODH_STT_PROVIDER=sarvam        # browser (default) | sarvam
+BODH_LLM_PROVIDER=openai        # openai (default) | sarvam
+```
+
+`npm run i18n:ta` extends the Tamil overlay from authored English copy with glossary pinning; entries arrive as `reviewed: false` until a Tamil speaker checks them.
+
 Never commit the key. Production secrets belong in the hosting environment, not in this repository.
 
 ### Validate the build
@@ -214,30 +243,33 @@ npm run validate:evals
 
 - **Application:** Next.js 16, React 19, TypeScript
 - **Edge runtime:** Vinext/Vite on a Cloudflare Worker
-- **Data:** Cloudflare D1 + Drizzle migrations
-- **Intelligence:** OpenAI Responses API and Speech API
+- **Data:** Cloudflare D1 + Drizzle migrations; growth graph in IndexedDB on the device
+- **Intelligence:** OpenAI Responses API and Speech API; Sarvam Saaras v3, Bulbul v3, Sarvam-Translate and Sarvam-105B
+- **Physics:** Rapier 2D deterministic build (Apache-2.0) with a fixed timestep
+- **Agents:** WebMCP-shaped tool registry, `document.modelContext` registration, `GET /api/tools`
 - **Validation:** JSON Schema, Ajv, deterministic domain guardrails
-- **Interaction:** Web Speech API, Canvas sharing, CSS/SVG/React visual artifacts
+- **Interaction:** Web Speech API, MediaRecorder, Canvas 2D world, Canvas sharing, CSS/SVG/React visual artifacts
 
 ## Repository map
 
 ```text
-app/                 learner, judge, maths, science, and evidence surfaces
-components/          reusable visual, narration, and journey components
-lib/                 deterministic pedagogy, routing, guardrails, and receipts
-worker/              diagnosis, D1 traces/rate limits, and narration endpoints
+app/                 learner, judge, maths, science, evidence, and Bodh Van (/van, /van/map) surfaces
+app/components/      reusable visual, narration, journey, and world components
+lib/                 deterministic pedagogy, growth graph, world stations, tool registry, guardrails, receipts
+lib/world/           places, stations, session reducer, Rapier physics wrapper
+worker/              diagnosis, narration, Sarvam speech, tool manifest, atom generation, tutor step
 data/taxonomy/       bounded Marble curriculum slices
-data/fixtures/       reviewed artifacts and nine seeded doubts
+data/fixtures/       reviewed artifacts, nine seeded doubts, authored atom fills
 data/evals/          development-gold and frozen diagnostic cases
-schemas/             strict model-output and evaluation contracts
-tests/               behavior, safety, rendering, and regression checks
-docs/                decisions, evidence, traceability, and demo material
+schemas/             strict model-output, growth-graph, atom-fill, and evaluation contracts
+tests/               behavior, safety, rendering, determinism, agent-journey, and regression checks
+docs/                decisions, vision, growth graph, tools, Sarvam, evidence, and demo material
 public/art/bodh/     production mascot poses
 ```
 
 ## Curriculum and credits
 
-Concept grounding uses bounded extracts of the [Marble Skill Taxonomy](https://github.com/withmarbleapp/os-taxonomy), pinned to commit `96a7933754af672e1bfdbf7ecb05c325860c6e0d`. The database and text retain their upstream ODbL 1.0 and CC BY-SA 4.0 terms. See [NOTICE.md](./NOTICE.md) for the exact boundary.
+Concept grounding uses bounded extracts of the [Marble Skill Taxonomy](https://github.com/withmarbleapp/os-taxonomy), pinned to commit `96a7933754af672e1bfdbf7ecb05c325860c6e0d`. The database and text retain their upstream ODbL 1.0 and CC BY-SA 4.0 terms. Bodh Van's physics uses [Rapier](https://rapier.rs) (Apache-2.0); its world-plus-typed-tools pattern is inspired by [gods-eye-view](https://github.com/bilawalsidhu/gods-eye-view) (MIT) and its determinism standard by [Box2D/Box3D](https://github.com/erincatto/box3d) (MIT). See [NOTICE.md](./NOTICE.md) for the exact boundary.
 
 Bodh was created for **OpenAI Devpost Build Week** with OpenAI's Responses and Speech APIs. Baloo 2 and Mukta are used under the SIL Open Font License.
 

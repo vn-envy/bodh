@@ -879,6 +879,11 @@ export function DemoJourney() {
                     : DEMO_JOURNEY_COPY.receipt.shareFailed)}
               </p>
             )}
+            {canShowReceiptClaims && (
+              <Link className="button button-secondary journey-primary receipt-climb-action" href="/climb?topic=mt_9Y96vxG_LH">
+                {language === "hi" ? "इसे तीन तरह से साबित करें · Understanding Climb" : "Prove it three ways · Understanding Climb"} <span aria-hidden="true">→</span>
+              </Link>
+            )}
             <Link className="button button-primary journey-primary receipt-restart-action" href="/" onClick={startAnotherDoubt}>
               {t(DEMO_JOURNEY_COPY.receipt.oneMore)} <span aria-hidden="true">→</span>
             </Link>

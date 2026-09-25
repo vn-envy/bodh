@@ -24,7 +24,7 @@
   <img alt="Hindi and English" src="https://img.shields.io/badge/languages-Hindi%20%2B%20English-67798b?style=flat-square" />
   <img alt="Mathematics and science" src="https://img.shields.io/badge/subjects-mathematics%20%2B%20science-7b8350?style=flat-square" />
   <img alt="32 of 32 recorded evaluation cases passed" src="https://img.shields.io/badge/recorded%20eval-32%2F32-e08f72?style=flat-square" />
-  <img alt="115 automated checks passing" src="https://img.shields.io/badge/automated%20checks-115%20passing-34737a?style=flat-square" />
+  <img alt="132 automated checks passing" src="https://img.shields.io/badge/automated%20checks-132%20passing-34737a?style=flat-square" />
 </p>
 
 <p align="center">
@@ -106,6 +106,24 @@ Bodh is not a scorekeeper. The elephant stays emotionally steady while the learn
 | Voice | Authored Hindi and Indian-English narration IDs, synchronized pointers, one pinned Bodh voice per selected language, and replay |
 | Sharing | Deterministic 1200×1500 Canvas receipt, PNG download/share, and text fallback |
 | Resilience | Every hero journey runs without an API key; live failure continues through an explicitly labelled reviewed route |
+| Understanding Climb | 18 Marble topics × 3 evidence statements, deterministic checks in four facets, confidence-aware evidence, prerequisite-graph repair, and spaced retrieval stored on the device |
+
+## Understanding that lasts: the Understanding Climb
+
+A repaired doubt is evidence about one moment. The **[Understanding Climb](https://bodh-learning.neekhil007.chatgpt.site/climb)** asks whether the idea is really the learner's own—using the **same bounded Marble slices** that ground diagnosis, with nothing new added to the curriculum.
+
+| Principle | How the Climb applies it |
+|---|---|
+| Grounded evidence | Each of the 18 Marble topics keeps its three canonical evidence statements. Every check is anchored to exactly one of those 54 statements and shows the Marble text in a "What does this check?" note. |
+| Understanding has facets | Checks ask the learner to **see it** (shade a bar, hop a number line, read an area model), **explain why** ("Kabir or Meera—who is right?"), **use it** in a new story, and **check it backwards** with the inverse operation. |
+| Correct keys by construction | Maths checks are generated from reviewed parameter pools; exact rational arithmetic computes the keys, and tests verify them against an independent oracle. Science checks are authored. No model writes a question or a key. |
+| Confidence matters | "How sure do you feel?" separates a lucky guess (*fragile*) from understanding (*firm*). A guess or a hinted answer earns one fresh variant in the same visit. |
+| Misses are diagnostic | Every distractor names the misconception behind it and explains why it is tempting. A **confident** miss descends to the Marble topic where that idea is repaired, and Bodh shows the canonical dependency reasons for the step. |
+| Next step from the graph | With no misses, Bodh suggests the outer fringe: the first unfirm topic whose hard prerequisites are all firm, climbing toward the slice's goal. |
+| Retention, not cramming | Firm evidence returns after 1, 3, 7, and 21 days as an interleaved memory check. Only a correct, confident, unaided answer **after the gap** marks evidence *lasting*. |
+| Privacy | The evidence ledger lives only in the learner's browser: IDs, booleans, confidence, and timestamps—no text. A grown-up panel explains every state and can erase it. |
+
+Every journey receipt now ends with **"Prove it three ways,"** which opens the Climb on the exact Marble topic the doubt was about.
 
 ## Pedagogy before spectacle
 
@@ -159,7 +177,7 @@ The recorded diagnostic release passed **32/32 synthetic safety and diagnostic-b
 | Evaluated source | `dc75a17f3870d80675315fe45a1b448770fb6127` |
 | Checks | notation preservation, in-slice IDs, misconception overlap, probe-before-teaching, Hindi bridge, trace bounds, and privacy declarations |
 | Current seed menu | 9 reviewed examples; the newer evaporation seed is not retroactively included in the recorded 32-case result |
-| Current automated suite | 115/115 checks passing across pedagogy, safety, rendering, narration, and sharing |
+| Current automated suite | 132/132 checks passing across pedagogy, safety, rendering, narration, sharing, and the Understanding Climb |
 
 Read the full [release evidence](./docs/EVALUATION_RELEASE.md) and [evaluation design](./docs/EVALUATION.md).
 

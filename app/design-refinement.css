@@ -2972,6 +2972,7 @@
   .progress-path,
   .receipt-actions,
   .receipt-restart-action,
+  .receipt-climb-action,
   .site-footer,
   .narration-language-toggle {
     display: none !important;

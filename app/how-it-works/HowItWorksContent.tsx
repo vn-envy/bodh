@@ -32,6 +32,10 @@ const copy = {
     taxonomyTitle: "एक असली prerequisite path से lesson को ground करना",
     taxonomyBoundary:
       "यह पाँच-topic chain curriculum grounding है। Lesson की सात authored teaching ideas presentation steps हैं—taxonomy nodes नहीं।",
+    climbTitle: "एक doubt के बाद: समझ जो टिके",
+    climbBody:
+      "Understanding Climb उन्हीं 18 Marble topics के हर evidence statement को code से बने checks से जाँचता है। \"कितना पक्का?\" पूछकर अंदाज़े को असली समझ से अलग करता है, गलत-पर-पक्के जवाब पर Marble prerequisite तक एक कदम नीचे जाता है, और एक दिन बाद फिर पूछता है।",
+    climbAction: "Understanding Climb खोलें",
     primary: "अपना सवाल लाएँ",
     secondary: "Curated fraction journey देखें",
   },
@@ -58,6 +62,10 @@ const copy = {
     taxonomyTitle: "Ground the lesson in a real prerequisite path",
     taxonomyBoundary:
       "This five-topic chain is curriculum grounding. The lesson's seven authored teaching ideas are presentation steps—not taxonomy nodes.",
+    climbTitle: "After a doubt: understanding that lasts",
+    climbBody:
+      "The Understanding Climb checks every evidence statement of the same 18 Marble topics with code-generated checks. Asking \"how sure?\" separates a lucky guess from understanding, a confident miss steps down to the Marble prerequisite, and Bodh asks again a day later.",
+    climbAction: "Open the Understanding Climb",
     primary: "Bring my question",
     secondary: "See the curated fraction journey",
   },
@@ -143,6 +151,22 @@ export function HowItWorksContent() {
           <i aria-hidden="true">→</i>
           <strong>Safe learner step</strong>
         </div>
+      </section>
+
+      <section className="taxonomy-proof" aria-labelledby="climb-proof-title">
+        <div className="taxonomy-proof-heading">
+          <span className="proof-kicker" lang="en">Understanding Climb · 54 Marble evidence statements</span>
+          <h2 id="climb-proof-title">{text.climbTitle}</h2>
+          <p>{text.climbBody}</p>
+        </div>
+        <ol className="taxonomy-chain" aria-label="Understanding Climb evidence loop" lang="en">
+          <li>Marble evidence statement</li>
+          <li>See · explain · use</li>
+          <li>How sure?</li>
+          <li>Confident miss → prerequisite</li>
+          <li>Re-check after a gap</li>
+        </ol>
+        <p className="taxonomy-boundary"><Link href="/climb">{text.climbAction} →</Link></p>
       </section>
 
       <MeasuredEvaluation language={language} />

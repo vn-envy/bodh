@@ -654,7 +654,7 @@ function UnderstandingReceipt({
       <div className={styles.receiptFooter}>
         <div className={styles.receiptMeta}><span>✓ Marble · mt_Qkewo5M3_c</span><span>✓ {language === "hi" ? "हिंदी" : "English"}</span>{mode.live && <span>✓ OpenAI · seed-09</span>}</div>
         <p>{language === "hi" ? "यह आज किए काम का सबूत है—अंक या लंबे समय की महारत का दावा नहीं।" : "This records today's actions—not a grade or a claim of long-term mastery."}</p>
-        <div className={styles.receiptActions}><button className={styles.primaryAction} type="button" onClick={onRestart}>{language === "hi" ? "यात्रा फिर देखें" : "Replay the journey"}</button><Link className={styles.secondaryAction} href="/diagnose">{language === "hi" ? "एक और सवाल लाएँ" : "Bring another doubt"}</Link></div>
+        <div className={styles.receiptActions}><button className={styles.primaryAction} type="button" onClick={onRestart}>{language === "hi" ? "यात्रा फिर देखें" : "Replay the journey"}</button><Link className={styles.secondaryAction} href="/climb?topic=mt_Qkewo5M3_c">{language === "hi" ? "समझ टिकाएँ: Understanding Climb" : "Make it last: Understanding Climb"}</Link><Link className={styles.secondaryAction} href="/diagnose">{language === "hi" ? "एक और सवाल लाएँ" : "Bring another doubt"}</Link></div>
       </div>
     </article>
   );

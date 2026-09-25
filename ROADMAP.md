@@ -96,3 +96,15 @@ The hosted live path must process every reviewed seed with schema-valid, equatio
 ## Evaluation reserve
 
 The golden set grows from 8 seed cases to 16 development-gold cases and finally 8 frozen holdouts. Feature work stops before the concentrated evaluation window. Required release invariants are 100% equation preservation, schema validity, deterministic mathematical correctness, and supported taxonomy-ID validity.
+
+## Post-submission: Understanding Climb
+
+- [x] Anchor every check to one of the 54 canonical Marble evidence statements across both committed slices
+- [x] Deterministic maths generators with exact rational keys; authored science checks; misconception-tagged distractors with reasons
+- [x] Four facets per topic: see it, explain why, use it somewhere new, check it backwards
+- [x] Confidence capture: firm vs fragile evidence; one fresh variant after a miss, guess, or hint
+- [x] Prerequisite-graph planner: confident misses step down to the misconception's repair topic; otherwise climb the outer fringe toward the slice goal
+- [x] Spaced, interleaved retrieval (1/3/7/21 days); "lasting" only after a delayed, unaided, confident check
+- [x] Device-local, strictly validated evidence ledger with a grown-up explanation and erase control
+- [ ] Classroom pilot: does lasting evidence on the Climb predict independent performance a week later?
+

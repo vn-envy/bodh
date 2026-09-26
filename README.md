@@ -125,6 +125,8 @@ A repaired doubt is evidence about one moment. The **[Understanding Climb](https
 
 Every journey receipt now ends with **"Prove it three ways,"** which opens the Climb on the exact Marble topic the doubt was about.
 
+To try it end to end, follow the scenario-by-scenario **[testing guide](./docs/TESTING_THE_CLIMB.md)**.
+
 ## Pedagogy before spectacle
 
 The mathematics journey does not begin with “invert and multiply.” It establishes, in order:

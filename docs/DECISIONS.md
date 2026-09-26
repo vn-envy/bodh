@@ -77,3 +77,21 @@
 **Decision:** Keep one short mathematical anchor on screen while Bodh speaks the deeper explanation in reviewed sentence-sized beats. Every beat owns one visible pointer target; play, pause, and replay control voice and pointing together. The runtime Speech route accepts authored IDs only, never learner text, and device speech plus a transcript remain available when OpenAI narration is unavailable.
 
 **Why:** A child should be able to listen closely without reading a paragraph and searching the artifact at the same time. Sentence-sized ownership makes the deictic language—“यह हिस्सा,” “नीचे का 4,” “यही मात्रा”—visually unambiguous, while the allowlist protects cost, privacy, mathematical correctness, and the pre-lab answer gate.
+
+## D-014 — Understanding is shown on every Marble evidence statement
+
+**Decision:** The Understanding Climb (`/climb`) reuses the two committed Marble slices unchanged. Each of their 18 topics keeps its three canonical evidence statements, and every check Bodh asks is anchored to exactly one `(topicId, evidenceIndex)` pair. Checks cover four facets—see it, explain why, use it somewhere new, and check it backwards. Maths checks are generated from small reviewed parameter pools and their keys are recomputed with exact rational arithmetic; science checks are authored. Every distractor carries a named misconception and a reason.
+
+**Why:** One successful repair is evidence about one moment. The curriculum already states what understanding a topic looks like, so the grounded move is to check those statements directly rather than invent a new rubric or ask a model to write answer keys.
+
+## D-015 — Confidence separates guessing from understanding
+
+**Decision:** Before an answer is checked, the learner says how sure they feel. Evidence becomes *firm* only when an answer is correct, unaided by a hint, and not a guess. A correct guess or a hinted answer is *fragile* and triggers one fresh variant in the same visit. A confident miss is treated as a belief: when its misconception has a repair root lower in the Marble graph (or in a slice's diagnostic-support topic), Bodh suggests stepping down to that topic and shows the canonical dependency reasons that justify the step. A miss with no repair root steps down to the nearest unfirm hard prerequisite of the doubt's topic.
+
+**Why:** Right/wrong alone cannot tell a lucky guess from a stable idea, or a slip from a misconception. The prerequisite edges are already reviewed curriculum data, so they—not a model—decide where repair happens.
+
+## D-016 — Retention is measured, locally and honestly
+
+**Decision:** Firm evidence is re-checked after 1, 3, 7, and 21 days using fresh variants, and due checks are interleaved across topics. Only a correct, confident, unaided check taken after the gap promotes evidence to *lasting*; re-answering early does not. The ledger lives in the learner's browser storage, holds only topic IDs, evidence indices, variants, booleans, confidence, and timestamps, rejects forged or unknown fields, and can be erased from the grown-up panel. Nothing from the Climb is sent to the server.
+
+**Why:** "Truly understood" has to include "still understood later," which the single-session receipt explicitly could not claim. Keeping the evidence on the device preserves the project's privacy boundary while still letting the child and a grown-up see what has lasted.

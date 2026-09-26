@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { BodhMark } from "./components/BodhMark";
+import { ClimbInvite } from "./components/ClimbInvite";
 import { HomepagePathfinder } from "./components/HomepagePathfinder";
 import { JudgeLaneLink } from "./components/JudgeLaneLink";
 import { NarrationLanguageToggle, useNarrationLanguage } from "./components/NarrationLanguageToggle";
@@ -218,6 +219,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <ClimbInvite language={language} />
 
       <section className={styles.method} aria-labelledby="method-title">
         <div className={styles.methodIntro}>

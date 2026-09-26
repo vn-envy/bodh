@@ -185,3 +185,31 @@ test("server-renders the diagnostic intake and the judge-readable learning path"
   assert.match(legacyJudgeHtml, /seed-01/);
   assert.match(legacyJudgeHtml, /seed-09/);
 });
+
+test("server-renders the Understanding Climb over both committed Marble slices", async () => {
+  const response = await render("/climb");
+  assert.equal(response.status, 200);
+  // React separates adjacent text nodes with empty comments in server HTML.
+  const html = (await response.text()).replaceAll("<!-- -->", "");
+  assert.match(html, /<title>Understanding Climb · Bodh<\/title>/);
+  assert.match(html, /समझ की चढ़ाई/);
+  assert.match(html, /10 Marble topics/);
+  assert.match(html, /8 Marble topics/);
+  assert.match(html, /Marble · Dividing fractions · ages 11–12/);
+  assert.match(html, /Marble · Fractions of a whole · ages 8–9/);
+  assert.match(html, /grade, score, या mastery certificate नहीं/);
+  assert.match(html, /सिर्फ इसी device पर रहता है/);
+
+  const home = await (await render("/")).text();
+  assert.match(home, /एक बार समझना काफी नहीं। समझ टिकनी चाहिए।/);
+  assert.match(home, /href="\/climb"/);
+
+  const [demo, learn, science] = await Promise.all([
+    readFile(new URL("../app/demo/DemoJourney.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/learn/SeededLearningJourney.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/science/evaporation/EvaporationJourney.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(demo, /\/climb\?topic=mt_9Y96vxG_LH/);
+  assert.match(learn, /\/climb\?topic=\$\{seed\.goalTopicId\}/);
+  assert.match(science, /\/climb\?topic=mt_Qkewo5M3_c/);
+});

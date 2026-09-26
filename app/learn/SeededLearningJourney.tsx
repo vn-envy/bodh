@@ -380,7 +380,8 @@ export function SeededLearningJourney() {
             <p>{language === "hi" ? "यह आज की activity का evidence है—grade, score, या long-term mastery claim नहीं।" : "This is evidence from today's activity—not a grade, score, or long-term mastery claim."}</p>
             <div className={styles.receiptMeta}><span>✓ {handoff.model}</span><span>✓ {handoff.seedId}</span><span>✓ Marble grounded</span></div>
             <div className={styles.receiptActions}>
-              <Link className="button button-primary" href="/diagnose" onClick={startAnotherDoubt}>{language === "hi" ? "एक और doubt लाएँ" : "Bring another doubt"}</Link>
+              <Link className="button button-primary" href={`/climb?topic=${seed.goalTopicId}`}>{language === "hi" ? "इसे तीन तरह से साबित करें" : "Prove it three ways"} <span aria-hidden="true">→</span></Link>
+              <Link className="button button-secondary" href="/diagnose" onClick={startAnotherDoubt}>{language === "hi" ? "एक और doubt लाएँ" : "Bring another doubt"}</Link>
               <Link className="button button-secondary" href="/demo">{language === "hi" ? "Curated fallback देखें" : "See the curated fallback"}</Link>
             </div>
           </div>
